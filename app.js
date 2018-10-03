@@ -8,10 +8,13 @@ const spotifyUserId = process.env.SPOTIFY_USERNAME;
 
 var spotifyToken;
 
-function requestError(response) {
+function requestError(response, exception = null) {
 	console.log('REQUEST ERROR');
 	console.log(`RESPONSE STATUS CODE: ${response.statusCode}`);
 	console.log(response.body);
+	if (exception) {
+		console.log(exception);
+	}
 	process.exit(2);
 }
 
@@ -34,13 +37,13 @@ async function getSpotifyToken() {
 	try {
 		response = await request('https://accounts.spotify.com/api/token', postOptions);
 	} catch (e) {
-		console.log(e);
+		requestError(response, e);
 	}
 
-	if (response.statusCode) {
-		spotifyToken = `Bearer ${JSON.parse(response.body).access_token}`;
-	} else {
+	if (!response.statusCode) {
 		requestError(response);
+	} else {
+		spotifyToken = `Bearer ${JSON.parse(response.body).access_token}`;
 	}
 } 
 
@@ -58,7 +61,11 @@ async function getPlaylists() {
 	try {
 		response = await request(`https://api.spotify.com/v1/users/${spotifyUserId}/playlists`, getOptions);
 	} catch (e) {
-		console.log(e);
+		requestError(response, e);
+	}
+
+	if (!response.statusCode) {
+		requestError(response);
 	}
 
 	 let body = JSON.parse(response.body);
@@ -82,7 +89,7 @@ async function pickPlaylist(playlistNamesById) {
 	return Object.keys(playlistNamesById).filter(x => playlistNamesById[x] === playlist)[0];
 }
 
-async function getTracks(playlistId) {
+async function getArtists(playlistId) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -96,15 +103,25 @@ async function getTracks(playlistId) {
 		// TODO :: page tracklist
 		response = await request(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
 	} catch (e) {
-		console.log(e);
+		requestError(response, e);
+	}
+
+	if (!response.statusCode) {
+		requestError(response);
 	}
 
 	let body = JSON.parse(response.body);
 	let artists = body.items
 		.map(x => x.track)
 		.map(x => x.artists)
-		.map(x => encodeURI(x.name));
-	console.log(artists);
+		.map(x => x[0])		// each artist is a list of a single object (ew)
+		.map(x => x.name);
+
+	// Filter out duplicates and encode safely
+	hasSeen = {};
+	artists = artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true))
+		.map(x => encodeURI(x));
+
 }
 
 async function main() {
@@ -116,7 +133,7 @@ async function main() {
 	await getSpotifyToken();
 	let playlistDict = await getPlaylists();
 	let playlistId = await pickPlaylist(playlistDict);
-	let artists = await getTracks(playlistId);
+	let artists = await getArtists(playlistId);
 }
 
 main()
