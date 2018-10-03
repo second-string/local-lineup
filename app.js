@@ -5,6 +5,7 @@ require('dotenv').load();
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const spotifyUserId = process.env.SPOTIFY_USERNAME;
+const bandsInTownSecret = process.env.BANDS_IN_TOWN_SECRET;
 
 var spotifyToken;
 
@@ -114,19 +115,48 @@ async function getArtists(playlistId) {
 	let artists = body.items
 		.map(x => x.track)
 		.map(x => x.artists)
-		.map(x => x[0])		// each artist is a list of a single object (ew)
-		.map(x => x.name);
+		.map(x => x[0])					// each artist is a list of a single object (ew)
+		.map(x => encodeURI(x.name));	// encode to URL-safe characters
 
-	// Filter out duplicates and encode safely
+	// Filter out duplicates
 	hasSeen = {};
-	artists = artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true))
-		.map(x => encodeURI(x));
+	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
+}
 
+async function doSomething(artists) {
+	let getOptions = {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json'
+		}
+	};
+
+	let response;
+	try {
+		response = await request(`https://rest.bandsintown.com/artists/${artists[0]}/events?app_id=${bandsInTownSecret}`);
+	} catch (e) {
+		requestError(response, e);
+	}
+
+	if (!response.statusCode) {
+		requestError(response);
+	}
+
+	let body = JSON.parse(response.body);
+	let sfShows = body.filter(x => x.venue.city.toLowerCase() === 'san francisco')
+		.map(x =>  ({
+			name: x.venue.name,
+			date: new Date(x.datetime),
+			url: x.url
+		 }));
+
+	console.log(`SF Shows`);
+	sfShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
 }
 
 async function main() {
-	if (!clientId || !clientSecret || !spotifyUserId) {
-		console.log("Please supply a valid CLIENT_ID and CLIENT_SECRET in the .env file");
+	if (!clientId || !clientSecret || !spotifyUserId || !bandsInTownSecret) {
+		console.log("Please supply valid creds in the .env file");
 		process.exit(1);
 	}
 
@@ -134,6 +164,7 @@ async function main() {
 	let playlistDict = await getPlaylists();
 	let playlistId = await pickPlaylist(playlistDict);
 	let artists = await getArtists(playlistId);
+	await doSomething(artists);
 }
 
 main()
