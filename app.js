@@ -123,7 +123,7 @@ async function getArtists(playlistId) {
 	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
 }
 
-async function doSomething(artists) {
+async function doSomething(artist) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -133,7 +133,7 @@ async function doSomething(artists) {
 
 	let response;
 	try {
-		response = await request(`https://rest.bandsintown.com/artists/${artists[0]}/events?app_id=${bandsInTownSecret}`);
+		response = await request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${bandsInTownSecret}`);
 	} catch (e) {
 		requestError(response, e);
 	}
@@ -142,6 +142,8 @@ async function doSomething(artists) {
 		requestError(response);
 	}
 
+	console.log();
+	console.log(`*********** ${decodeURI(artist)} ***********`);
 	let body = JSON.parse(response.body);
 	let sfShows = body.filter(x => x.venue.city.toLowerCase() === 'san francisco')
 		.map(x =>  ({
@@ -150,8 +152,26 @@ async function doSomething(artists) {
 			url: x.url
 		 }));
 
-	console.log(`SF Shows`);
-	sfShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
+	let laShows= body.filter(x => x.venue.city.toLowerCase() === 'los angeles')
+		.map(x =>  ({
+			name: x.venue.name,
+			date: new Date(x.datetime),
+			url: x.url
+		 }));
+
+	if (sfShows.length > 0) {
+		console.log(`-- SF Shows --`);
+		sfShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
+	} else {
+		console.log('No SF shows');
+	}
+
+	if (sfShows.length > 0) {
+		console.log(`-- LA Shows --`);
+		laShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
+	} else {
+		console.log('No LA shows');
+	}
 }
 
 async function main() {
@@ -164,7 +184,10 @@ async function main() {
 	let playlistDict = await getPlaylists();
 	let playlistId = await pickPlaylist(playlistDict);
 	let artists = await getArtists(playlistId);
-	await doSomething(artists);
+
+	for (let artist of artists) {
+		await doSomething(artist);
+	}
 }
 
 main()
