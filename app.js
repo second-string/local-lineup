@@ -1,13 +1,22 @@
+// TODO :: API call to server to pull in spotify and BIT creds for app use by others
+
 var request = require('async-request');
 var inquirer = require('inquirer');
 require('dotenv').load();
 
+// TODO :: Constants file
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const spotifyUserId = process.env.SPOTIFY_USERNAME;
 const bandsInTownSecret = process.env.BANDS_IN_TOWN_SECRET;
 
+// TODO :: Cache token?
 var spotifyToken;
+
+// TODO :: Helper class
+function instrumentCall() {
+
+}
 
 function requestError(response, exception = null) {
 	console.log('REQUEST ERROR');
@@ -131,6 +140,7 @@ async function doSomething(artist) {
 		}
 	};
 
+	// TODO :: going to get the shit ratelimited out of us
 	let response;
 	try {
 		response = await request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${bandsInTownSecret}`);
