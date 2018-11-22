@@ -2,18 +2,12 @@
 
 var request = require('async-request');
 var inquirer = require('inquirer');
-require('dotenv').load();
-
-// TODO :: Constants file
-const clientId = process.env.CLIENT_ID;
-const clientSecret = process.env.CLIENT_SECRET;
-const spotifyUserId = process.env.SPOTIFY_USERNAME;
-const bandsInTownSecret = process.env.BANDS_IN_TOWN_SECRET;
+var constants = require('./constants');
 
 // TODO :: Cache token?
 var spotifyToken;
 
-// TODO :: Helper class
+// TODO :: Helper function/class
 function instrumentCall() {
 
 }
@@ -28,7 +22,7 @@ function requestError(response, exception = null) {
 	process.exit(2);
 }
 
-var spotifyAuth = () => 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+var spotifyAuth = () => 'Basic ' + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString('base64');
 
 async function getSpotifyToken() {
 	let postOptions = {
@@ -69,7 +63,7 @@ async function getPlaylists() {
 	console.log('Getting playlists...');
 	let response;
 	try {
-		response = await request(`https://api.spotify.com/v1/users/${spotifyUserId}/playlists`, getOptions);
+		response = await request(`https://api.spotify.com/v1/users/${constants.spotifyUserId}/playlists`, getOptions);
 	} catch (e) {
 		requestError(response, e);
 	}
@@ -108,10 +102,12 @@ async function getArtists(playlistId) {
 		}
 	};
 
-	let response;
-	try {
-		// TODO :: page tracklist
-		response = await request(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
+	let response = {};
+	let body = {};
+	let artists = [];
+	do {
+		try {
+		response = await request(body.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
 	} catch (e) {
 		requestError(response, e);
 	}
@@ -120,19 +116,21 @@ async function getArtists(playlistId) {
 		requestError(response);
 	}
 
-	let body = JSON.parse(response.body);
-	let artists = body.items
-		.map(x => x.track)
-		.map(x => x.artists)
+	body = JSON.parse(response.body);
+	artists = body.items
+	.map(x => x.track)
+	.map(x => x.artists)
 		.map(x => x[0])					// each artist is a list of a single object (ew)
 		.map(x => encodeURI(x.name));	// encode to URL-safe characters
+
+	} while (body.next != null);
 
 	// Filter out duplicates
 	hasSeen = {};
 	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
 }
 
-async function doSomething(artist) {
+function buildArtistQuery(artist) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -140,20 +138,10 @@ async function doSomething(artist) {
 		}
 	};
 
-	// TODO :: going to get the shit ratelimited out of us
-	let response;
-	try {
-		response = await request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${bandsInTownSecret}`);
-	} catch (e) {
-		requestError(response, e);
-	}
+	return request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
+}
 
-	if (!response.statusCode) {
-		requestError(response);
-	}
-
-	console.log();
-	console.log(`*********** ${decodeURI(artist)} ***********`);
+function printShowInfo(artist, response) {
 	let body = JSON.parse(response.body);
 	let sfShows = body.filter(x => x.venue.city.toLowerCase() === 'san francisco')
 		.map(x =>  ({
@@ -169,6 +157,13 @@ async function doSomething(artist) {
 			url: x.url
 		 }));
 
+	if (sfShows.length == 0 && laShows.length == 0) {
+		return;
+	}
+
+	console.log();
+	console.log(`*********** ${decodeURI(artist)} ***********`);
+
 	if (sfShows.length > 0) {
 		console.log(`-- SF Shows --`);
 		sfShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
@@ -176,7 +171,7 @@ async function doSomething(artist) {
 		console.log('No SF shows');
 	}
 
-	if (sfShows.length > 0) {
+	if (laShows.length > 0) {
 		console.log(`-- LA Shows --`);
 		laShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
 	} else {
@@ -185,7 +180,8 @@ async function doSomething(artist) {
 }
 
 async function main() {
-	if (!clientId || !clientSecret || !spotifyUserId || !bandsInTownSecret) {
+	console.log("client id: " + constants.clientId);
+	if (!constants.clientId || !constants.clientSecret || !constants.spotifyUserId || !constants.bandsInTownSecret) {
 		console.log("Please supply valid creds in the .env file");
 		process.exit(1);
 	}
@@ -195,8 +191,12 @@ async function main() {
 	let playlistId = await pickPlaylist(playlistDict);
 	let artists = await getArtists(playlistId);
 
-	for (let artist of artists) {
-		await doSomething(artist);
+	let artistQueries = [];
+	artists.forEach(x => artistQueries.push(buildArtistQuery(x)));
+	let responses = await Promise.all(artistQueries);
+	for (response in responses) {
+		// Can index into artists as well since Promise.all retains strict ordering
+		printShowInfo(artists[response], responses[response]);
 	}
 }
 
