@@ -179,9 +179,20 @@ function printShowInfo(artist, response) {
 	}
 }
 
+function buildSongkickArtistIdQuery(artist) {
+	let getOptions = {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json'
+		}
+	};
+
+	return request(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`, getOptions);
+}
+
 async function main() {
 	console.log("client id: " + constants.clientId);
-	if (!constants.clientId || !constants.clientSecret || !constants.spotifyUserId || !constants.bandsInTownSecret) {
+	if (!constants.clientId || !constants.clientSecret || !constants.spotifyUserId || !constants.bandsInTownSecret || !constants.songkickSecret) {
 		console.log("Please supply valid creds in the .env file");
 		process.exit(1);
 	}
@@ -191,8 +202,16 @@ async function main() {
 	let playlistId = await pickPlaylist(playlistDict);
 	let artists = await getArtists(playlistId);
 
-	let artistQueries = [];
-	artists.forEach(x => artistQueries.push(buildArtistQuery(x)));
+	let bandsInTownArtistQueries = [];
+	let songkickArtistIdQueries = [];
+	let songkickArtistQueries = [];
+
+	artists.forEach(x => songkickArtistIds.push(buildSongkickArtistIdQuery(x)));
+	artists.forEach(x => bandsInTownArtistQueries.push(buildBandsInTownArtistQuery(x)));
+
+	// TODO :: better to pass through to artist request as every artist id evaluates versus chunking them all up front?
+	let songkickArtistIds = await Promise.all()
+	artists.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x)))
 	let responses = await Promise.all(artistQueries);
 	for (response in responses) {
 		// Can index into artists as well since Promise.all retains strict ordering
