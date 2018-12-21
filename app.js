@@ -1,11 +1,11 @@
-// TODO :: API call to server to pull in spotify and BIT creds for app use by others
+// TODO :: API call to server to pull in songkick and BIT creds for app use by others
+// TODO :: enable spotify login and token retrieval for arbitrary users
 
 var request = require('async-request');
 var inquirer = require('inquirer');
 var constants = require('./constants');
 var fs = require('fs');
 
-// TODO :: Cache token?
 var spotifyToken;
 
 // TODO :: Helper function/class
@@ -148,23 +148,37 @@ function buildBandsInTownArtistQuery(artist) {
 	return request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
 }
 
-function printBandsInTownShowInfo(artist, response) {
-	let body = JSON.parse(response.body);
-	let sfShows = body.filter(x => x.venue.city.toLowerCase() === 'san francisco')
+function printShowInfo(artist, songkickResponse, bandsInTownResponse) {
+	let songkickBody = JSON.parse(songkickResponse.body);
+	let bandsInTownBody = JSON.parse(bandsInTownResponse.body);
+
+	let sfShows = [];
+	let laShows = [];
+
+	if (songkickBody.resultsPage.totalEntries != 0) {
+		let eventList = songkickBody.resultsPage.results.event;
+		sfShows = sfShows.concat(eventList.filter(x => x.location.city.toLowerCase().indexOf('san francisco') > -1).map(x => x.displayName));
+		laShows = laShows.concat(eventList.filter(x => x.location.city.toLowerCase().indexOf('los angeles') > -1).map(x => x.displayName));
+	}
+
+	let bandsInTownSfShowObjects = bandsInTownBody.filter(x => x.venue.city.toLowerCase() === 'san francisco')
 		.map(x =>  ({
 			name: x.venue.name,
 			date: new Date(x.datetime),
 			url: x.url
 		 }));
 
-	let laShows= body.filter(x => x.venue.city.toLowerCase() === 'los angeles')
+	let bandsInTownLaShowObjects= bandsInTownBody.filter(x => x.venue.city.toLowerCase() === 'los angeles')
 		.map(x =>  ({
 			name: x.venue.name,
 			date: new Date(x.datetime),
 			url: x.url
 		 }));
 
-	if (sfShows.length == 0 && laShows.length == 0) {
+	sfShows = sfShows.concat(bandsInTownSfShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
+	laShows = laShows.concat(bandsInTownLaShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
+
+	if (sfShows.length === 0 && laShows.length === 0) {
 		return;
 	}
 
@@ -173,46 +187,14 @@ function printBandsInTownShowInfo(artist, response) {
 
 	if (sfShows.length > 0) {
 		console.log(`-- SF Shows --`);
-		sfShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
+		sfShows.forEach(x => console.log(x));
 	} else {
 		console.log('No SF shows');
 	}
 
 	if (laShows.length > 0) {
 		console.log(`-- LA Shows --`);
-		laShows.forEach(x => console.log(`${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
-	} else {
-		console.log('No LA shows');
-	}
-}
-
-function printSongkickShowInfo(artist, response) {
-	let body = JSON.parse(response.body);
-	if (body.resultsPage.totalEntries === 0) {
-		return;
-	}
-
-	let eventList = body.resultsPage.results.event;
-	let sfShows = eventList.filter(x => x.location.city.toLowerCase().indexOf('san francisco') > -1);
-	let laShows = eventList.filter(x => x.location.city.toLowerCase().indexOf('los angeles') > -1);
-
-	if (sfShows.length == 0 && laShows.length == 0) {
-		return;
-	}
-
-	console.log();
-	console.log(`*********** ${decodeURI(artist)} ***********`);
-
-	if (sfShows.length > 0) {
-		console.log(`-- SF Shows --`);
-		sfShows.forEach(x => console.log(x.displayName));
-	} else {
-		console.log('No SF shows');
-	}
-
-	if (laShows.length > 0) {
-		console.log(`-- LA Shows --`);
-		laShows.forEach(x => console.log(x.displayName));
+		laShows.forEach(x => console.log(x));
 	} else {
 		console.log('No LA shows');
 	}
@@ -237,8 +219,6 @@ function buildSongkickArtistQuery(artistId) {
 		}
 	};
 
-	// let requests = Object.keys(artistIdsByArtist).map(x => request(`https://api.songkick.com/api/3.0/artists/${artistIdsByArtist[x]}/calendar.json?apikey=${constants.songkickSecret}`, getOptions));
-	// return Promise.all(requests);
 	return request(`https://api.songkick.com/api/3.0/artists/${artistId}/calendar.json?apikey=${constants.songkickSecret}`, getOptions);
 }
 
@@ -250,17 +230,12 @@ function getSongkickArtistIdsFromJson(responseList) {
 	for (responseIndex in responseList) {
 		let responseBody = JSON.parse(responseList[responseIndex].body);
 		let singleArtistList = responseBody.resultsPage.results.artist;
+
 		// Each query for a single artist name will return a list of all artists fuzzy matched.
 		// We're only going to pull the first one for now, since more often than not the related
 		// artists don't apply (unfortunate in the case of The XX and getting Jamie xx back, etc. but eh)
 		artistsObjects.push({ id: singleArtistList[0].id, name: singleArtistList[0].displayName });
-		// artistsById[singleArtistList[0].id] = singleArtistList[0].displayName;
 	}
-	// for (artistIndex in singleArtistList) {
-	// 	let artistEntry = singleArtistList[artistIndex];
-	// 		// There's only ever going to be one ID per display name, since they're all 'different'
-	// 		artistIdByArtist[artistEntry.displayName] = artistEntry.id;
-	// }
 
 	return artistsObjects;
 }
@@ -281,51 +256,26 @@ async function main() {
 	let songkickArtistIdQueries = [];
 	let songkickArtistQueries = [];
 
+	// Get songkick artist IDs and get BIT full artist response
 	artists.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x)));
 	artists.forEach(x => bandsInTownArtistQueries.push(buildBandsInTownArtistQuery(x)));
 
 	// TODO :: better to pass through to artist request as every artist id evaluates versus chunking them all up front?
+	console.log('Getting Songkick artists IDs...');
 	let songkickArtistIdResponseJson = await Promise.all(songkickArtistIdQueries);
-
-	// This ends up as a list of Dictionary<string, int> where each dict represents the response from a single artist query,
-	// and the KVP contained is all of the related artist names mapped to their ID
 	let songkickArtistObjects = getSongkickArtistIdsFromJson(songkickArtistIdResponseJson);
 	songkickArtistObjects.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x.id)));
+
+	console.log('Getting Songkick artist shows...');
 	let songkickResponses = await Promise.all(songkickArtistQueries);
+	console.log('Getting BandsInTown artist shows...');
 	let bandsInTownResponses = await Promise.all(bandsInTownArtistQueries);
 
 	for (artistIndex in artists) {
 		let artist = artists[artistIndex];
-		printSongkickShowInfo(artist, songkickResponses[artistIndex]);
-		printBandsInTownShowInfo(artist, bandsInTownResponses[artistIndex]);
+		printShowInfo(artist, songkickResponses[artistIndex], bandsInTownResponses[artistIndex]);
 	}
 }
 
 main()
 	.catch(e => console.log(e));
-
-
-/*
-Work done for handling list of related songkick responses as well
-	for (responseIndex in songkickResponses) {
-		console.log('``````````````````````````````````````New artist group``````````````````````````````````````````````````')
-		let resultsPageList = songkickResponses[responseIndex].map(x => JSON.parse(x.body).resultsPage);
-		// console.log(resultsPageList)
-		if (resultsPageList) {
-			let innerResultsList = resultsPageList.filter(x => x.totalEntries > 0).map(x => x.results);
-			if (innerResultsList.length === 0) {
-				// This means for all related artists for this specific artist name, none have upcoming shows
-				continue;
-			}
-
-			// Overall list is of each related artist for a single playlist artist
-			// Inner list is every performance for that specific artist (list of `event` to list KVPs)
-			let eventListPerArtist = innerResultsList.filter(x => x != null).map(x => x.event);
-			for (artistListIndex in eventListPerArtist) {
-				let artistList = eventListPerArtist[artistListIndex];
-				if (artistListIndex)
-				console.log('``````````````` new artist in artist group`````````````');
-				console.log(artistList.map(y => y.displayName + ' in ' + y.location.city));
-			}
-		}
-*/
