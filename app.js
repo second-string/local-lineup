@@ -23,6 +23,7 @@ function requestError(response, exception = null) {
 	process.exit(2);
 }
 
+
 var spotifyAuth = () => 'Basic ' + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString('base64');
 
 async function getSpotifyToken() {
@@ -37,17 +38,17 @@ async function getSpotifyToken() {
 		}
 	};
 
-	console.log('Authing with spotify...');
+	console.log('Getting spotify API token...');
 	let response;
 	try {
 		response = await request('https://accounts.spotify.com/api/token', postOptions);
 	} catch (e) {
 		requestError(response, e);
 	}
-
 	if (!response.statusCode) {
 		requestError(response);
 	} else {
+		// TODO :: not actually reusing cached token. Will also have to handle invalid tokens retrieved from cache
 		spotifyToken = `Bearer ${JSON.parse(response.body).access_token}`;
 		if (fs.existsSync('.env')) {
 			var envFile = fs.readFileSync('.env', 'utf8', error => console.log(error));
@@ -58,7 +59,38 @@ async function getSpotifyToken() {
 	}
 }
 
-async function getPlaylists() {
+/*
+async function getSpotifyToken() {
+	let getOptions = {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json'
+		}
+	};
+
+	let response;
+	try {
+		response = await request('PI IP + PORT HERE', getOptions);
+	}
+
+	console.log(response);
+	process.exit(0);
+}
+*/
+
+async function getSpotifyUserId() {
+	let answer = await inquirer
+		.prompt([
+		{
+			type: 'entry',
+			name: 'username',
+			message: 'Enter your spotify username:'
+		}]);
+
+	return answer['username'];
+}
+
+async function getPlaylists(userId) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -70,7 +102,7 @@ async function getPlaylists() {
 	console.log('Getting playlists...');
 	let response;
 	try {
-		response = await request(`https://api.spotify.com/v1/users/${constants.spotifyUserId}/playlists`, getOptions);
+		response = await request(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions);
 	} catch (e) {
 		requestError(response, e);
 	}
@@ -248,7 +280,9 @@ async function main() {
 	}
 
 	await getSpotifyToken();
-	let playlistDict = await getPlaylists();
+	// spotifyToken = await getSpotifyToken();
+	let userId = await getSpotifyUserId();
+	let playlistDict = await getPlaylists(userId);
 	let playlistId = await pickPlaylist(playlistDict);
 	let artists = await getArtists(playlistId);
 
