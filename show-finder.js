@@ -6,7 +6,7 @@ var inquirer = require('inquirer');
 var constants = require('./constants');
 var fs = require('fs');
 
-var spotifyToken;
+// var spotifyToken;
 
 // TODO :: Helper function/class
 function instrumentCall() {
@@ -49,7 +49,8 @@ async function getSpotifyToken() {
 		requestError(response);
 	} else {
 		// TODO :: not actually reusing cached token. Will also have to handle invalid tokens retrieved from cache
-		spotifyToken = `Bearer ${JSON.parse(response.body).access_token}`;
+		// spotifyToken = `Bearer ${JSON.parse(response.body).access_token}`;
+		return `Bearer ${JSON.parse(response.body).access_token}`;
 		if (fs.existsSync('.env')) {
 			var envFile = fs.readFileSync('.env', 'utf8', error => console.log(error));
 			if (envFile.indexOf('SPOTIFY_TOKEN') === -1) {
@@ -90,7 +91,7 @@ async function getSpotifyUserId() {
 	return answer['username'];
 }
 
-async function getPlaylists(userId) {
+async function getPlaylists(spotifyToken, userId) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -132,7 +133,7 @@ async function pickPlaylist(playlistNamesById) {
 	return Object.keys(playlistNamesById).filter(x => playlistNamesById[x] === playlist)[0];
 }
 
-async function getArtists(playlistId) {
+async function getArtists(spotifyToken, playlistId) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -311,5 +312,11 @@ async function main() {
 	}
 }
 
-main()
-	.catch(e => console.log(e));
+module.exports = {
+	getSpotifyToken: getSpotifyToken,
+	getPlaylists: getPlaylists,
+	getArtists: getArtists
+};
+
+// main()
+// 	.catch(e => console.log(e));
