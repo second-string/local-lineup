@@ -134,6 +134,7 @@ async function pickPlaylist(playlistNamesById) {
 }
 
 async function getArtists(spotifyToken, playlistId) {
+	console.log('in getArtists');
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -145,29 +146,67 @@ async function getArtists(spotifyToken, playlistId) {
 	let response = {};
 	let body = {};
 	let artists = [];
+	console.log('Getting artists...');
 	do {
 		try {
-		response = await request(body.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
-	} catch (e) {
-		requestError(response, e);
-	}
+			response = await request(body.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
+		} catch (e) {
+			requestError(response, e);
+		}
 
-	if (!response.statusCode) {
-		requestError(response);
-	}
+		if (!response.statusCode) {
+			requestError(response);
+		}
 
-	body = JSON.parse(response.body);
-	artists = body.items
-	.map(x => x.track)
-	.map(x => x.artists)
-		.map(x => x[0])					// each artist is a list of a single object (ew)
-		.map(x => encodeURI(x.name));	// encode to URL-safe characters
+		body = JSON.parse(response.body);
+		artists = body.items
+		.map(x => x.track)
+		.map(x => x.artists)
+			.map(x => x[0])					// each artist is a list of a single object (ew)
+			.map(x => encodeURI(x.name));	// encode to URL-safe characters
 
 	} while (body.next != null);
 
 	// Filter out duplicates
 	hasSeen = {};
 	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
+}
+
+async function getSongkickShows(artistList) {
+	let songkickArtistIdQueries = [];
+	let songkickArtistQueries = [];
+
+	// First get artist IDs from within songkick to be able to query artist directly
+	artistList.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x)));
+	let songkickArtistIdResponseJson = await Promise.all(songkickArtistIdQueries);
+	let artistIdObjects = getSongkickArtistIdsFromJson(songkickArtistIdResponseJson);
+	let songkickArtistObjects = artistIdObjects.artists;
+	let indicesToSkip = artistIdObjects.indicesToSkip;
+
+	// Build and send queries for actual shows for each artist
+	songkickArtistObjects.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x.id)));
+	console.log('Getting Songkick artist shows...');
+	songkickResponse = await Promise.all(songkickArtistQueries);
+
+	// for (index in songkickArtistQueries) {
+	// 	let query = songkickArtistQueries[index];
+	// 	try {
+	// 		let resp = await query;
+	// 		console.log('done one query');
+	// 		songkickResponses.push(resp);
+	// 	} catch (e) {
+	// 		console.log('Error getting shows from songkick');
+	// 		throw new Error(e.toString());
+	// 	}
+	// }
+
+	let showsByArtistName = {};
+	for (index in songkickArtistObjects) {
+		showsByArtistName[songkickArtistObjects[index].name] = songkickResponse[index].body;
+		// showsByArtistName[songkickArtistObjects[index].name] = songkickResponse[index].body;
+	}
+
+	return prettifySongkickShows(showsByArtistName);
 }
 
 function buildBandsInTownArtistQuery(artist) {
@@ -179,6 +218,27 @@ function buildBandsInTownArtistQuery(artist) {
 	};
 
 	return request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
+}
+
+function prettifySongkickShows(showsByArtistName) {
+	let locationsByArtistName = {};
+	let artistNames = Object.keys(showsByArtistName);
+	for (index in artistNames) {
+		let artistName = artistNames[index];
+		let artistEntry = showsByArtistName[artistName];
+		let songkickBody = JSON.parse(artistEntry);
+		if (songkickBody.resultsPage.totalEntries !== 0) {
+			let locations = {};
+			let eventList = songkickBody.resultsPage.results.event;
+			locations.sf = eventList.filter(x => x.location.city.toLowerCase().indexOf('san francisco') > -1).map(x => x.displayName);
+			locations.la = eventList.filter(x => x.location.city.toLowerCase().indexOf('los angeles') > -1).map(x => x.displayName);
+			if (locations.sf.length !== 0 || locations.la.length !== 0) {
+				locationsByArtistName[artistName] = locations;
+			}
+		}
+	}
+
+	return locationsByArtistName;
 }
 
 function printShowInfo(artist, songkickResponse, bandsInTownResponse) {
@@ -260,17 +320,22 @@ function getSongkickArtistIdsFromJson(responseList) {
 	// an object with { id : artist } KVPs to retain ordering so we can index
 	// into the initial 'artists' list when combining artists results across services
 	let artistsObjects = [];
+	// We need a way to know which artist names to skip over when we're doing said indexing ^
+	let artistIndicesToSkip = [];
 	for (responseIndex in responseList) {
 		let responseBody = JSON.parse(responseList[responseIndex].body);
 		let singleArtistList = responseBody.resultsPage.results.artist;
-
+		if (singleArtistList === undefined) {
+			artistIndicesToSkip.push(responseIndex);
+			continue;
+		}
 		// Each query for a single artist name will return a list of all artists fuzzy matched.
 		// We're only going to pull the first one for now, since more often than not the related
 		// artists don't apply (unfortunate in the case of The XX and getting Jamie xx back, etc. but eh)
 		artistsObjects.push({ id: singleArtistList[0].id, name: singleArtistList[0].displayName });
 	}
 
-	return artistsObjects;
+	return { artists: artistsObjects, indicesToSkip: artistIndicesToSkip };
 }
 
 async function main() {
@@ -315,7 +380,8 @@ async function main() {
 module.exports = {
 	getSpotifyToken: getSpotifyToken,
 	getPlaylists: getPlaylists,
-	getArtists: getArtists
+	getArtists: getArtists,
+	getSongkickShows: getSongkickShows
 };
 
 // main()
