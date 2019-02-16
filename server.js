@@ -4,7 +4,6 @@ const showFinder = require('./show-finder');
 const app = express();
 const port = process.env.PORT || 5000;
 
-// TODO :: BT have token passed in header in the future, rather than func call?
 var spotifyToken;
 
 app.use(bodyParser.json());

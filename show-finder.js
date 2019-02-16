@@ -3,7 +3,6 @@ var inquirer = require('inquirer');
 var constants = require('./constants');
 var fs = require('fs');
 
-// TODO :: Helper function/class
 function instrumentCall() {
 
 }
@@ -43,8 +42,6 @@ async function getSpotifyToken() {
 	if (!response.statusCode) {
 		requestError(response);
 	} else {
-		// TODO :: not actually reusing cached token. Will also have to handle invalid tokens retrieved from cache
-		// spotifyToken = `Bearer ${JSON.parse(response.body).access_token}`;
 		return `Bearer ${JSON.parse(response.body).access_token}`;
 		if (fs.existsSync('.env')) {
 			var envFile = fs.readFileSync('.env', 'utf8', error => console.log(error));
@@ -147,7 +144,6 @@ async function getArtists(spotifyToken, playlistId) {
 	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
 }
 
-// TODO :: handle songkick's bullshit random 500ing
 // artists param is list of { id, name }
 async function getAllShows(artists) {
 	// List of { artistId, query } objects
@@ -180,7 +176,6 @@ async function getAllShows(artists) {
 	let songkickArtistQueries = [];
 
 	// First get artist IDs from within songkick to be able to query artist directly
-	// TODO :: how to keep passing the artist ID through all the Promise.alls
 	// Butchered it for now, but should create own promises in `buildXQuery` to return an object holding result of the fetch and artist ID
 	artists.forEach(x => songkickArtistIdQueries.push({ artistId: x.id, query: buildSongkickArtistIdQuery(x.name) }));
 	console.log('Getting Songkick artist IDs...');
@@ -192,7 +187,6 @@ async function getAllShows(artists) {
 	console.log('Getting Songkick artist shows...');
 	songkickResponses = await Promise.all(songkickArtistQueries.map(x => x.query));
 
-	// TODO :: dedupe based on date
 	let songkickShowsFound = 0;
 	for (index in songkickArtistObjects) {
 		let cleanedShows = parseSongkickResponse(songkickResponses[index].body);
@@ -538,7 +532,6 @@ async function main() {
 	artists.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x)));
 	artists.forEach(x => bandsInTownArtistQueries.push(buildBandsInTownArtistQuery(x)));
 
-	// TODO :: better to pass through to artist request as every artist id evaluates versus chunking them all up front?
 	console.log('Getting Songkick artists IDs...');
 	let songkickArtistIdResponseJson = await Promise.all(songkickArtistIdQueries);
 	let songkickArtistObjects = getSongkickArtistIdsFromJsonOLD(songkickArtistIdResponseJson);

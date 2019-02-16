@@ -53,7 +53,6 @@ class App extends Component {
   };
 
 
-  // TODO :: BT this seems to maybe not get all artists for certain playlists (Salad, CCHLA XXIX)
   choosePlaylist = async e => {
     e.preventDefault();
     if (this.state.selectedPlaylistIndex === null) {
@@ -113,7 +112,6 @@ class App extends Component {
           <button type="submit">Select playlist</button>
         </form>
         <form onSubmit={this.getShowsForArtists}>
-          {/* TODO :: handle setting the state of all artists in onchange */}
           <ReactList items={this.state.artists} multiple={true} selected={ Array(this.state.artists.length).keys() } /*onChange={ this.setState({ }) }*/ />
           <button type="submit">Choose artists</button>
         </form>
