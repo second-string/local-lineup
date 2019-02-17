@@ -7,32 +7,22 @@ class App extends Component {
     userName: null,
     playlists: [],
     playlistNamesById: {},
-    selectedPlaylistIndex: null,
-    artists: [],
-    shows: []
+    allArtists: [],
+    shows: [],
+    showingArtists: false,
+    showingPlaylists: false,
+    showingShows: false
   }
 
-  // playlistNamesById = {};
+  constructor(props) {
+    super(props);
 
-  async componentDidMount() {
-    // this.resultsRef = React.createRef();
-    // try {
-    //   let res = await this.getHello();
-    //   this.setState({ data: res.data });
-    // } catch (e) {
-    //   console.log(e);
-    // }
+    // Use refs instead up updating state variables because for some reason
+    // any call to `setState` from within the component's onChange causes all
+    // the styling and selectedItems logic to get completely borked
+    this.playlistListRef = React.createRef();
+    this.artistListRef = React.createRef();
   }
-
-  // getHello = async () => {
-  //   let response = await fetch('/hello');
-  //   let body = await response.json();
-  //   if (response.status !== 200) {
-  //     throw Error(body.message);
-  //   }
-
-  //   return body;
-  // }
 
   getPlaylists = async e => {
     e.preventDefault();
@@ -49,16 +39,19 @@ class App extends Component {
     this.setState({ playlistNamesById: playlistNamesById });
     let names = [];
     Object.keys(playlistNamesById).forEach(x => names.push(playlistNamesById[x]));
-    this.setState({ playlists: names });
+    this.setState({ showingPlaylists: true, showingArtists: false, playlists: names });
   };
 
 
-  choosePlaylist = async e => {
+  getArtists = async e => {
     e.preventDefault();
-    if (this.state.selectedPlaylistIndex === null) {
+    console.log(this.playlistListRef);
+    let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
+    if (selectedPlaylistIndex === null) {
       alert('You must select a playlist');
     }
-    let playlistId = Object.keys(this.state.playlistNamesById)[this.state.selectedPlaylistIndex];
+
+    let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
     let encodedPlaylistId = encodeURIComponent(playlistId);
     let res = await fetch(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: 'GET' });
     let artistJson = await res.json();
@@ -67,13 +60,16 @@ class App extends Component {
       decodedArtists.push(decodeURI(artistJson[index]));
     }
 
-    this.setState({ artists: decodedArtists});
-    console.log(decodedArtists);
+    this.setState({ showingPlaylists: false, showingArtists: true, allArtists: decodedArtists});
   };
 
   getShowsForArtists = async e => {
     e.preventDefault();
-    let encodedArtists = this.state.artists.map(x => encodeURI(x));
+    let selectedArtistIndices = this.artistListRef.current.state.selectedItems;
+    let encodedArtists = this.state.allArtists
+      .filter((x, i) => selectedArtistIndices.includes(i))
+      .map(x => encodeURI(x));
+    console.log(encodedArtists);
     let postOptions = {
       method: 'POST',
       headers: {
@@ -86,8 +82,8 @@ class App extends Component {
     let showsJson = await fetch('/show-finder/shows', postOptions);
     let shows = await showsJson.json();
 
-    console.log(shows);
-    this.setState({ shows: shows.map(x =>
+    this.setState({ showingShows: true, showingPlaylists: false, showingArtists: false,
+      shows: shows.map(x =>
       <div>
         <h3>{x.artistName}</h3>
         {x.shows.sf.length > 0 && <h5>San Francisco</h5>}
@@ -102,17 +98,19 @@ class App extends Component {
     return (
       <div className="App">
         <h1>Show Finder</h1>
-        <h4>Enter your spotify username:</h4>
-        <form onSubmit={this.getPlaylists}>
-          <input type="text" onChange={ entry => this.setState({ userName: entry.target.value }) } />
-          <button type="submit">Submit</button>
-        </form>
-        <form onSubmit={this.choosePlaylist}>
-          <ReactList items={this.state.playlists} onChange={index => this.setState({ selectedPlaylistIndex: index }) } />
+        <div  style={{ display: this.state.showingArtists || this.state.showingPlaylists || this.state.showingShows ? 'none' : '' }}>
+          <h4>Enter your spotify username:</h4>
+          <form onSubmit={this.getPlaylists}>
+            <input type="text" onChange={ entry => this.setState({ userName: entry.target.value }) } />
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+        <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? '' : 'none' }}>
+          <ReactList ref={ this.playlistListRef } items={this.state.playlists} /*onChange={index => this.setState({ selectedPlaylistIndex: index }) }*/ />
           <button type="submit">Select playlist</button>
         </form>
-        <form onSubmit={this.getShowsForArtists}>
-          <ReactList items={this.state.artists} multiple={true} selected={ Array(this.state.artists.length).keys() } /*onChange={ this.setState({ }) }*/ />
+        <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? '' : 'none' }}>
+          <ReactList ref={ this.artistListRef } items={this.state.allArtists} multiple={true} selected={ Array(this.state.allArtists.length).keys() } />
           <button type="submit">Choose artists</button>
         </form>
         { this.state.shows }

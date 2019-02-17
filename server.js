@@ -41,7 +41,7 @@ app.post('/show-finder/shows', async (req, res) => {
 			return;
 		}
 	}
-
+	console.log(req.body.selectedArtists);
 	// No query param, need to group artist by id to be
 	// able to bundle and serve consolidated response
 	let i = 0;
