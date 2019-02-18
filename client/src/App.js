@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import ReactList from 'react-list-select';
 import './App.css';
 
@@ -54,7 +55,9 @@ class App extends Component {
     this.setState({ playlistNamesById: playlistNamesById });
     let names = [];
     Object.keys(playlistNamesById).forEach(x => names.push(playlistNamesById[x]));
-    this.setState({ showingPlaylists: true, showingArtists: false, playlists: names });
+    this.setState({ showingPlaylists: true, showingArtists: false, playlists: names }, () => {
+      ReactDOM.findDOMNode(this.playlistListRef.current).focus();
+    });
   };
 
 
@@ -64,6 +67,7 @@ class App extends Component {
     let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
     if (selectedPlaylistIndex === null) {
       alert('You must select a playlist');
+      return;
     }
 
     let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
@@ -75,7 +79,9 @@ class App extends Component {
       decodedArtists.push(decodeURI(artistJson[index]));
     }
 
-    this.setState({ showingPlaylists: false, showingArtists: true, allArtists: decodedArtists});
+    this.setState({ showingPlaylists: false, showingArtists: true, allArtists: decodedArtists}, () => {
+      ReactDOM.findDOMNode(this.artistListRef.current).focus();
+    });
   };
 
   getShowsForArtists = async e => {
