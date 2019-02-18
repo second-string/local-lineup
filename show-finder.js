@@ -3,10 +3,6 @@ var inquirer = require('inquirer');
 var constants = require('./constants');
 var fs = require('fs');
 
-function instrumentCall() {
-
-}
-
 function requestError(response, exception = null) {
 	console.log('REQUEST ERROR');
 	console.log(`RESPONSE STATUS CODE: ${response.statusCode}`);
@@ -14,9 +10,27 @@ function requestError(response, exception = null) {
 	if (exception) {
 		console.log(exception);
 	}
-	process.exit(2);
+
+	return response;
 }
 
+async function instrumentCall(url, options) {
+	let res;
+	let error = null;
+	try {
+		res = await request(url, options);
+	} catch (e) {
+		error = requestError(res, e);
+	}
+
+	if (res.statusCode >= 400) {
+		error = requestError(res);
+	}
+
+	let success = error === null;
+	let response = error || res;
+	return { success, response };
+}
 
 var spotifyAuth = () => 'Basic ' + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString('base64');
 
@@ -33,15 +47,9 @@ async function getSpotifyToken() {
 	};
 
 	console.log('Getting spotify API token...');
-	let response;
-	try {
-		response = await request('https://accounts.spotify.com/api/token', postOptions);
-	} catch (e) {
-		requestError(response, e);
-	}
-	if (!response.statusCode) {
-		requestError(response);
-	} else {
+	let {success, response} = await instrumentCall('https://accounts.spotify.com/api/token', postOptions);
+
+	if (success) {
 		return `Bearer ${JSON.parse(response.body).access_token}`;
 		if (fs.existsSync('.env')) {
 			var envFile = fs.readFileSync('.env', 'utf8', error => console.log(error));
@@ -49,6 +57,8 @@ async function getSpotifyToken() {
 				fs.appendFile('.env', 'SPOTIFY_TOKEN=' + spotifyToken, error => console.log('Error writing token to env file: ' + error));
 			}
 		}
+	} else {
+		return response;
 	}
 }
 
@@ -74,21 +84,16 @@ async function getPlaylists(spotifyToken, userId) {
 	};
 
 	console.log('Getting playlists...');
-	let response;
-	try {
-		response = await request(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions);
-	} catch (e) {
-		requestError(response, e);
+	let { success, response } = await instrumentCall(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions);
+
+	if (!success) {
+		return response;
 	}
 
-	if (!response.statusCode) {
-		requestError(response);
-	}
-
-	 let body = JSON.parse(response.body);
-	 let playlistNamesById = {};
-	 body.items.forEach(x => playlistNamesById[x.id] = x.name);
-	 return playlistNamesById;
+	let body = JSON.parse(response.body);
+	let playlistNamesById = {};
+	body.items.forEach(x => playlistNamesById[x.id] = x.name);
+	return playlistNamesById;
 }
 
 async function pickPlaylist(playlistNamesById) {
@@ -115,19 +120,14 @@ async function getArtists(spotifyToken, playlistId) {
 		}
 	};
 
-	let response = {};
+
 	let body = {};
 	let artists = [];
 	console.log('Getting artists...');
 	do {
-		try {
-			response = await request(body.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
-		} catch (e) {
-			requestError(response, e);
-		}
-
-		if (!response.statusCode) {
-			requestError(response);
+		let { success, response } = await instrumentCall(body.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
+		if (!success) {
+			return response;
 		}
 
 		body = JSON.parse(response.body);
@@ -137,7 +137,7 @@ async function getArtists(spotifyToken, playlistId) {
 			.map(x => x[0])					// each artist is a list of a single object (ew)
 			.map(x => encodeURI(x.name));	// encode to URL-safe characters
 
-	} while (body.next != null);
+		} while (body.next != null);
 
 	// Filter out duplicates
 	hasSeen = {};
@@ -154,9 +154,13 @@ async function getAllShows(artists) {
 
 	let showsByArtistId = {};
 	for (index in bandsInTownResponses) {
+		if (!bandsInTownResponses[index].success) {
+			console.log(`Failed query in BandsInTown requests, ${bandsInTownResponses[index].response}`);
+			continue;
+		}
 		// Can loop responses and index into artists b/c we're guaranteed a response for each req,
 		// even if body is an empty list (no shows) or `{warn=Not found}` (artist not found)
-		let cleanedShows = parseBandsInTownResponse(bandsInTownResponses[index].body);
+		let cleanedShows = parseBandsInTownResponse(bandsInTownResponses[index].response.body);
 		if (cleanedShows !== null && cleanedShows !== undefined) {
 			if (showsByArtistId[artists[index].id]){
 				// Theoretically we should never be here since it means we're
@@ -189,7 +193,10 @@ async function getAllShows(artists) {
 
 	let songkickShowsFound = 0;
 	for (index in songkickArtistObjects) {
-		let cleanedShows = parseSongkickResponse(songkickResponses[index].body);
+		if (!songkickResponses[index].success) {
+			console.log(`Failed query in Songkick artist show requests, ${songkickResponses[index].response}`);
+		}
+		let cleanedShows = parseSongkickResponse(songkickResponses[index].response.body);
 		if (cleanedShows !== null && cleanedShows !== undefined) {
 			songkickShowsFound++;
 			if (showsByArtistId[songkickArtistObjects[index].artistId]){
@@ -312,7 +319,7 @@ function buildBandsInTownArtistQuery(artist) {
 		}
 	};
 
-	return request(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
+	return instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
 }
 
 function prettifySongkickShows(showsByArtistName) {
@@ -452,7 +459,7 @@ function buildSongkickArtistIdQuery(artist) {
 		}
 	};
 
-	return request(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`, getOptions);
+	return instrumentCall(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`, getOptions);
 }
 
 function buildSongkickArtistQuery(artistId) {
@@ -463,13 +470,18 @@ function buildSongkickArtistQuery(artistId) {
 		}
 	};
 
-	return request(`https://api.songkick.com/api/3.0/artists/${artistId}/calendar.json?apikey=${constants.songkickSecret}`, getOptions);
+	return instrumentCall(`https://api.songkick.com/api/3.0/artists/${artistId}/calendar.json?apikey=${constants.songkickSecret}`, getOptions);
 }
 
 function getSongkickArtistIdsFromJson(responseList) {
 	let artistsObjects = [];
 	for (responseIndex in responseList) {
-		let responseBody = JSON.parse(responseList[responseIndex].body || responseList[responseIndex].query.body);
+		if (!responseList[responseIndex].success) {
+			console.log(`Failed query in Songkick artist ID requests, ${responseList[responseIndex].response}`);
+			continue;
+		}
+
+		let responseBody = JSON.parse(responseList[responseIndex].response.body || responseList[responseIndex].response.query.body);
 		let singleArtistList = responseBody.resultsPage.results.artist;
 		if (singleArtistList === undefined) {
 			continue;

@@ -14,6 +14,21 @@ class App extends Component {
     showingShows: false
   }
 
+  async instrumentCall(url, options) {
+    let res;
+    try {
+      res = await fetch(url, options);
+    } catch (e) {
+      throw new Error(e);
+    }
+
+    if (res.status >= 400) {
+      throw new Error(res);
+    }
+
+    return res;
+  }
+
   constructor(props) {
     super(props);
 
@@ -34,7 +49,7 @@ class App extends Component {
       body: JSON.stringify({ username: this.state.userName })
     };
 
-    let res = await fetch('/show-finder/playlists', postOptions);
+    let res = await this.instrumentCall('/show-finder/playlists', postOptions);
     let playlistNamesById = await res.json();
     this.setState({ playlistNamesById: playlistNamesById });
     let names = [];
@@ -45,7 +60,7 @@ class App extends Component {
 
   getArtists = async e => {
     e.preventDefault();
-    console.log(this.playlistListRef);
+
     let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
     if (selectedPlaylistIndex === null) {
       alert('You must select a playlist');
@@ -53,7 +68,7 @@ class App extends Component {
 
     let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
     let encodedPlaylistId = encodeURIComponent(playlistId);
-    let res = await fetch(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: 'GET' });
+    let res = await this.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: 'GET' });
     let artistJson = await res.json();
     let decodedArtists = [];
     for (let index in Object.keys(artistJson)) {
@@ -65,11 +80,12 @@ class App extends Component {
 
   getShowsForArtists = async e => {
     e.preventDefault();
+
     let selectedArtistIndices = this.artistListRef.current.state.selectedItems;
     let encodedArtists = this.state.allArtists
       .filter((x, i) => selectedArtistIndices.includes(i))
       .map(x => encodeURI(x));
-    console.log(encodedArtists);
+
     let postOptions = {
       method: 'POST',
       headers: {
@@ -79,7 +95,7 @@ class App extends Component {
     }
 
     // List of { artistName, show } objects
-    let showsJson = await fetch('/show-finder/shows', postOptions);
+    let showsJson = await this.instrumentCall('/show-finder/shows', postOptions);
     let shows = await showsJson.json();
 
     this.setState({ showingShows: true, showingPlaylists: false, showingArtists: false,
