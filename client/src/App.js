@@ -83,7 +83,7 @@ class App extends Component {
     this.setState({
       showingPlaylists: false,
       showSpinner: true,
-      headerText: `Fetching artists for \'${this.state.playlistNamesById[playlistId]}\'`
+      headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`
     });
     let res = await this.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: 'GET' });
     let artistJson = await res.json();
@@ -150,7 +150,7 @@ class App extends Component {
             <div className="center-child">
               <input className="textbox" type="text" onChange={ entry => this.setState({ userName: entry.target.value }) } />
             </div>
-            <button class="unselectable" type="submit">Submit</button>
+            <button className="unselectable" type="submit">Submit</button>
           </form>
         </div>
         <div>
@@ -158,14 +158,14 @@ class App extends Component {
           <div className="center-child">
             <ReactList className="scroll-vertical" ref={ this.playlistListRef } items={this.state.playlists} />
           </div>
-          <button class="unselectable" type="submit">Select playlist</button>
+          <button className="unselectable" type="submit">Select playlist</button>
         </form>
 
-        <form class="center-child" onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? '' : 'none' }}>
+        <form className="center-child" onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? '' : 'none' }}>
           <div className="center-child">
             <ReactList className="scroll-vertical" ref={ this.artistListRef } items={this.state.allArtists} multiple={true} selected={ Array(this.state.allArtists.length).keys() } />
           </div>
-          <button class="unselectable" type="submit">Choose artists</button>
+          <button className="unselectable" type="submit">Choose artists</button>
         </form>
         </div>
         { this.state.shows }

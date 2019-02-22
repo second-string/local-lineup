@@ -1,6 +1,7 @@
 var request = require('async-request');
 var inquirer = require('inquirer');
 var constants = require('./constants');
+var foopee = require('./foopee-scrape');
 var fs = require('fs');
 
 function requestError(response, exception = null) {
@@ -148,11 +149,12 @@ async function getArtists(spotifyToken, playlistId) {
 async function getAllShows(artists) {
 	// List of { artistId, query } objects
 	let bandsInTownQueries = [];
+	let showsByArtistId = {};
+
 	artists.forEach(x => bandsInTownQueries.push({ artistId: x.id, query: buildBandsInTownArtistQuery(x.name) }));
 	console.log('Getting BandsInTown artist shows...');
 	let bandsInTownResponses = await Promise.all(bandsInTownQueries.map(x => x.query));
 
-	let showsByArtistId = {};
 	for (index in bandsInTownResponses) {
 		if (!bandsInTownResponses[index].success) {
 			console.log(`Failed query in BandsInTown requests, ${bandsInTownResponses[index].response}`);
@@ -207,8 +209,19 @@ async function getAllShows(artists) {
 			}
 		}
 	}
-
 	console.log(`Added or appended shows for ${songkickShowsFound} artists from Songkick`);
+
+	console.log('Getting foopee artist shows...');
+	let foopeeShows = await foopee.getFoopeeShows(artists);
+	for (showObject of foopeeShows) {
+		if (showsByArtistId[showObject.id]) {
+			showsByArtistId[showObject.id].sf = showsByArtistId[showObject.id].sf.concat(showObject.shows);
+		} else {
+			showsByArtistId[showObject.id]= { sf: showObject.shows, la: [] };
+		}
+	}
+	console.log(`Added or appended shows for ${Object.keys(foopeeShows).length} artists from Foopee`);
+
 	return showsByArtistId;
 }
 
@@ -523,7 +536,6 @@ function getSongkickArtistIdsFromJsonOLD(responseList) {
 }
 
 async function main() {
-	// console.log("client id: " + constants.clientId);
 	if (!constants.clientId || !constants.clientSecret || !constants.spotifyUserId || !constants.bandsInTownSecret || !constants.songkickSecret) {
 		console.log("Please supply valid creds in the .env file");
 		process.exit(1);
