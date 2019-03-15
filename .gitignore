@@ -62,3 +62,9 @@ typings/
 
 # nope
 setup_env.sh
+
+# Don't transfer deployment bundle
+client/build
+
+# nodemon config is for setting DEPLOY_STAGE env var
+nodemon.json

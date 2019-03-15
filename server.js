@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const bodyParser = require('body-parser');
 const showFinder = require('./show-finder');
 const app = express();
@@ -7,6 +8,13 @@ const port = process.env.PORT || 5000;
 var spotifyToken;
 
 app.use(bodyParser.json());
+
+
+// No static file routing for dev env because the react webpack server will handle it for us
+if (process.env.DEPLOY_STAGE === 'PROD') {
+	let production_app_dir = path.join(__dirname, 'client/build');
+	app.get('*', (req, res) => res.sendFile('index.html', { root: production_app_dir }));
+}
 
 app.post('/show-finder/playlists', async (req, res) => {
 	console.log(req.body);
