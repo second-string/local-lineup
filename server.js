@@ -1,14 +1,24 @@
 const express = require('express');
+const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs');
 const bodyParser = require('body-parser');
 const showFinder = require('./show-finder');
+
 const app = express();
 const port = process.env.PORT || 5000;
 
 var spotifyToken;
 
-app.use(bodyParser.json());
+fs.mkdir('logs', err => {
+	if (err && err.code != 'EEXIST') {
+		throw(err);
+	}
+});
+let requestLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'requests.log'), { flags: 'a' });
+app.use(morgan('[:date[clf]] - ":method :url" | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms', { stream: requestLogStream }));
 
+app.use(bodyParser.json());
 
 // No static file routing for dev env because the react webpack server will handle it for us
 if (process.env.DEPLOY_STAGE === 'PROD') {

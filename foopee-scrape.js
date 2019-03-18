@@ -1,8 +1,14 @@
 var request = require('async-request');
 var cheerio = require('cheerio');
 
-// Will return the { id, name } object for the artist we're looking for
+// Will return the { id, name } object for the artist we're looking for, null if this
+// dom artist does not match
 function getMatchingArtist(domArtist, userSelectedArtists) {
+	// Surprise! foopee sometimes will have a blank artist name as a bug
+	if (domArtist.children[0].data === undefined) {
+		return null;
+	}
+
 	for (artistObject of userSelectedArtists)
 	{
 		if (decodeURI(artistObject.name).toLowerCase() === domArtist.children[0].data.toLowerCase()) {

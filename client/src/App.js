@@ -105,8 +105,8 @@ class App extends Component {
 
     let selectedArtistIndices = this.artistListRef.current.state.selectedItems;
     let encodedArtists = this.state.allArtists
-    .filter((x, i) => selectedArtistIndices.includes(i))
-    .map(x => encodeURI(x));
+      .filter((x, i) => selectedArtistIndices.includes(i))
+      .map(x => encodeURI(x));
 
     let postOptions = {
       method: 'POST',
