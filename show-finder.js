@@ -145,8 +145,8 @@ async function getArtists(spotifyToken, playlistId) {
 	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
 }
 
-// artists param is list of { id, name }
-async function getAllShows(artists) {
+// artists param is list of { id, name }, location is lowercased basic city string
+async function getAllShows(artists, location) {
 	// List of { artistId, query } objects
 	let bandsInTownQueries = [];
 	let showsByArtistId = {};
@@ -162,13 +162,12 @@ async function getAllShows(artists) {
 		}
 		// Can loop responses and index into artists b/c we're guaranteed a response for each req,
 		// even if body is an empty list (no shows) or `{warn=Not found}` (artist not found)
-		let cleanedShows = parseBandsInTownResponse(bandsInTownResponses[index].response.body);
+		let cleanedShows = parseBandsInTownResponse(bandsInTownResponses[index].response.body, location);
 		if (cleanedShows !== null && cleanedShows !== undefined) {
 			if (showsByArtistId[artists[index].id]){
 				// Theoretically we should never be here since it means we're
 				// indexing to the same artist twice from different BIT responses
-				showsByArtistId[artists[index].id].sf = showsByArtistId[artists[index].id].sf.concat(cleanedShows);
-				showsByArtistId[artists[index].id].la = showsByArtistId[artists[index].id].la.concat(cleanedShows);
+				showsByArtistId[artists[index].id] = showsByArtistId[artists[index].id].concat(cleanedShows);
 			} else {
 				showsByArtistId[artists[index].id] = cleanedShows;
 			}
@@ -198,12 +197,11 @@ async function getAllShows(artists) {
 		if (!songkickResponses[index].success) {
 			console.log(`Failed query in Songkick artist show requests, ${songkickResponses[index].response}`);
 		}
-		let cleanedShows = parseSongkickResponse(songkickResponses[index].response.body);
+		let cleanedShows = parseSongkickResponse(songkickResponses[index].response.body, location);
 		if (cleanedShows !== null && cleanedShows !== undefined) {
 			songkickShowsFound++;
 			if (showsByArtistId[songkickArtistObjects[index].artistId]){
-				showsByArtistId[songkickArtistObjects[index].artistId].sf = showsByArtistId[songkickArtistObjects[index].artistId].sf.concat(cleanedShows.sf);
-				showsByArtistId[songkickArtistObjects[index].artistId].la = showsByArtistId[songkickArtistObjects[index].artistId].la.concat(cleanedShows.la);
+				showsByArtistId[songkickArtistObjects[index].artistId] = showsByArtistId[songkickArtistObjects[index].artistId].concat(cleanedShows);
 			} else {
 				showsByArtistId[songkickArtistObjects[index].artistId] = cleanedShows;
 			}
@@ -211,22 +209,25 @@ async function getAllShows(artists) {
 	}
 	console.log(`Added or appended shows for ${songkickShowsFound} artists from Songkick`);
 
-	console.log('Getting foopee artist shows...');
-	let foopeeShows = await foopee.getFoopeeShows(artists);
-	for (showObject of foopeeShows) {
-		if (showsByArtistId[showObject.id]) {
-			showsByArtistId[showObject.id].sf = showsByArtistId[showObject.id].sf.concat(showObject.shows);
-		} else {
-			showsByArtistId[showObject.id]= { sf: showObject.shows, la: [] };
+	if (location === 'san francisco')
+	{
+		console.log('Getting foopee artist shows...');
+		let foopeeShows = await foopee.getFoopeeShows(artists);
+		for (showObject of foopeeShows) {
+			if (showsByArtistId[showObject.id]) {
+				showsByArtistId[showObject.id] = showsByArtistId[showObject.id].concat(showObject.shows);
+			} else {
+				showsByArtistId[showObject.id]= showObject.shows;
+			}
 		}
+		console.log(`Added or appended shows for ${Object.keys(foopeeShows).length} artists from Foopee`);
 	}
-	console.log(`Added or appended shows for ${Object.keys(foopeeShows).length} artists from Foopee`);
 
 	return showsByArtistId;
 }
 
-function parseBandsInTownResponse(responseBody) {
-	let locations = {};
+function parseBandsInTownResponse(responseBody, location) {
+	// let locations = {};
 	let body;
 	try {
 		body = JSON.parse(responseBody);
@@ -239,32 +240,18 @@ function parseBandsInTownResponse(responseBody) {
 		return null;
 	}
 
-	let bandsInTownSfShowObjects = body.filter(x => x.venue.city.toLowerCase() === 'san francisco')
-	.map(x =>  ({
-		name: x.venue.name,
-		date: new Date(x.datetime),
-		url: x.url
-	}));
+	let showObjects = body.filter(x => x.venue.city.toLowerCase().includes(location))
+		.map(x =>  ({
+			name: x.venue.name,
+			date: new Date(x.datetime),
+			url: x.url
+		}));
 
-	let bandsInTownLaShowObjects= body.filter(x => x.venue.city.toLowerCase() === 'los angeles')
-	.map(x =>  ({
-		name: x.venue.name,
-		date: new Date(x.datetime),
-		url: x.url
-	}));
-
-	let sfShows = bandsInTownSfShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`);
-	let laShows = bandsInTownLaShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`);
-	if (sfShows.length === 0 && laShows.length === 0) {
-		return null;
-	}
-
-	locations.sf = sfShows;
-	locations.la = laShows;
-	return locations;
+	let shows = showObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`);
+	return shows.length === 0 ? null : shows;
 }
 
-function parseSongkickResponse(responseBody) {
+function parseSongkickResponse(responseBody, location) {
 	let body;
 	try {
 		body = JSON.parse(responseBody);
@@ -273,15 +260,9 @@ function parseSongkickResponse(responseBody) {
 	}
 
 	if (body.resultsPage.totalEntries !== 0) {
-		let locations = {};
 		let eventList = body.resultsPage.results.event;
-		locations.sf = eventList.filter(x => x.location.city.toLowerCase().indexOf('san francisco') > -1).map(x => x.displayName);
-		locations.la = eventList.filter(x => x.location.city.toLowerCase().indexOf('los angeles') > -1).map(x => x.displayName);
-		if (locations.sf.length !== 0 || locations.la.length !== 0) {
-			return locations;
-		} else {
-			return null;
-		}
+		let shows = eventList.filter(x => x.location.city.toLowerCase().includes(location)).map(x => x.displayName);
+		return shows.length === 0 ? null : shows;
 	} else {
 		return null;
 	}

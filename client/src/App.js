@@ -14,7 +14,9 @@ class App extends Component {
     showingArtists: false,
     showingPlaylists: false,
     showingShows: false,
-    showSpinner: false
+    showSpinner: false,
+    locations: [],
+    selectedLocation: null
   }
 
   async instrumentCall(url, options) {
@@ -42,6 +44,19 @@ class App extends Component {
     this.artistListRef = React.createRef();
   }
 
+  componentDidMount() {
+    let locations = [
+     { value: 'san francisco', displayName: 'San Francisco' },
+     { value: 'los angeles', displayName: 'Los Angeles' },
+     { value: 'washington', displayName: 'Washington DC' },
+     { value: 'new york', displayName: 'New York' },
+     { value: 'chicago', displayName: 'Chicago' },
+     { value: 'houston', displayName: 'Houston' },
+     { value: 'philadelphia', displayName: 'Philadelphia' }
+    ];
+    this.setState({ locations: locations });
+  }
+
   getPlaylists = async e => {
     e.preventDefault();
     let postOptions = {
@@ -51,6 +66,8 @@ class App extends Component {
       },
       body: JSON.stringify({ username: this.state.userName })
     };
+
+    console.log(this.state.selectedLocation);
 
     this.setState({ showSpinner: true, headerText: 'Fetching playlists...' });
     let res = await this.instrumentCall('/show-finder/playlists', postOptions);
@@ -113,7 +130,7 @@ class App extends Component {
       headers: {
         'Content-type': 'application/json'
       },
-      body: JSON.stringify({ selectedArtists: encodedArtists })
+      body: JSON.stringify({ selectedArtists: encodedArtists, location: this.state.selectedLocation })
     }
 
     // List of { artistName, show } objects
@@ -124,45 +141,52 @@ class App extends Component {
     let showsJson = await this.instrumentCall('/show-finder/shows', postOptions);
     let shows = await showsJson.json();
 
+    let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
+    let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
+    let location = this.state.locations.filter(x => x.value === this.state.selectedLocation).map(x => x.displayName);
+    let header = `Shows found for '${this.state.playlistNamesById[playlistId]}' artists in ${location}`;
+
     this.setState({
       showingShows: true,
       showSpinner: false,
-      headerText: 'Shows found',
+      headerText: header,
       shows: shows.map(x =>
         <div>
-        <h3>{x.artistName}</h3>
-        {x.shows.sf.length > 0 && <h5>San Francisco</h5>}
-        {x.shows.sf.length > 0 && x.shows.sf.map(y => <li>{y}</li>)}
-          {x.shows.la.length > 0 && <h5>Los Angeles</h5>}
-          {x.shows.la.length > 0 && x.shows.la.map(y => <li>{y}</li>)}
-            </div>
-            ) });
-      }
+          <h3>{x.artistName}</h3>
+          {x.shows.map(y => <li>{y}</li>)}
+        </div>
+      )
+    });
+  }
 
   render() {
     return (
       <div className="App">
-        <h1 className="center-child">{ this.state.headerText }</h1>
+        <h1>{ this.state.headerText }</h1>
         <div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
-        <div className="center-child" style={{ display: this.state.showingArtists || this.state.showingPlaylists || this.state.showingShows || this.state.showSpinner ? 'none' : '' }}>
+        <div style={{ display: this.state.showingArtists || this.state.showingPlaylists || this.state.showingShows || this.state.showSpinner ? 'none' : '' }}>
           <h4>Enter your spotify username:</h4>
           <form onSubmit={this.getPlaylists}>
-            <div className="center-child">
+            <div>
               <input className="textbox" type="text" onChange={ entry => this.setState({ userName: entry.target.value }) } />
-            </div>
-            <button className="unselectable" type="submit">Submit</button>
+              <select id='location-select' onChange={ selection => this.setState({ selectedLocation: selection.target.value }) }>
+                <option id='' disabled defaultValue> Choose a location </option>
+                { this.state.locations.map(x => <option key={x.value} value={x.value}> {x.displayName} </option>) }
+               </select>
+           </div>
+            <button className="unselectable" type="submit" disabled={this.state.selectedLocation == null || this.state.userName == null}>Submit</button>
           </form>
         </div>
         <div>
-        <form className="center-child" onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? '' : 'none' }}>
-          <div className="center-child">
+        <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? '' : 'none' }}>
+          <div>
             <ReactList className="scroll-vertical" ref={ this.playlistListRef } items={this.state.playlists} />
           </div>
           <button className="unselectable" type="submit">Select playlist</button>
         </form>
 
-        <form className="center-child" onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? '' : 'none' }}>
-          <div className="center-child">
+        <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? '' : 'none' }}>
+          <div>
             <ReactList className="scroll-vertical" ref={ this.artistListRef } items={this.state.allArtists} multiple={true} selected={ Array(this.state.allArtists.length).keys() } />
           </div>
           <button className="unselectable" type="submit">Choose artists</button>
