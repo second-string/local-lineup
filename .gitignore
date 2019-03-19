@@ -68,3 +68,6 @@ client/build
 
 # nodemon config is for setting DEPLOY_STAGE env var
 nodemon.json
+
+# don't include the charles files from api exploration
+.chls
