@@ -97,21 +97,6 @@ async function getPlaylists(spotifyToken, userId) {
 	return playlistNamesById;
 }
 
-async function pickPlaylist(playlistNamesById) {
-	let playlistNames = Object.keys(playlistNamesById).map(x => playlistNamesById[x]);
-	let answer = await inquirer
-		.prompt([
-		{
-			type: 'list',
-			name: 'playlist',
-			message: 'Choose a playlist containing the artists you want to see shows for',
-			choices: playlistNames
-		}]);
-
-	let playlist = answer['playlist'];
-	return Object.keys(playlistNamesById).filter(x => playlistNamesById[x] === playlist)[0];
-}
-
 async function getArtists(spotifyToken, playlistId) {
 	let getOptions = {
 		method: 'GET',
@@ -120,7 +105,6 @@ async function getArtists(spotifyToken, playlistId) {
 			'Authorization': spotifyToken
 		}
 	};
-
 
 	let body = {};
 	let artists = [];
@@ -227,7 +211,6 @@ async function getAllShows(artists, location) {
 }
 
 function parseBandsInTownResponse(responseBody, location) {
-	// let locations = {};
 	let body;
 	try {
 		body = JSON.parse(responseBody);
@@ -316,135 +299,6 @@ function buildBandsInTownArtistQuery(artist) {
 	return instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
 }
 
-function prettifySongkickShows(showsByArtistName) {
-	let locationsByArtistName = {};
-	let artistNames = Object.keys(showsByArtistName);
-	for (index in artistNames) {
-		let artistName = artistNames[index];
-		let artistEntry = showsByArtistName[artistName];
-		let body;
-		try {
-			body = JSON.parse(artistEntry);
-		} catch (e) {
-			console.log('Failed to parse artist json for ' + artistName);
-			console.log('Offending object: ' + artistEntry.toString());
-		}
-
-		if (body.resultsPage.totalEntries !== 0) {
-			let locations = {};
-			let eventList = body.resultsPage.results.event;
-			locations.sf = eventList.filter(x => x.location.city.toLowerCase().indexOf('san francisco') > -1).map(x => x.displayName);
-			locations.la = eventList.filter(x => x.location.city.toLowerCase().indexOf('los angeles') > -1).map(x => x.displayName);
-			if (locations.sf.length !== 0 || locations.la.length !== 0) {
-				locationsByArtistName[artistName] = locations;
-			}
-		}
-	}
-
-	return locationsByArtistName;
-}
-
-function prettifyBandsInTownShows(showsByArtistName) {
-	let locationsByArtistName = {};
-	let artistNames = Object.keys(showsByArtistName);
-	for (index in artistNames) {
-		let locations = {};
-		let artistName = artistNames[index];
-		let artistEntry = showsByArtistName[artistName];
-
-		if (artistEntry.toString().includes('warn')) {
-			// Non-parsable format of `{warn=Not found}` so easiest just to string it and check
-			continue;
-		}
-
-		let body;
-		try {
-			body = JSON.parse(artistEntry);
-		} catch (e) {
-			console.log('Failed to parse artist json for ' + artistName);
-			console.log('Offending object: ' + artistEntry.toString());
-		}
-
-		let bandsInTownSfShowObjects = body.filter(x => x.venue.city.toLowerCase() === 'san francisco')
-		.map(x =>  ({
-			name: x.venue.name,
-			date: new Date(x.datetime),
-			url: x.url
-		 }));
-
-		let bandsInTownLaShowObjects= body.filter(x => x.venue.city.toLowerCase() === 'los angeles')
-		.map(x =>  ({
-			name: x.venue.name,
-			date: new Date(x.datetime),
-			url: x.url
-		 }));
-
-		let sfShows = bandsInTownSfShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`);
-		let laShows = bandsInTownLaShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`);
-		if (sfShows.length === 0 && laShows.length === 0) {
-			continue;
-		}
-
-		locations.sf = sfShows;
-		locations.la = laShows;
-		locationsByArtistName[artistName] = locations;
-	}
-
-	return locationsByArtistName;
-}
-
-function printShowInfo(artist, songkickResponse, bandsInTownResponse) {
-	let songkickBody = JSON.parse(songkickResponse.body);
-	let bandsInTownBody = JSON.parse(bandsInTownResponse.body);
-
-	let sfShows = [];
-	let laShows = [];
-
-	if (songkickBody.resultsPage.totalEntries != 0) {
-		let eventList = songkickBody.resultsPage.results.event;
-		sfShows = sfShows.concat(eventList.filter(x => x.location.city.toLowerCase().indexOf('san francisco') > -1).map(x => x.displayName));
-		laShows = laShows.concat(eventList.filter(x => x.location.city.toLowerCase().indexOf('los angeles') > -1).map(x => x.displayName));
-	}
-
-	let bandsInTownSfShowObjects = bandsInTownBody.filter(x => x.venue.city.toLowerCase() === 'san francisco')
-		.map(x =>  ({
-			name: x.venue.name,
-			date: new Date(x.datetime),
-			url: x.url
-		 }));
-
-	let bandsInTownLaShowObjects= bandsInTownBody.filter(x => x.venue.city.toLowerCase() === 'los angeles')
-		.map(x =>  ({
-			name: x.venue.name,
-			date: new Date(x.datetime),
-			url: x.url
-		 }));
-
-	sfShows = sfShows.concat(bandsInTownSfShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
-	laShows = laShows.concat(bandsInTownLaShowObjects.map(x => `${x.name} on ${x.date.toLocaleString('en-us', { month: 'long' })} ${x.date.getDate()}, ${x.date.getFullYear()}`));
-
-	if (sfShows.length === 0 && laShows.length === 0) {
-		return;
-	}
-
-	console.log();
-	console.log(`*********** ${decodeURI(artist)} ***********`);
-
-	if (sfShows.length > 0) {
-		console.log(`-- SF Shows --`);
-		sfShows.forEach(x => console.log(x));
-	} else {
-		console.log('No SF shows');
-	}
-
-	if (laShows.length > 0) {
-		console.log(`-- LA Shows --`);
-		laShows.forEach(x => console.log(x));
-	} else {
-		console.log('No LA shows');
-	}
-}
-
 function buildSongkickArtistIdQuery(artist) {
 	let getOptions = {
 		method: 'GET',
@@ -516,43 +370,6 @@ function getSongkickArtistIdsFromJsonOLD(responseList) {
 	return artistsObjects;
 }
 
-async function main() {
-	if (!constants.clientId || !constants.clientSecret || !constants.spotifyUserId || !constants.bandsInTownSecret || !constants.songkickSecret) {
-		console.log("Please supply valid creds in the .env file");
-		process.exit(1);
-	}
-
-	await getSpotifyToken();
-	// spotifyToken = await getSpotifyToken();
-	let userId = await getSpotifyUserId();
-	let playlistDict = await getPlaylists(userId);
-	let playlistId = await pickPlaylist(playlistDict);
-	let artists = await getArtists(playlistId);
-
-	let bandsInTownArtistQueries = [];
-	let songkickArtistIdQueries = [];
-	let songkickArtistQueries = [];
-
-	// Get songkick artist IDs and get BIT full artist response
-	artists.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x)));
-	artists.forEach(x => bandsInTownArtistQueries.push(buildBandsInTownArtistQuery(x)));
-
-	console.log('Getting Songkick artists IDs...');
-	let songkickArtistIdResponseJson = await Promise.all(songkickArtistIdQueries);
-	let songkickArtistObjects = getSongkickArtistIdsFromJsonOLD(songkickArtistIdResponseJson);
-	songkickArtistObjects.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x.id)));
-
-	console.log('Getting Songkick artist shows...');
-	let songkickResponses = await Promise.all(songkickArtistQueries);
-	console.log('Getting BandsInTown artist shows...');
-	let bandsInTownResponses = await Promise.all(bandsInTownArtistQueries);
-
-	for (artistIndex in artists) {
-		let artist = artists[artistIndex];
-		printShowInfo(artist, songkickResponses[artistIndex], bandsInTownResponses[artistIndex]);
-	}
-}
-
 module.exports = {
 	getSpotifyToken: getSpotifyToken,
 	getPlaylists: getPlaylists,
@@ -561,6 +378,3 @@ module.exports = {
 	getBandsInTownShows: getBandsInTownShows,
 	getAllShows: getAllShows
 };
-
-// main()
-// 	.catch(e => console.log(e));
