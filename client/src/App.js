@@ -11,6 +11,7 @@ class App extends Component {
     playlistNamesById: {},
     allArtists: [],
     shows: [],
+    showingForm: true,
     showingArtists: false,
     showingPlaylists: false,
     showingShows: false,
@@ -67,9 +68,7 @@ class App extends Component {
       body: JSON.stringify({ username: this.state.userName })
     };
 
-    console.log(this.state.selectedLocation);
-
-    this.setState({ showSpinner: true, headerText: 'Fetching playlists...' });
+    this.setState({ showSpinner: true, showingForm: false, headerText: 'Fetching playlists...' });
     let res = await this.instrumentCall('/show-finder/playlists', postOptions);
 
     let playlistNamesById = await res.json();
@@ -133,18 +132,26 @@ class App extends Component {
       body: JSON.stringify({ selectedArtists: encodedArtists, location: this.state.selectedLocation })
     }
 
-    // List of { artistName, show } objects
     this.setState({
       showingArtists: false,
       showSpinner: true,
       headerText: 'Searching for shows...'});
+    // list of { artistName, shows[] } objects
     let showsJson = await this.instrumentCall('/show-finder/shows', postOptions);
     let shows = await showsJson.json();
 
-    let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
-    let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
+    // shows.length is actually a count of number of artists returned
+    let showCount = shows.map(x => x.shows.length).reduce((x, y) => x + y);
     let location = this.state.locations.filter(x => x.value === this.state.selectedLocation).map(x => x.displayName);
-    let header = `Shows found for '${this.state.playlistNamesById[playlistId]}' artists in ${location}`;
+
+    let header;
+    if (shows.length > 0) {
+      let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
+      let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
+      header = `${showCount + (showCount === 1 ? ' show' : ' shows')} found in ${location} for ${shows.length + (shows.length === 1 ? ' artist' : ' artists')} on '${this.state.playlistNamesById[playlistId]}'`
+    } else {
+      header = `No ${location} shows found for those artists`;
+    }
 
     this.setState({
       showingShows: true,
@@ -164,7 +171,7 @@ class App extends Component {
       <div className="App">
         <h1>{ this.state.headerText }</h1>
         <div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
-        <div style={{ display: this.state.showingArtists || this.state.showingPlaylists || this.state.showingShows || this.state.showSpinner ? 'none' : '' }}>
+        <div style={{ display: this.state.showingForm ? '' : 'none' }}>
           <h4>Enter your spotify username:</h4>
           <form onSubmit={this.getPlaylists}>
             <div>
@@ -192,6 +199,7 @@ class App extends Component {
           <button className="unselectable" type="submit">Choose artists</button>
         </form>
         </div>
+
         { this.state.shows }
       </div>
     );

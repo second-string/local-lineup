@@ -59,6 +59,9 @@ app.get('/show-finder/artists', async (req, res) => {
 });
 
 app.post('/show-finder/shows', async (req, res) => {
+	/*
+	refactor these back again when we support individual service querying for the api
+	
 	if (req.query.service) {
 		console.log('Query param: ' + req.query.service);
 		let request;
@@ -80,6 +83,7 @@ app.post('/show-finder/shows', async (req, res) => {
 
 		return res.json(response);
 	}
+	*/
 
 	// No query param, need to group artist by id to be
 	// able to bundle and serve consolidated response

@@ -96,7 +96,7 @@ async function getFoopeeShows(artists) {
 			if (pageArtist.attribs && (artistObjectIndex = artistObjectsOnPage.map(x => x.name).indexOf(pageArtist.attribs.name)) > -1) {
 				let showListObject = pageArtist.next.children;
 				let domShows = showListObject.filter(x => x.name === 'li');
-				let listOfShowStrs = [];
+				let listOfShowObjs = [];
 				for (showIndex in domShows) {
 					let info = domShows[showIndex].children;
 					let date = info.filter(x => x.name === 'b')[0]
@@ -105,10 +105,11 @@ async function getFoopeeShows(artists) {
 					let venue = info.filter(x => x.name === 'a')[0]
 						.children[0].data;
 					let cleanedStr = venue + ' on ' + date; // TODO :: format date correctly
-					listOfShowStrs.push(cleanedStr);
+
+					listOfShowObjs.push({ date: new Date(date).setYear(new Date().getFullYear()), show: cleanedStr });
 				}
 
-				shows.push({ id: artistObjectsOnPage[artistObjectIndex].id , shows: listOfShowStrs });
+				shows.push({ id: artistObjectsOnPage[artistObjectIndex].id , showObjects: listOfShowObjs });
 
 				// Remove just-found artist
 				artistObjectsOnPage.splice(artistObjectIndex, 1);
