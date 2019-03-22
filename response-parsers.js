@@ -13,7 +13,7 @@ function parseBandsInTownResponse(responseBody, location) {
 
 	// We do weird shit with the datetime to strip off the timezone so we can create a datetime with just the date.
 	// If you don't the datetime automatically converts it to UTC for its string repres., which for all late-night, west-coast
-	// shows rolls it to the next day. This is the only way to get rid of it before creating the Date object
+	// shows rolls it to the next day. This is the only way to get rid of it _before_ creating the Date object
 	let shows = body.filter(x => x.venue.city.toLowerCase().includes(location))
 		.map(x =>  {
 			let showObj = {
@@ -22,7 +22,7 @@ function parseBandsInTownResponse(responseBody, location) {
 				url: x.url
 			};
 
-			return { date: showObj.date, show: `${showObj.name} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getDate()}, ${showObj.date.getFullYear()}` };
+			return { date: showObj.date, show: `${showObj.name} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}` };
 		});
 
 	return shows.length === 0 ? null : shows;

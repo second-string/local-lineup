@@ -89,13 +89,17 @@ async function getArtists(spotifyToken, playlistId) {
 async function getAllShows(artists, location) {
 	// Eventual return value (ish). Object with key of artist ID (int) and value of a list of { date: DateTime, show: string }
 	let showsByArtistId = {};
-	await getBandsInTownShows(artists, location, showsByArtistId);
-	await getSongkickShows(artists, location, showsByArtistId);
+	let showServiceRequests = [];
+	showServiceRequests.push(getBandsInTownShows(artists, location, showsByArtistId));
+	showServiceRequests.push(getSongkickShows(artists, location, showsByArtistId));
 
 	if (location === 'san francisco')
 	{
-		await getFoopeeShows(artists, location, showsByArtistId);
+		showServiceRequests.push(getFoopeeShows(artists, location, showsByArtistId));
 	}
+
+	await Promise.all(showServiceRequests);
+	helpers.dedupeShows(showsByArtistId);
 
 	// Set each value of the artist ID key to just the list of shows from the previous list of show/date objects
 	Object.keys(showsByArtistId).forEach(x => showsByArtistId[x] = showsByArtistId[x].map(y => y.show));
@@ -121,7 +125,7 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 			if (showsByArtistId[artists[index].id]){
 				// Theoretically we should never be here since it means we're
 				// indexing to the same artist twice from different BIT responses
-				showsByArtistId[artists[index].id] = helpers.addDedupedShows(showsByArtistId[artists[index].id], cleanedShowObjects);
+				showsByArtistId[artists[index].id] = showsByArtistId[artists[index].id].concat(cleanedShowObjects);
 				// showsByArtistId[artists[index].id] = showsByArtistId[artists[index].id].concat(cleanedShowObjects);
 			} else {
 				showsByArtistId[artists[index].id] = cleanedShowObjects;
@@ -157,7 +161,7 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			songkickShowsFound++;
 			if (showsByArtistId[songkickArtistObjects[index].artistId]){
-				showsByArtistId[songkickArtistObjects[index].artistId] = helpers.addDedupedShows(showsByArtistId[songkickArtistObjects[index].artistId], cleanedShowObjects)
+				showsByArtistId[songkickArtistObjects[index].artistId] = showsByArtistId[songkickArtistObjects[index].artistId].concat(cleanedShowObjects);
 			} else {
 				showsByArtistId[songkickArtistObjects[index].artistId] = cleanedShowObjects;
 			}
@@ -173,7 +177,7 @@ async function getFoopeeShows(artists, location, showsByArtistId) {
 	let foopeeShows = await foopee.getFoopeeShows(artists);
 	for (foopeeObject of foopeeShows) {
 		if (showsByArtistId[foopeeObject.id]) {
-			showsByArtistId[foopeeObject.id] = helpers.addDedupedShows(showsByArtistId[foopeeObject.id], foopeeObject.showObjects);
+			showsByArtistId[foopeeObject.id] = showsByArtistId[foopeeObject.id].concat(foopeeObject.showObjects);
 		} else {
 			showsByArtistId[foopeeObject.id]= foopeeObject.showObjects;
 		}

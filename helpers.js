@@ -74,6 +74,11 @@ function datesEqual(dateString1, dateString2) {
 		&& date1.getUTCDate() === date2.getUTCDate();
 }
 
+function getUTCDate(inputDate) {
+	let date = new Date(inputDate);
+	return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0);
+}
+
 function addDedupedShows(previouslyAddedShows, newArtistShowList)
 {
 	// If you set this to previouslyAddedShows directly does js do a shallow copy or are we dealing with pointers?
@@ -95,8 +100,29 @@ function addDedupedShows(previouslyAddedShows, newArtistShowList)
 	return dedupedShows;
 }
 
+// adapted from perf solution of this answer https://stackoverflow.com/a/9229821.
+// Does not remove shows in-place from list but reassigns new list after deduping
+function dedupeShows(showsByArtistId) {
+	for (let key of Object.keys(showsByArtistId)) {
+		let showList =  showsByArtistId[key];
+		let dedupedShowList = [];
+
+		// 'set' used for hash lookups on dates to dedupe
+		let dates = {};
+		for (showObj of showList) {
+			let standardDate = getUTCDate(showObj.date);
+			if (dates[standardDate] !== 1) {
+				dates[standardDate] = 1;
+				dedupedShowList.push(showObj);
+			}
+		}
+
+		showsByArtistId[key] = dedupedShowList;
+	}
+}
+
 module.exports = {
 	instrumentCall,
 	datesEqual,
-	addDedupedShows
+	dedupeShows
 };
