@@ -24,17 +24,7 @@ async function getSpotifyToken() {
 	console.log('Getting spotify API token...');
 	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions);
 
-	if (success) {
-		return `Bearer ${JSON.parse(response.body).access_token}`;
-		if (fs.existsSync('.env')) {
-			var envFile = fs.readFileSync('.env', 'utf8', error => console.log(error));
-			if (envFile.indexOf('SPOTIFY_TOKEN') === -1) {
-				fs.appendFile('.env', 'SPOTIFY_TOKEN=' + spotifyToken, error => console.log('Error writing token to env file: ' + error));
-			}
-		}
-	} else {
-		return response;
-	}
+	return success ? `Bearer ${JSON.parse(response.body).access_token}` : response;
 }
 
 async function getPlaylists(spotifyToken, userId) {

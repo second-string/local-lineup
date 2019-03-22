@@ -8,8 +8,10 @@ const showFinder = require('./show-finder');
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Poor man's in-mem cache
 var spotifyToken;
 
+// Logging setup
 fs.mkdir('logs', err => {
 	if (err && err.code != 'EEXIST') {
 		throw(err);
@@ -27,15 +29,26 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 }
 
 app.post('/show-finder/playlists', async (req, res) => {
-	console.log(req.body);
+	// If we have a token cached, give it a shot to see if it's still valid
+	if (spotifyToken) {
+		let cachedAttempt = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.query.username : 'bteamer');
+
+		// If we have no status, that means we got our playlist json object back (success). If we have a code,
+		// instrumentCall returned our full failed response to us, so refresh the token and continue.
+		if (cachedAttempt.statusCode === undefined) {
+			return res.send(response);
+		}
+	}
+
 	spotifyToken = await showFinder.getSpotifyToken();
+
 	if (spotifyToken.statusCode) {
 		console.log(`Call to get spotify token failed with status ${spotifyToken.statusCode}`);
 		return res.status(spotifyToken.statusCode)
 			.json(spotifyToken);
 	}
 
-	let playlists = await showFinder.getPlaylists(spotifyToken, 'bteamer');	// TODO :: BT replace with entry
+	let playlists = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.query.username : 'bteamer');
 	if (playlists.statusCode) {
 		console.log(`Call to get users playlists failed with status ${playlists.statusCode}`);
 		return res.status(playlists.statusCode)
@@ -61,7 +74,7 @@ app.get('/show-finder/artists', async (req, res) => {
 app.post('/show-finder/shows', async (req, res) => {
 	/*
 	refactor these back again when we support individual service querying for the api
-	
+
 	if (req.query.service) {
 		console.log('Query param: ' + req.query.service);
 		let request;
