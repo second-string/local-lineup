@@ -68,17 +68,21 @@ async function getArtists(spotifyToken, playlistId) {
 		}
 
 		body = JSON.parse(response.body);
-		artists = body.items
-		.map(x => x.track)
-		.map(x => x.artists)
-			.map(x => x[0])					// each artist is a list of a single object (ew)
-			.map(x => encodeURI(x.name));	// encode to URL-safe characters
+
+		// Amalgamates a list of lists, where each top-level list is one endpoint page
+		artists.push(body.items
+			.map(x => x.track)
+			.map(x => x.artists)
+				.map(x => x[0])					// each artist is a list of a single object (ew)
+				.map(x => encodeURI(x.name)));	// encode to URL-safe characters
 
 		} while (body.next != null);
 
 	// Filter out duplicates
 	hasSeen = {};
-	return artists.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
+	return artists
+		.reduce((x, y) => x.concat(y))
+		.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
 }
 
 // artists param is list of { id, name }, location is lowercased basic city string
