@@ -1,5 +1,4 @@
-# Logs
-logs
+
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -68,3 +67,10 @@ client/build
 
 # nodemon config is for setting DEPLOY_STAGE env var
 nodemon.json
+
+# don't include the charles files from api exploration
+*.chls
+
+# don't include certs or keys
+*.crt
+*.key

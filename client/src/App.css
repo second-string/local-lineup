@@ -1,5 +1,6 @@
 .App {
   font-family: "Trebuchet MS", Helvetica, sans-serif;
+  text-align: center;
 }
 
 h1 {
@@ -16,6 +17,13 @@ button {
   border-radius: 5px;
   margin: 10px;
   outline: none;
+}
+
+#location-select {
+  display: block;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .unselectable {
