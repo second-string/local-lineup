@@ -99,6 +99,7 @@ async function getAllShows(artists, location) {
 
 	// Set each value of the artist ID key to just the list of shows from the previous list of show/date objects
 	Object.keys(showsByArtistId).forEach(x => showsByArtistId[x] = showsByArtistId[x].map(y => y.show));
+
 	return showsByArtistId;
 }
 

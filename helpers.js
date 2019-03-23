@@ -25,34 +25,38 @@ async function instrumentCall(url, options) {
 		error = requestError(res, e);
 	} finally {
 		// Log out a curl for every call we instrument.
-		let curl = ['curl'];
+		if (process.env.DEPLOY_STAGE !== 'PROD') {
+			let curl = ['curl'];
 
-		// -s: don't show progress ascii
-		// -D -: output headers to file, '-' uses stdout as file
-		// You can also use -v for a full dump
-		curl.push('-sD -');
-		curl.push(`\'${url}\'`);
-		curl.push(`-X ${options.method}`);
-		for (let header of Object.keys(options.headers)) {
-			curl.push(`-H \'${header}: ${options.headers[header]}\'`);
-		}
-		if (options.data) {
-			let encodedData;
-			switch (options.headers['Content-type']) {
-				case 'application/json':
-					encodedData = JSON.stringify(options.data);
-					break;
-				case 'application/x-www-form-urlencoded':
-					encodedData = formUrlEncode(options.data);
-					break;
-				default:
-					throw new Error(`Need to supply a data encoded for ${JSON.stringify(options.data, null, 2)} in curl logging`);
+			// -s: don't show progress ascii
+			// -D -: output headers to file, '-' uses stdout as file
+			// You can also use -v for a full dump
+			curl.push('-sD -');
+			curl.push(`\'${url}\'`);
+			curl.push(`-X ${options.method}`);
+			for (let header of Object.keys(options.headers)) {
+				curl.push(`-H \'${header}: ${options.headers[header]}\'`);
 			}
-			curl.push(`-d \'${encodedData}\'`);
-		}
-		curl.push('--compressed');
 
-		console.log(curl.join(' '));
+			if (options.data) {
+				let encodedData;
+				switch (options.headers['Content-type']) {
+					case 'application/json':
+						encodedData = JSON.stringify(options.data);
+						break;
+					case 'application/x-www-form-urlencoded':
+						encodedData = formUrlEncode(options.data);
+						break;
+					default:
+						throw new Error(`Need to supply a data encoded for ${JSON.stringify(options.data, null, 2)} in curl logging`);
+				}
+
+				curl.push(`-d \'${encodedData}\'`);
+			}
+
+			curl.push('--compressed');
+			console.log(curl.join(' '));
+		}
 	}
 
 	if (res && res.statusCode >= 400) {

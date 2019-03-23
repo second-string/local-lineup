@@ -36,7 +36,7 @@ app.post('/show-finder/playlists', async (req, res) => {
 		// If we have no status, that means we got our playlist json object back (success). If we have a code,
 		// instrumentCall returned our full failed response to us, so refresh the token and continue.
 		if (cachedAttempt.statusCode === undefined) {
-			return res.send(response);
+			return res.send(cachedAttempt);
 		}
 	}
 
