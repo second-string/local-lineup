@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const https = require('https');
 const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
@@ -6,7 +8,7 @@ const bodyParser = require('body-parser');
 const showFinder = require('./show-finder');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 443;
 
 // Poor man's in-mem cache
 var spotifyToken;
@@ -120,4 +122,25 @@ app.post('/show-finder/shows', async (req, res) => {
 	res.json(mappedArtistsToShows);
 });
 
-app.listen(port, () => console.log('Express backend listening on ' + port));
+app.use((req, res, next) => {
+	// https://expressjs.com/en/api.html#req.secure
+	if (req.headers['x-forwarded-proto'] === 'http' || !req.secure) {
+		let path = req.route === undefined ? '' : req.route.path;	// https redirection working, but not the rebuild of the url
+		console.log(req.originalUrl);
+		return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`)
+	}
+
+	return next();
+});
+
+var key = fs.readFileSync(__dirname + '/showfinder-selfsigned.key');
+var cert = fs.readFileSync(__dirname + '/showfinder-selfsigned.crt');
+var creds = {
+	key: key,
+	cert: cert
+};
+
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(creds, app);
+httpServer.listen(80);
+httpsServer.listen(port, () => console.log('http redirecting from 80 to 443, https listening on 443...'));

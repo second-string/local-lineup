@@ -70,3 +70,7 @@ nodemon.json
 
 # don't include the charles files from api exploration
 *.chls
+
+# don't include certs or keys
+*.crt
+*.key
