@@ -134,25 +134,31 @@ app.use((req, res, next) => {
 	return next();
 });
 
-if (!process.env.PROD_SSL_KEY_PATH || !process.env.PROD_SSL_CERT_PATH || !process.env.PROD_SSL_CA_CERT_PATH) {
-	console.log("SSL cert env variables not set. Run the setup_env.sh script");
-	console.log(process.env.PROD_SSL_KEY_PATH);
-	console.log(process.env.PROD_SSL_CERT_PATH);
-	console.log(process.env.PROD_SSL_CA_CERT_PATH);
-	console.log(process.env);
-	process.exit(1);
-}
+var creds = {};
+if (process.env.DEPLOY_STAGE === 'PROD') {
+	if (!process.env.PROD_SSL_KEY_PATH || !process.env.PROD_SSL_CERT_PATH || !process.env.PROD_SSL_CA_CERT_PATH) {
+		console.log("SSL cert env variables not set. Run the setup_env.sh script");
+		process.exit(1);
+	}
 
-var key = fs.readFileSync(process.env.PROD_SSL_KEY_PATH);
-var cert = fs.readFileSync(process.env.PROD_SSL_CERT_PATH);
-var ca = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH);
-var creds = {
-	key: key,
-	cert: cert,
-	ca: ca
-};
+	var key = fs.readFileSync(process.env.PROD_SSL_KEY_PATH);
+	var cert = fs.readFileSync(process.env.PROD_SSL_CERT_PATH);
+	var ca = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH);
+	creds = {
+		key: key,
+		cert: cert,
+		ca: ca
+	};
+} else {
+	var key = fs.readFileSync('./showfinder-selfsigned.crt');
+	var cert = fs.readFileSync('./showfinder-selfsigned.key');
+	creds = {
+		key: key,
+		cert: cert
+	};
+}
 
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer(creds, app);
-//httpServer.listen(80);
+httpServer.listen(80);
 httpsServer.listen(port, () => console.log('http redirecting from 80 to 443, https listening on 443...'));
