@@ -74,3 +74,4 @@ nodemon.json
 # don't include certs or keys
 *.crt
 *.key
+*.pem
