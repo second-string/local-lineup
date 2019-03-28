@@ -17,12 +17,12 @@ function parseBandsInTownResponse(responseBody, location) {
 	let shows = body.filter(x => x.venue.city.toLowerCase().includes(location))
 		.map(x =>  {
 			let showObj = {
-				name: x.venue.name,
+				show: x.venue.name,
 				date: new Date(x.datetime.substring(0, x.datetime.indexOf('T'))),
 				url: x.url
 			};
 
-			return { date: showObj.date, show: `${showObj.name} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}` };
+			return { date: showObj.date, show: `${showObj.show} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}` };
 		});
 
 	return shows.length === 0 ? null : shows;
@@ -52,7 +52,7 @@ function parseSongkickResponse(responseBody, location) {
 
 // param is a list of { artistId: int, queryResponse: http response object }
 function parseSongkickArtistsResponse(responseList) {
-	let artistsObjects = [];
+	let artistObjects = [];
 	for (let promiseObject of responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
@@ -74,14 +74,65 @@ function parseSongkickArtistsResponse(responseList) {
 		 the artist ID as the index, since that's how the initial artist list is built in the express
 		 Server. I don't see this working out well in the future
 		*/
-		artistsObjects.push({ artistId: promiseObject.artistId, songkickId: singleArtistList[0].id });
+		artistObjects.push({ artistId: promiseObject.artistId, songkickId: singleArtistList[0].id });
 	}
 
-	return artistsObjects;
+	return artistObjects;
+}
+
+function parseSeatGeekResponse(responseBody, location) {
+	let body;
+	try {
+		body = JSON.parse(responseBody);
+	} catch (e) {
+		throw new Error('Failed to parse JSON for ' + responseBody);
+	}
+
+	if (body.meta.total === 0) {
+		return null;
+	}
+
+	let shows = body.events
+		.filter(x => x.venue.city.toLowerCase().includes(location))
+		.map(x => {
+			let showObj = {
+				date: new Date(x.datetime_local.substring(0, x.datetime_local.indexOf('T'))),
+				show: x.short_title,
+				url: x.url
+			};
+
+			return { date: showObj.date, show: `${showObj.show} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}` };
+		});
+
+	return shows.length === 0 ? null : shows;
+}
+
+function parseSeatGeekArtistsResponse(responseList) {
+	let artistObjects = [];
+	for (let promiseObject of responseList) {
+		let responseObject = promiseObject.queryResponse;
+		if (!responseObject.success) {
+			console.log(`Failed query in Songkick artist ID requests, ${responseObject.response}`);
+			continue;
+		}
+
+		let responseBody = JSON.parse(responseObject.response.body || responseObject.response.query.body);
+		if (responseBody.meta.total === 0) {
+			// No results for this artist
+			continue;
+		}
+
+		// Same situation as songkick with a list of fuzzy-matched artists that we're just taking the first result of
+		artistObjects.push({ artistId: promiseObject.artistId, seatGeekId: responseBody.performers[0].id });
+	}
+
+	return artistObjects;
 }
 
 module.exports = {
 	parseBandsInTownResponse,
 	parseSongkickResponse,
-	parseSongkickArtistsResponse
+	parseSongkickArtistsResponse,
+	parseSeatGeekResponse,
+	parseSeatGeekArtistsResponse
 };

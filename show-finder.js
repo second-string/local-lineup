@@ -8,6 +8,7 @@ var fs = require('fs');
 
 
 var spotifyAuth = () => 'Basic ' + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString('base64');
+var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
 
 async function getSpotifyToken() {
 	let postOptions = {
@@ -92,6 +93,7 @@ async function getAllShows(artists, location) {
 	let showServiceRequests = [];
 	showServiceRequests.push(getBandsInTownShows(artists, location, showsByArtistId));
 	showServiceRequests.push(getSongkickShows(artists, location, showsByArtistId));
+	showServiceRequests.push(getSeatGeekShows(artists, location, showsByArtistId));
 
 	if (location === 'san francisco')
 	{
@@ -158,6 +160,7 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 		if (!responseObject.success) {
 			console.log(`Failed query in Songkick artist show requests, ${responseObject.response}`);
 		}
+
 		let cleanedShowObjects = parsers.parseSongkickResponse(responseObject.response.body, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			songkickShowsFound++;
@@ -170,6 +173,41 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 	}
 
 	console.log(`Added or appended shows for ${songkickShowsFound} artists from Songkick`);
+}
+
+async function getSeatGeekShows(artists, location, showsByArtistId) {
+	let seatGeekArtistIdQueries = [];
+	let seatGeekArtistQueries = [];
+
+	artists.forEach(x => seatGeekArtistIdQueries.push(buildSeatGeekArtistIdQuery(x.id, x.name)));
+	console.log('Getting SeatGeek artist IDs...')
+	let seatGeekArtistIdResponseObjects = await Promise.all(seatGeekArtistIdQueries);
+	let seatGeekArtistObjects = parsers.parseSeatGeekArtistsResponse(seatGeekArtistIdResponseObjects);
+
+	console.log('Getting SeatGeek artist shows...');
+	// TODO :: BT paginate
+	seatGeekArtistObjects.forEach(x => seatGeekArtistQueries.push(buildSeatGeekArtistQuery(x.artistId, x.seatGeekId)));
+	let seatGeekResponseObjects = await Promise.all(seatGeekArtistQueries);
+
+	let seatGeekShowsFound = 0;
+	for (let promiseObject of seatGeekResponseObjects) {
+		let responseObject = promiseObject.queryResponse;
+		if (!responseObject.success) {
+			console.log(`Failed query in SeatGeek artist show requests, ${responseObject.response}`);
+		}
+
+		let cleanedShowObjects = parsers.parseSeatGeekResponse(responseObject.response.body, location);
+		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
+			seatGeekShowsFound++;
+			if (showsByArtistId[promiseObject.artistId]){
+				showsByArtistId[promiseObject.artistId] = showsByArtistId[promiseObject.artistId].concat(cleanedShowObjects);
+			} else {
+				showsByArtistId[promiseObject.artistId] = cleanedShowObjects;
+			}
+		}
+	}
+
+	console.log(`Added or appended shows for ${seatGeekShowsFound} artists from SeatGeek`);
 }
 
 // Assuming location-checking for location of SF is done beforehand
@@ -257,7 +295,7 @@ function buildBandsInTownArtistQuery(artistId, artist) {
 	};
 
 	return new Promise(async (resolve, reject) => {
-		let response = await helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, 
+		let response = await helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`,
 			getOptions,
 			false);
 		resolve({ artistId: artistId, queryResponse: response });
@@ -279,7 +317,6 @@ function buildSongkickArtistIdQuery(artistId, artist) {
 			false);
 		resolve({ artistId: artistId, queryResponse: response })
 	});
-	// return helpers.instrumentCall(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`, getOptions);
 }
 
 function buildSongkickArtistQuery(artistId, songkickArtistId) {
@@ -295,8 +332,63 @@ function buildSongkickArtistQuery(artistId, songkickArtistId) {
 			getOptions,
 			false);
 		resolve({ artistId: artistId, queryResponse: response });
-	})
-	// return helpers.instrumentCall(`https://api.songkick.com/api/3.0/artists/${songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`, getOptions);
+	});
+}
+
+function buildSeatGeekArtistIdQuery(artistId, artist) {
+	let getOptions = {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json',
+			'Authorization': seatGeekAuth()
+		}
+	};
+
+	return new Promise(async (resolve, reject) => {
+		let response = await helpers.instrumentCall(`https://api.seatgeek.com/2/performers?q=${artist}`,
+			getOptions,
+			false);
+		resolve({ artistId: artistId, queryResponse: response });
+	});
+}
+
+function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
+{
+	let getOptions = {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json',
+			'Authorization': seatGeekAuth()
+		}
+	};
+
+	return new Promise(async (resolve, reject) => {
+		let resultCount = 0;
+		let page = 1;
+		let total = 0;
+		let perPage = 25;
+		let response = {};
+		let responseBody = {};
+		let fullEventsList = [];
+
+		// Normal pagination logic while building the fullEventsList list
+		do {
+			response = await helpers.instrumentCall(`https://api.seatgeek.com/2/events?performers.id=${seatGeekArtistId}&per_page=${perPage}&page=${page++}`,
+				getOptions,
+				false);
+
+			responseBody = JSON.parse(response.response.body);
+			fullEventsList = fullEventsList.concat(responseBody.events);
+			total = responseBody.meta.total;
+		} while (perPage * page <= total);
+
+		// This is where it gets hacky - our parser is conditioned to check the success field of a single response, and then pull the events
+		// list out of its body. Here we rip open the final response from the last page request, show the full events list in there, and then
+		// stringify it all back up and act like nothing happened
+		responseBody.events = fullEventsList;
+		response.response.body = JSON.stringify(responseBody);
+		resolve({ artistId: artistId, queryResponse: response });
+	});
 }
 
 module.exports = {
