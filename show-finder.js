@@ -107,64 +107,64 @@ async function getAllShows(artists, location) {
 	return showsByArtistId;
 }
 
-async function getSongkickShows(artists, location, showsByArtistId) {
+async function getBandsInTownShows(artists, location, showsByArtistId) {
 	// List of { artistId, query } objects
 	let bandsInTownQueries = [];
-	artists.forEach(x => bandsInTownQueries.push({ artistId: x.id, query: buildBandsInTownArtistQuery(x.name) }));
+	artists.forEach(x => bandsInTownQueries.push(buildBandsInTownArtistQuery(x.id, x.name)));
 	console.log('Getting BandsInTown artist shows...');
-	let bandsInTownResponses = await Promise.all(bandsInTownQueries.map(x => x.query));
+	let bandsInTownResponseObjects = await Promise.all(bandsInTownQueries);
 
-	for (index in bandsInTownResponses) {
-		if (!bandsInTownResponses[index].success) {
-			console.log(`Failed query in BandsInTown requests, ${bandsInTownResponses[index].response}`);
+	let bandsInTownShowsFound = 0;
+	for (let promiseObject of bandsInTownResponseObjects) {
+		let responseObject = promiseObject.queryResponse;
+		if (!responseObject.success) {
+			console.log(`Failed query in BandsInTown requests, ${responseObject.response}`);
 			continue;
 		}
-		// Can loop responses and index into artists b/c we're guaranteed a response for each req,
-		// even if body is an empty list (no shows) or `{warn=Not found}` (artist not found)
-		let cleanedShowObjects = parsers.parseBandsInTownResponse(bandsInTownResponses[index].response.body, location);
+
+		let cleanedShowObjects = parsers.parseBandsInTownResponse(responseObject.response.body, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
-			if (showsByArtistId[artists[index].id]){
-				// Theoretically we should never be here since it means we're
-				// indexing to the same artist twice from different BIT responses
-				showsByArtistId[artists[index].id] = showsByArtistId[artists[index].id].concat(cleanedShowObjects);
-				// showsByArtistId[artists[index].id] = showsByArtistId[artists[index].id].concat(cleanedShowObjects);
+			bandsInTownShowsFound++;
+			if (showsByArtistId[promiseObject.artistId]){
+				showsByArtistId[promiseObject.artistId] = showsByArtistId[promiseObject.artistId].concat(cleanedShowObjects);
 			} else {
-				showsByArtistId[artists[index].id] = cleanedShowObjects;
+				showsByArtistId[promiseObject.artistId] = cleanedShowObjects;
 			}
 		}
 	}
-	console.log(`Added shows for ${Object.keys(showsByArtistId).length} artists from BandsInTown response`);
+
+	console.log(`Added shows for ${bandsInTownShowsFound} artists from BandsInTown`);
 }
 
-async function getBandsInTownShows(artists, location, showsByArtistId) {
+async function getSongkickShows(artists, location, showsByArtistId) {
 	// Both are list of { artistId, query } objects
 	let songkickArtistIdQueries = [];
 	let songkickArtistQueries = [];
 
 	// First get artist IDs from within songkick to be able to query artist directly
-	// Butchered it for now, but should create own promises in `buildXQuery` to return an object holding result of the fetch and artist ID
-	artists.forEach(x => songkickArtistIdQueries.push({ artistId: x.id, query: buildSongkickArtistIdQuery(x.name) }));
+	artists.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x.id, x.name)));
 	console.log('Getting Songkick artist IDs...');
-	let songkickArtistIdResponseJson = await Promise.all(songkickArtistIdQueries.map(x => x.query));
-	let songkickArtistObjects = parsers.parseSongkickArtistsResponse(songkickArtistIdResponseJson);
+	let songkickArtistIdResponseObjects = await Promise.all(songkickArtistIdQueries);
+	let songkickArtistObjects = parsers.parseSongkickArtistsResponse(songkickArtistIdResponseObjects);
 
 	// Build and send queries for actual shows for each artist
-	songkickArtistObjects.forEach(x => songkickArtistQueries.push({ artistId: x.artistId, query: buildSongkickArtistQuery(x.songkickId) }));
+	songkickArtistObjects.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x.artistId, x.songkickId)));
 	console.log('Getting Songkick artist shows...');
-	songkickResponses = await Promise.all(songkickArtistQueries.map(x => x.query));
+	let songkickResponseObjects = await Promise.all(songkickArtistQueries);
 
 	let songkickShowsFound = 0;
-	for (index in songkickArtistObjects) {
-		if (!songkickResponses[index].success) {
-			console.log(`Failed query in Songkick artist show requests, ${songkickResponses[index].response}`);
+	for (let promiseObject of songkickResponseObjects) {
+		let responseObject = promiseObject.queryResponse;
+		if (!responseObject.success) {
+			console.log(`Failed query in Songkick artist show requests, ${responseObject.response}`);
 		}
-		let cleanedShowObjects = parsers.parseSongkickResponse(songkickResponses[index].response.body, location);
+		let cleanedShowObjects = parsers.parseSongkickResponse(responseObject.response.body, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			songkickShowsFound++;
-			if (showsByArtistId[songkickArtistObjects[index].artistId]){
-				showsByArtistId[songkickArtistObjects[index].artistId] = showsByArtistId[songkickArtistObjects[index].artistId].concat(cleanedShowObjects);
+			if (showsByArtistId[promiseObject.artistId]){
+				showsByArtistId[promiseObject.artistId] = showsByArtistId[promiseObject.artistId].concat(cleanedShowObjects);
 			} else {
-				showsByArtistId[songkickArtistObjects[index].artistId] = cleanedShowObjects;
+				showsByArtistId[promiseObject.artistId] = cleanedShowObjects;
 			}
 		}
 	}
@@ -248,7 +248,7 @@ async function getBandsInTownShows(artistList) {
 }
 */
 
-function buildBandsInTownArtistQuery(artist) {
+function buildBandsInTownArtistQuery(artistId, artist) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -256,10 +256,16 @@ function buildBandsInTownArtistQuery(artist) {
 		}
 	};
 
-	return helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
+	return new Promise(async (resolve, reject) => {
+		let response = await helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, 
+			getOptions,
+			false);
+		resolve({ artistId: artistId, queryResponse: response });
+	})
+	// return helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
 }
 
-function buildSongkickArtistIdQuery(artist) {
+function buildSongkickArtistIdQuery(artistId, artist) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -267,10 +273,16 @@ function buildSongkickArtistIdQuery(artist) {
 		}
 	};
 
-	return helpers.instrumentCall(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`, getOptions);
+	return new Promise(async (resolve, reject) => {
+		let response = await helpers.instrumentCall(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`,
+			getOptions,
+			false);
+		resolve({ artistId: artistId, queryResponse: response })
+	});
+	// return helpers.instrumentCall(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`, getOptions);
 }
 
-function buildSongkickArtistQuery(artistId) {
+function buildSongkickArtistQuery(artistId, songkickArtistId) {
 	let getOptions = {
 		method: 'GET',
 		headers: {
@@ -278,7 +290,13 @@ function buildSongkickArtistQuery(artistId) {
 		}
 	};
 
-	return helpers.instrumentCall(`https://api.songkick.com/api/3.0/artists/${artistId}/calendar.json?apikey=${constants.songkickSecret}`, getOptions);
+	return new Promise(async (resolve, reject) => {
+		let response = await helpers.instrumentCall(`https://api.songkick.com/api/3.0/artists/${songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`,
+			getOptions,
+			false);
+		resolve({ artistId: artistId, queryResponse: response });
+	})
+	// return helpers.instrumentCall(`https://api.songkick.com/api/3.0/artists/${songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`, getOptions);
 }
 
 module.exports = {

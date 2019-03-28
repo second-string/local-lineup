@@ -16,16 +16,19 @@ function requestError(response, exception = null) {
 	return response;
 }
 
-async function instrumentCall(url, options) {
+async function instrumentCall(url, options, logCurl) {
 	let res;
 	let error = null;
+
+	// Default value of true
+	logCurl = logCurl === undefined ? true : logCurl;
 	try {
 		res = await request(url, options);
 	} catch (e) {
 		error = requestError(res, e);
 	} finally {
 		// Log out a curl for every call we instrument.
-		if (process.env.DEPLOY_STAGE !== 'PROD') {
+		if (logCurl && process.env.DEPLOY_STAGE !== 'PROD') {
 			let curl = ['curl'];
 
 			// -s: don't show progress ascii

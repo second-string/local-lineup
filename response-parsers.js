@@ -50,15 +50,17 @@ function parseSongkickResponse(responseBody, location) {
 	}
 }
 
+// param is a list of { artistId: int, queryResponse: http response object }
 function parseSongkickArtistsResponse(responseList) {
 	let artistsObjects = [];
-	for (responseIndex in responseList) {
-		if (!responseList[responseIndex].success) {
-			console.log(`Failed query in Songkick artist ID requests, ${responseList[responseIndex].response}`);
+	for (let promiseObject of responseList) {
+		let responseObject = promiseObject.queryResponse;
+		if (!responseObject.success) {
+			console.log(`Failed query in Songkick artist ID requests, ${responseObject.response}`);
 			continue;
 		}
 
-		let responseBody = JSON.parse(responseList[responseIndex].response.body || responseList[responseIndex].response.query.body);
+		let responseBody = JSON.parse(responseObject.response.body || responseObject.response.query.body);
 		let singleArtistList = responseBody.resultsPage.results.artist;
 		if (singleArtistList === undefined) {
 			continue;
@@ -72,7 +74,7 @@ function parseSongkickArtistsResponse(responseList) {
 		 the artist ID as the index, since that's how the initial artist list is built in the express
 		 Server. I don't see this working out well in the future
 		*/
-		artistsObjects.push({ artistId: responseIndex, songkickId: singleArtistList[0].id });
+		artistsObjects.push({ artistId: promiseObject.artistId, songkickId: singleArtistList[0].id });
 	}
 
 	return artistsObjects;

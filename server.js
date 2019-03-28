@@ -39,8 +39,11 @@ app.post('/show-finder/playlists', async (req, res) => {
 		// If we have no status, that means we got our playlist json object back (success). If we have a code,
 		// instrumentCall returned our full failed response to us, so refresh the token and continue.
 		if (cachedAttempt.statusCode === undefined) {
+			console.log('Using cached spotify token...')
 			return res.send(cachedAttempt);
 		}
+
+		console.log('Attempt to use cached spotify token failed, refreshing');
 	}
 
 	spotifyToken = await showFinder.getSpotifyToken();
@@ -62,8 +65,6 @@ app.post('/show-finder/playlists', async (req, res) => {
 });
 
 app.get('/show-finder/artists', async (req, res) => {
-	console.log(req.body);
-	console.log('Query param: ' + req.query.playlistId);
 	let artists = await showFinder.getArtists(spotifyToken, req.query.playlistId);
 	if (artists.statusCode) {
 		console.log(`Call to get artists for playlist failed with status ${artists.statusCode}`);
@@ -119,7 +120,7 @@ app.post('/show-finder/shows', async (req, res) => {
 			shows: allServicesResponse[x]
 		}));
 
-	console.log(`Successfully fetch and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
+	console.log(`Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
 	res.json(mappedArtistsToShows);
 });
 
@@ -127,6 +128,7 @@ app.use((req, res, next) => {
 	// https://expressjs.com/en/api.html#req.secure
 	if (req.headers['x-forwarded-proto'] === 'http' || !req.secure) {
 		let path = req.route === undefined ? '' : req.route.path;	// https redirection working, but not the rebuild of the url
+		console.log('!!!!!!!!!!!!! FORWARDING HTTP TO HTTPS !!!!!!!!!!!!!');
 		console.log(req.originalUrl);
 		return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`)
 	}
@@ -136,6 +138,7 @@ app.use((req, res, next) => {
 
 var creds = {};
 if (process.env.DEPLOY_STAGE === 'PROD') {
+	console.log('Setting env variables for prod cert paths');
 	if (!process.env.PROD_SSL_KEY_PATH || !process.env.PROD_SSL_CERT_PATH || !process.env.PROD_SSL_CA_CERT_PATH) {
 		console.log("SSL cert env variables not set. Run the setup_env.sh script");
 		process.exit(1);
@@ -150,8 +153,9 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 		ca: ca
 	};
 } else {
-	var key = fs.readFileSync('./showfinder-selfsigned.crt');
-	var cert = fs.readFileSync('./showfinder-selfsigned.key');
+	console.log('Running server locally, using local self-signed cert');
+	var key = fs.readFileSync(__dirname + '/showfinder-selfsigned-key.pem', 'utf-8');
+	var cert = fs.readFileSync(__dirname + '/showfinder-selfsigned-cert.pem', 'utf-8');
 	creds = {
 		key: key,
 		cert: cert
