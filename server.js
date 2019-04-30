@@ -153,7 +153,7 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 		ca: ca
 	};
 } else {
-	console.log('Running server locally, using local self-signed cert');
+	console.log('Running server locally using local self-signed cert');
 	var key = fs.readFileSync(__dirname + '/showfinder-selfsigned-key.pem', 'utf-8');
 	var cert = fs.readFileSync(__dirname + '/showfinder-selfsigned-cert.pem', 'utf-8');
 	creds = {
@@ -164,5 +164,11 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer(creds, app);
-httpServer.listen(80);
-httpsServer.listen(port, () => console.log('http redirecting from 80 to 443, https listening on 443...'));
+
+if (process.env.DEPLOY_STAGE === 'PROD') {
+	httpServer.listen(8080);
+	httpsServer.listen(port, () => console.log('http redirecting from 8080 to 8443, https listening on 8443...'));
+} else {
+	httpServer.listen(80);
+	httpsServer.listen(port, () => console.log('http redirecting from 80 to 443, https listening on 443...'));
+}
