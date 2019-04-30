@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const showFinder = require('./show-finder');
 
 const app = express();
-const port = process.env.PORT || 443;
+const port = parseInt(process.env.PORT, 10) || process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
 
 // Poor man's in-mem cache
 var spotifyToken;
@@ -167,8 +167,8 @@ var httpsServer = https.createServer(creds, app);
 
 if (process.env.DEPLOY_STAGE === 'PROD') {
 	httpServer.listen(8080);
-	httpsServer.listen(port, () => console.log('http redirecting from 8080 to 8443, https listening on 8443...'));
+	httpsServer.listen(port, () => console.log(`http redirecting from 8080 to 8443, https listening on ${port}...`));
 } else {
 	httpServer.listen(80);
-	httpsServer.listen(port, () => console.log('http redirecting from 80 to 443, https listening on 443...'));
+	httpsServer.listen(port, () => console.log(`http redirecting from 80 to 443, https listening on ${port}...`));
 }
