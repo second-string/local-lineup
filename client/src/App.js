@@ -60,6 +60,11 @@ class App extends Component {
 
   getPlaylists = async e => {
     e.preventDefault();
+    if (this.state.selectedLocation == null || this.state.userName == null || this.state.userName === undefined || this.state.userName === '') {
+      alert('You must enter a username and location');
+      return;
+    }
+
     let postOptions = {
       method: 'POST',
       headers: {
@@ -181,7 +186,7 @@ class App extends Component {
                 { this.state.locations.map(x => <option key={x.value} value={x.value}> {x.displayName} </option>) }
                </select>
            </div>
-            <button className="unselectable" type="submit" disabled={this.state.selectedLocation == null || this.state.userName == null}>Submit</button>
+            <button className="unselectable" type="submit" disabled={this.state.selectedLocation == null || this.state.userName == null || this.state.userName === undefined || this.state.userName === ''}>Submit</button>
           </form>
         </div>
         <div>

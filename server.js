@@ -34,7 +34,7 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 app.post('/show-finder/playlists', async (req, res) => {
 	// If we have a token cached, give it a shot to see if it's still valid
 	if (spotifyToken) {
-		let cachedAttempt = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.query.username : 'bteamer');
+		let cachedAttempt = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.body.username : 'bteamer');
 
 		// If we have no status, that means we got our playlist json object back (success). If we have a code,
 		// instrumentCall returned our full failed response to us, so refresh the token and continue.
@@ -54,7 +54,7 @@ app.post('/show-finder/playlists', async (req, res) => {
 			.json(spotifyToken);
 	}
 
-	let playlists = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.query.username : 'bteamer');
+	let playlists = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.body.username : 'bteamer');
 	if (playlists.statusCode) {
 		console.log(`Call to get users playlists failed with status ${playlists.statusCode}`);
 		return res.status(playlists.statusCode)
