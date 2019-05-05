@@ -300,7 +300,6 @@ function buildBandsInTownArtistQuery(artistId, artist) {
 			false);
 		resolve({ artistId: artistId, queryResponse: response });
 	})
-	// return helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`, getOptions);
 }
 
 function buildSongkickArtistIdQuery(artistId, artist) {

@@ -146,7 +146,7 @@ class App extends Component {
     let shows = await showsJson.json();
 
     // shows.length is actually a count of number of artists returned
-    let showCount = shows.map(x => x.shows.length).reduce((x, y) => x + y);
+    let showCount = shows.map(x => x.shows.length || 0).reduce((x, y) => x + y, 0);
     let location = this.state.locations.filter(x => x.value === this.state.selectedLocation).map(x => x.displayName);
 
     let header;
