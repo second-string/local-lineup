@@ -114,13 +114,14 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 	let bandsInTownQueries = [];
 	artists.forEach(x => bandsInTownQueries.push(buildBandsInTownArtistQuery(x.id, x.name)));
 	console.log('Getting BandsInTown artist shows...');
-	let bandsInTownResponseObjects = await Promise.all(bandsInTownQueries);
 
+	let bandsInTownResponseObjects = await Promise.all(bandsInTownQueries);
 	let bandsInTownShowsFound = 0;
 	for (let promiseObject of bandsInTownResponseObjects) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
-			console.log(`Failed query in BandsInTown requests, ${responseObject.response}`);
+			console.log(`Failed query in BandsInTown requests:`);
+			console.log(responseObject.response);
 			continue;
 		}
 
@@ -158,7 +159,9 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 	for (let promiseObject of songkickResponseObjects) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
-			console.log(`Failed query in Songkick artist show requests, ${responseObject.response}`);
+			console.log(`Failed query in Songkick artist show requests:`);
+			console.log(responseObject.response);
+			continue;
 		}
 
 		let cleanedShowObjects = parsers.parseSongkickResponse(responseObject.response.body, location);
@@ -193,7 +196,9 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 	for (let promiseObject of seatGeekResponseObjects) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
-			console.log(`Failed query in SeatGeek artist show requests, ${responseObject.response}`);
+			console.log(`Failed query in SeatGeek artist show requests:`);
+			console.log(responseObject.response);
+			continue;
 		}
 
 		let cleanedShowObjects = parsers.parseSeatGeekResponse(responseObject.response.body, location);

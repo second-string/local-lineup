@@ -19,6 +19,10 @@ button {
   outline: none;
 }
 
+.align-left {
+  text-align: left;
+}
+
 #location-select {
   display: block;
   margin: auto;

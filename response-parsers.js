@@ -3,7 +3,12 @@ function parseBandsInTownResponse(responseBody, location) {
 	try {
 		body = JSON.parse(responseBody);
 	} catch (e) {
-		throw new Error('Failed to parse JSON for ' + responseBody);
+		// Don't log out missing artists
+		if (!responseBody.includes('{warn=Not found}')) {
+			console.log('ERROR: Failed to parse JSON for ' + responseBody);
+		}
+
+		return null;
 	}
 
 	if (body.errorMessage) {
@@ -56,7 +61,8 @@ function parseSongkickArtistsResponse(responseList) {
 	for (let promiseObject of responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
-			console.log(`Failed query in Songkick artist ID requests, ${responseObject.response}`);
+			console.log(`Failed query in Songkick artist ID requests:`);
+			console.log(responseObject.response);
 			continue;
 		}
 
@@ -112,7 +118,8 @@ function parseSeatGeekArtistsResponse(responseList) {
 	for (let promiseObject of responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
-			console.log(`Failed query in Songkick artist ID requests, ${responseObject.response}`);
+			console.log(`Failed query in Songkick artist ID requests`);
+			console.log(responseObject.response);
 			continue;
 		}
 

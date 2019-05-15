@@ -4,7 +4,7 @@ import ReactList from 'react-list-select';
 import './App.css';
 
 class App extends Component {
-  state = {
+  baseState = {
     userName: null,
     headerText: 'Show Finder',
     playlists: [],
@@ -20,16 +20,23 @@ class App extends Component {
     selectedLocation: null
   }
 
+  state = {};
+
   async instrumentCall(url, options) {
     let res;
     try {
       res = await fetch(url, options);
     } catch (e) {
+      console.log(e);
       throw new Error(e);
     }
 
     if (res.status >= 400) {
-      throw new Error(res);
+      console.log(`ERROR contacting ${url} with options:`);
+      console.log(options);
+      console.log('Reponse: ');
+      console.log(res);
+      // throw new Error(res);
     }
 
     return res;
@@ -43,6 +50,8 @@ class App extends Component {
     // the styling and selectedItems logic to get completely borked
     this.playlistListRef = React.createRef();
     this.artistListRef = React.createRef();
+
+    this.state = this.baseState;
   }
 
   componentDidMount() {
@@ -56,6 +65,16 @@ class App extends Component {
      { value: 'philadelphia', displayName: 'Philadelphia' }
     ];
     this.setState({ locations: locations });
+  }
+
+  resetState() {
+    this.setState(this.baseState);
+  }
+
+  newSearch() {
+    let userName = this.state.userName;
+    this.resetState();
+    this.setState({ userName: userName});
   }
 
   getPlaylists = async e => {
@@ -125,6 +144,14 @@ class App extends Component {
     e.preventDefault();
 
     let selectedArtistIndices = this.artistListRef.current.state.selectedItems;
+
+    // If no artists have been selected then selectedArtistIndices will be an iterator.
+    // If any have, it will be an array. Fuck this list implementation
+    if (selectedArtistIndices.length === undefined && selectedArtistIndices.next()) {
+      alert('You must select at least one artist. Select the list and all artists are included by default.');
+      return;
+    }
+
     let encodedArtists = this.state.allArtists
       .filter((x, i) => selectedArtistIndices.includes(i))
       .map(x => encodeURI(x));
@@ -174,6 +201,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
+        <button className="unselectable align-left" onClick={this.newSearch} style={{ display: this.state.showingShows ? '' : 'none' }}>New Search</button>
         <h1>{ this.state.headerText }</h1>
         <div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
         <div style={{ display: this.state.showingForm ? '' : 'none' }}>
