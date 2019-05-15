@@ -74,8 +74,8 @@ async function getArtists(spotifyToken, playlistId) {
 		artists.push(body.items
 			.map(x => x.track)
 			.map(x => x.artists)
-				.map(x => x[0])					// each artist is a list of a single object (ew)
-				.map(x => encodeURI(x.name)));	// encode to URL-safe characters
+				.map(x => x[0])							// each artist is a list of a single object (ew)
+				.map(x => encodeURIComponent(x.name)));	// encode to URL-safe characters
 
 		} while (body.next != null);
 

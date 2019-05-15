@@ -11,7 +11,7 @@ function getMatchingArtist(domArtist, userSelectedArtists) {
 
 	for (artistObject of userSelectedArtists)
 	{
-		if (decodeURI(artistObject.name).toLowerCase() === domArtist.children[0].data.toLowerCase()) {
+		if (decodeURIComponent(artistObject.name).toLowerCase() === domArtist.children[0].data.toLowerCase()) {
 			return artistObject;
 		}
 	}

@@ -65,7 +65,7 @@ cursor: default;
 .react-list-select {
   text-align: center;
   display: inline-block;
-  min-width: 400px;
+  min-width: 600px;
   border-radius: 5px;
   border-style: solid;
   border-color: #79b9ff;

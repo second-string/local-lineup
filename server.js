@@ -116,7 +116,7 @@ app.post('/show-finder/shows', async (req, res) => {
 	let mappedArtistsToShows = Object.keys(allServicesResponse)
 		.filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
 		.map(x => ({
-			artistName: decodeURI(artists.find(y => y.id === parseInt(x)).name).toString(),
+			artistName: decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
 			shows: allServicesResponse[x]
 		}));
 

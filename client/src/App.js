@@ -131,7 +131,7 @@ class App extends Component {
     let artistJson = await res.json();
     let decodedArtists = [];
     for (let index in Object.keys(artistJson)) {
-      decodedArtists.push(decodeURI(artistJson[index]));
+      decodedArtists.push(decodeURIComponent(artistJson[index]));
     }
 
     this.setState({
@@ -156,8 +156,8 @@ class App extends Component {
 
     let encodedArtists = this.state.allArtists
       .filter((x, i) => selectedArtistIndices.includes(i))
-      .map(x => encodeURI(x));
-
+      .map(x => encodeURIComponent(x));
+      console.log(encodedArtists);
     let postOptions = {
       method: 'POST',
       headers: {
