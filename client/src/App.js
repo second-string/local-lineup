@@ -22,6 +22,16 @@ class App extends Component {
 
   state = {};
 
+  locations = [
+     { value: 'san francisco', displayName: 'San Francisco' },
+     { value: 'los angeles', displayName: 'Los Angeles' },
+     { value: 'washington', displayName: 'Washington DC' },
+     { value: 'new york', displayName: 'New York' },
+     { value: 'chicago', displayName: 'Chicago' },
+     { value: 'houston', displayName: 'Houston' },
+     { value: 'philadelphia', displayName: 'Philadelphia' }
+    ];
+
   async instrumentCall(url, options) {
     let res;
     try {
@@ -55,26 +65,18 @@ class App extends Component {
   }
 
   componentDidMount() {
-    let locations = [
-     { value: 'san francisco', displayName: 'San Francisco' },
-     { value: 'los angeles', displayName: 'Los Angeles' },
-     { value: 'washington', displayName: 'Washington DC' },
-     { value: 'new york', displayName: 'New York' },
-     { value: 'chicago', displayName: 'Chicago' },
-     { value: 'houston', displayName: 'Houston' },
-     { value: 'philadelphia', displayName: 'Philadelphia' }
-    ];
-    this.setState({ locations: locations });
+    this.setState({ locations: this.locations });
   }
 
   resetState() {
     this.setState(this.baseState);
   }
 
-  newSearch() {
+  newSearch = () => {
+    console.log(this.state);
     let userName = this.state.userName;
     this.resetState();
-    this.setState({ userName: userName});
+    this.setState({ userName: userName, locations: this.locations });
   }
 
   getPlaylists = async e => {
@@ -201,7 +203,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <button className="unselectable align-left" onClick={this.newSearch} style={{ display: this.state.showingShows ? '' : 'none' }}>New Search</button>
+        <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingForm ? 'none' : '' }}>New Search</button>
         <h1>{ this.state.headerText }</h1>
         <div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
         <div style={{ display: this.state.showingForm ? '' : 'none' }}>
