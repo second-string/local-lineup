@@ -24,13 +24,6 @@ app.use(morgan('[:date[clf]] - ":method :url" | Status - :status | Response leng
 
 app.use(bodyParser.json());
 
-// No static file routing for dev env because the react webpack server will handle it for us
-if (process.env.DEPLOY_STAGE === 'PROD') {
-	let production_app_dir = path.join(__dirname, 'client/build');
-	app.use(express.static(production_app_dir));
-	app.get('*', (req, res) => res.sendFile('index.html', { root: production_app_dir }));
-}
-
 app.post('/show-finder/playlists', async (req, res) => {
 	// If we have a token cached, give it a shot to see if it's still valid
 	if (spotifyToken) {
@@ -136,9 +129,20 @@ app.use((req, res, next) => {
 	return next();
 });
 
+// No static file routing for dev env because the react webpack server will handle it for us
+if (process.env.DEPLOY_STAGE === 'PROD' || process.env.DEPLOY_STAGE === 'LOCAL_PROD') {
+	let production_app_dir = path.join(__dirname, 'client/build');
+	app.use(express.static(production_app_dir));
+
+	app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: production_app_dir }));
+
+	app.get('/show-finder/', (req, res) => res.sendFile('show-finder.html', { root: production_app_dir }));
+
+	app.get('*', (req, res) => res.sendFile('index.html', { root: production_app_dir }));
+}
+
 var creds = {};
 if (process.env.DEPLOY_STAGE === 'PROD') {
-	console.log('Setting env variables for prod cert paths');
 	if (!process.env.PROD_SSL_KEY_PATH || !process.env.PROD_SSL_CERT_PATH || !process.env.PROD_SSL_CA_CERT_PATH) {
 		console.log("SSL cert env variables not set. Run the setup_env.sh script");
 		process.exit(1);
