@@ -75,3 +75,6 @@ nodemon.json
 *.crt
 *.key
 *.pem
+
+# self-explanatory
+*.DS_STORE
