@@ -25,8 +25,9 @@
     "dotenv": "^6.0.0",
     "express": "^4.16.4",
     "form-urlencoded": "^3.0.0",
+    "i": "^0.3.6",
     "inquirer": "^6.2.0",
     "morgan": "^1.9.1",
-    "nodemon": "^1.18.10"
+    "nodemon": "^1.19.0"
   }
 }
