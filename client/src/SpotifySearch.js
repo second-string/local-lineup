@@ -241,4 +241,4 @@ class SpotifySearch extends Component {
   }
 }
 
-export default App;
+export default SpotifySearch;

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js & npm start --prefix client/",
+    "dev": "npm run devBuild --prefix client && nodemon server.js",
+    "devOld": "nodemon server.js & npm run --prefix client/",
     "deploy": "npm run-script build --prefix client/ && nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -28,5 +29,10 @@
     "inquirer": "^6.2.0",
     "morgan": "^1.9.1",
     "nodemon": "^1.18.10"
+  },
+  "devDependencies": {
+    "webpack": "^4.31.0",
+    "webpack-dev-middleware": "^3.7.0",
+    "webpack-hot-middleware": "^2.25.0"
   }
 }

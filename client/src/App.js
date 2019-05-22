@@ -10,7 +10,7 @@ class App extends Component {
     return (
       <div className="App">
         <h3>helloaf</h3>
-        <a href="/show-finder/">Show Finder</a>
+        <a href="show-finder/">Show Finder</a>
       </div>
     );
   }

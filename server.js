@@ -130,17 +130,24 @@ app.use((req, res, next) => {
 });
 
 // No static file routing for dev env because the react webpack server will handle it for us
-if (process.env.DEPLOY_STAGE === 'PROD' || process.env.DEPLOY_STAGE === 'LOCAL_PROD') {
-	let production_app_dir = path.join(__dirname, 'client/build');
-	app.use(express.static(production_app_dir));
-
-	app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: production_app_dir }));
-
-	app.get('/show-finder/', (req, res) => res.sendFile('show-finder.html', { root: production_app_dir }));
-
-	app.get('*', (req, res) => res.sendFile('index.html', { root: production_app_dir }));
+let static_app_dir = '';
+if (process.env.DEPLOY_STAGE === 'PROD' || process.env.DEPLOY_STAGE === 'LOCAL') {
+	static_app_dir = path.join(__dirname, 'client/build');
+	console.log(`Routing to static files in ${static_app_dir}...`);
+} else {
+	//webpack dev server
+	static_app_dir = path.join(__dirname, 'client/devBuild')
 }
 
+app.use(express.static(static_app_dir));
+
+app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: static_app_dir }));
+
+app.get('/show-finder/', (req, res) => res.sendFile('show-finder.html', { root: static_app_dir }));
+
+app.get('*', (req, res) => res.sendFile('index.html', { root: static_app_dir }));
+
+// HTTPS certs
 var creds = {};
 if (process.env.DEPLOY_STAGE === 'PROD') {
 	if (!process.env.PROD_SSL_KEY_PATH || !process.env.PROD_SSL_CERT_PATH || !process.env.PROD_SSL_CA_CERT_PATH) {
