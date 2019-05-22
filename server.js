@@ -131,7 +131,7 @@ app.use((req, res, next) => {
 
 // No static file routing for dev env because the react webpack server will handle it for us
 let static_app_dir = '';
-if (process.env.DEPLOY_STAGE === 'PROD' || process.env.DEPLOY_STAGE === 'LOCAL') {
+if (process.env.DEPLOY_STAGE === 'PROD') {
 	static_app_dir = path.join(__dirname, 'client/build');
 	console.log(`Routing to static files in ${static_app_dir}...`);
 } else {

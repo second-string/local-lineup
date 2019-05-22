@@ -64,6 +64,7 @@ setup_env.sh
 
 # Don't transfer deployment bundle
 client/build
+client/devBuild
 
 # nodemon config is for setting DEPLOY_STAGE env var
 nodemon.json
@@ -78,3 +79,5 @@ nodemon.json
 
 # self-explanatory
 *.DS_STORE
+
+
