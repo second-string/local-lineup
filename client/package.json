@@ -58,8 +58,9 @@
     "start": "node scripts/start.js",
     "buildOld": "node scripts/build.js",
     "test": "node scripts/test.js",
-    "devBuild": "webpack --config webpack.dev.js --mode production",
-    "devServer": "webpack-dev-server --config webpack.dev.js"
+    "devBuild": "webpack --config webpack.dev.js",
+    "devServer": "webpack-dev-server --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js"
   },
   "eslintConfig": {
     "extends": "react-app"
