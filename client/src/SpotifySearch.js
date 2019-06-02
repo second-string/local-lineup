@@ -68,15 +68,15 @@ class SpotifySearch extends Component {
     this.setState({ locations: this.locations });
   }
 
-  resetState() {
-    this.setState(this.baseState);
+  resetState(overrides) {
+    console.log(this.baseState);
+    let newState = {...this.baseState, ...overrides };
+    console.log(newState);
+    this.setState(newState);
   }
 
   newSearch = () => {
-    console.log(this.state);
-    let userName = this.state.userName;
-    this.resetState();
-    this.setState({ userName: userName, locations: this.locations });
+    this.resetState({ userName: this.state.userName, locations: this.locations, selectedLocation: this.state.selectedLocation });
   }
 
   getPlaylists = async e => {
@@ -200,6 +200,16 @@ class SpotifySearch extends Component {
     });
   }
 
+  userNameStateChange = (entry) => {
+    console.log(entry.target.value); 
+    this.setState({ userName: entry.target.value });
+  }
+
+  locationStateChange = (selection) => {
+    console.log(selection.target.value);
+    this.setState({ selectedLocation: selection.target.value });
+  }
+
   render() {
     return (
       <div className="SpotifySearch">
@@ -210,8 +220,8 @@ class SpotifySearch extends Component {
           <h4>Enter your spotify username:</h4>
           <form onSubmit={this.getPlaylists}>
             <div>
-              <input className="textbox" type="text" onChange={ entry => this.setState({ userName: entry.target.value }) } />
-              <select id='location-select' onChange={ selection => this.setState({ selectedLocation: selection.target.value }) }>
+              <input className="textbox" type="text" onChange={this.userNameStateChange} />
+              <select id='location-select' onChange={this.locationStateChange}>
                 <option id='' disabled defaultValue> Choose a location </option>
                 { this.state.locations.map(x => <option key={x.value} value={x.value}> {x.displayName} </option>) }
                </select>
