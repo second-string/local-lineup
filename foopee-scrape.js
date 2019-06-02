@@ -1,4 +1,4 @@
-var request = require('async-request');
+var fetch = require('node-fetch');
 var cheerio = require('cheerio');
 
 // Will return the { id, name } object for the artist we're looking for, null if this
@@ -21,15 +21,16 @@ function getMatchingArtist(domArtist, userSelectedArtists) {
 
 // artists param is a list of { id, name }
 async function getFoopeeShows(artists) {
-	let response = await request('http://www.foopee.com/punk/the-list/', { method: 'GET' });
-	if (response.statusCode !== 200) {
-		console.log(`Status of ${response.statusCode}, exiting`);
-		console.log(response);
+	let unparsedResponse = await fetch('http://www.foopee.com/punk/the-list/', { method: 'GET' });
+	if (!unparsedResponse.ok) {
+		console.log(`Status of ${unparsedResponse.statusText}, exiting`);
+		console.log(unparsedResponse);
 		process.exit(1);
 	}
+	let response = await unparsedResponse.text();
 
 	// Pulling in all bands available on page
-	let root = cheerio.load(response.body);
+	let root = cheerio.load(response);
 	let headings = root('dt > b');
 	let bandsTable = null;
 	for (let i = 0; i < headings.length; i++) {
@@ -70,12 +71,13 @@ async function getFoopeeShows(artists) {
 	for (index in Object.keys(artistObjectsByHref)) {
 		//request page href
 		let href = Object.keys(artistObjectsByHref)[index];
-		let showPage = await request(`http://www.foopee.com/punk/the-list/${href}`, { method: 'GET' });
-		if (showPage.statusCode !== 200) {
-			console.log(`Status of ${showPage.statusCode}, exiting`);
-			console.log(showPage);
+		let unparsedShowPage = await fetch(`http://www.foopee.com/punk/the-list/${href}`, { method: 'GET' });
+		if (!unparsedShowPage.ok) {
+			console.log(`Status of ${unparsedShowPage.statusText}, exiting`);
+			console.log(unparsedShowPage);
 			process.exit(1);
 		}
+		let showPage = await unparsedShowPage.text();
 
 		// Yeah so right now this is going to run down the entire page of artists and if one of them
 		// is in our list of artists we're looking for on this page, we grab their shows and keep going.
@@ -83,7 +85,7 @@ async function getFoopeeShows(artists) {
 		// (because I'm assuming that the number of artists we're searching for is decently < number on page),
 		// versus O(n^2) for if we looped through the artists we're looking for and then scan down the
 		// page for each of them, but I dunno if cheerio does some shit better than that.
-		root = cheerio.load(showPage.body);
+		root = cheerio.load(showPage);
 		let domArtists = root('li > a');
 		let artistObjectsOnPage = artistObjectsByHref[href];
 		for (let key of Object.keys(domArtists)) {

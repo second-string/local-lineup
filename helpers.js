@@ -1,4 +1,4 @@
-var request = require('async-request');
+var fetch = require('node-fetch');
 var formUrlEncode = require('form-urlencoded').default;
 
 
@@ -19,13 +19,36 @@ function requestError(response, exception = null) {
 async function instrumentCall(url, options, logCurl) {
 	let res;
 	let error = null;
+	let encodedBody = '';
 
 	// Default value of true
 	logCurl = logCurl === undefined ? true : logCurl;
+
 	try {
-		res = await request(url, options);
+		if (options.body) {
+			switch (options.headers['Content-type']) {
+				case 'application/json':
+					encodedBody = JSON.stringify(options.body);
+					break;
+				case 'application/x-www-form-urlencoded':
+					encodedBody = formUrlEncode(options.body);
+					break;
+				default:
+					throw new Error(`Need to supply a data encoded for ${JSON.stringify(options.body, null, 2)}`);
+			}
+
+			options.body = encodedBody;
+		}
+
+		let unparsedRes = await fetch(url, options);
+
+		if (unparsedRes && !unparsedRes.ok) {
+			error = unparsedRes;
+		} else {
+			res = await unparsedRes.json();
+		}
 	} catch (e) {
-		error = requestError(res, e);
+		error = unparsedRes;
 	} finally {
 		// Log out a curl for every call we instrument.
 		if (logCurl && process.env.DEPLOY_STAGE !== 'PROD') {
@@ -41,29 +64,13 @@ async function instrumentCall(url, options, logCurl) {
 				curl.push(`-H \'${header}: ${options.headers[header]}\'`);
 			}
 
-			if (options.data) {
-				let encodedData;
-				switch (options.headers['Content-type']) {
-					case 'application/json':
-						encodedData = JSON.stringify(options.data);
-						break;
-					case 'application/x-www-form-urlencoded':
-						encodedData = formUrlEncode(options.data);
-						break;
-					default:
-						throw new Error(`Need to supply a data encoded for ${JSON.stringify(options.data, null, 2)} in curl logging`);
-				}
-
-				curl.push(`-d \'${encodedData}\'`);
+			if (encodedBody) {
+				curl.push(`-d \'${encodedBody}\'`);
 			}
 
 			curl.push('--compressed');
 			console.log(curl.join(' '));
 		}
-	}
-
-	if (res && res.statusCode >= 400) {
-		error = requestError(res);
 	}
 
 	let success = error === null;

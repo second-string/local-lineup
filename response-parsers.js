@@ -1,17 +1,9 @@
 function parseBandsInTownResponse(responseBody, location) {
-	let body;
-	try {
-		body = JSON.parse(responseBody);
-	} catch (e) {
-		// Don't log out missing artists
-		if (!responseBody.includes('{warn=Not found}')) {
-			console.log('ERROR: Failed to parse JSON for ' + responseBody);
-		}
-
+	if (typeof(responseBody) === 'string' && responseBody.includes('{warn=Not found}')) {
 		return null;
 	}
 
-	if (body.errorMessage) {
+	if (responseBody.errorMessage) {
 		// Most likely artist not found
 		return null;
 	}
@@ -19,7 +11,7 @@ function parseBandsInTownResponse(responseBody, location) {
 	// We do weird shit with the datetime to strip off the timezone so we can create a datetime with just the date.
 	// If you don't the datetime automatically converts it to UTC for its string repres., which for all late-night, west-coast
 	// shows rolls it to the next day. This is the only way to get rid of it _before_ creating the Date object
-	let shows = body.filter(x => x.venue.city.toLowerCase().includes(location))
+	let shows = responseBody.filter(x => x.venue.city.toLowerCase().includes(location))
 		.map(x =>  {
 			let showObj = {
 				show: x.venue.name,
@@ -34,15 +26,8 @@ function parseBandsInTownResponse(responseBody, location) {
 }
 
 function parseSongkickResponse(responseBody, location) {
-	let body;
-	try {
-		body = JSON.parse(responseBody);
-	} catch (e) {
-		throw new Error('Failed to parse JSON for ' + responseBody);
-	}
-
-	if (body.resultsPage.totalEntries !== 0) {
-		let eventList = body.resultsPage.results.event;
+	if (responseBody.resultsPage.totalEntries !== 0) {
+		let eventList = responseBody.resultsPage.results.event;
 		let shows = eventList.filter(x => x.location.city.toLowerCase().includes(location))
 			.map(x => ({
 				date: new Date(x.start.date),
@@ -66,7 +51,7 @@ function parseSongkickArtistsResponse(responseList) {
 			continue;
 		}
 
-		let responseBody = JSON.parse(responseObject.response.body || responseObject.response.query.body);
+		responseBody = responseObject.response || responseObject.response.query;
 		let singleArtistList = responseBody.resultsPage.results.artist;
 		if (singleArtistList === undefined) {
 			continue;
@@ -87,18 +72,11 @@ function parseSongkickArtistsResponse(responseList) {
 }
 
 function parseSeatGeekResponse(responseBody, location) {
-	let body;
-	try {
-		body = JSON.parse(responseBody);
-	} catch (e) {
-		throw new Error('Failed to parse JSON for ' + responseBody);
-	}
-
-	if (body.meta.total === 0) {
+	if (responseBody.meta.total === 0) {
 		return null;
 	}
 
-	let shows = body.events
+	let shows = responseBody.events
 		.filter(x => x.venue.city.toLowerCase().includes(location))
 		.map(x => {
 			let showObj = {
@@ -118,12 +96,12 @@ function parseSeatGeekArtistsResponse(responseList) {
 	for (let promiseObject of responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
-			console.log(`Failed query in Songkick artist ID requests`);
-			console.log(responseObject.response);
+			console.log(`Failed query in SeatGeek artist ID requests`);
+			console.log(responseObject);
 			continue;
 		}
 
-		let responseBody = JSON.parse(responseObject.response.body || responseObject.response.query.body);
+		let responseBody = responseObject.response || responseObject.response.query;
 		if (responseBody.meta.total === 0) {
 			// No results for this artist
 			continue;

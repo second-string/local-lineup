@@ -176,10 +176,13 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer(creds, app);
 
+httpServer.on('error', e => console.log(e));
+httpsServer.on('error', e => console.log(e));
+
 if (process.env.DEPLOY_STAGE === 'PROD') {
 	httpServer.listen(8080);
-	httpsServer.listen(port, () => console.log(`http redirecting from 8080 to 8443, https listening on ${port}...`));
+	httpsServer.listen(port, () => console.log(`http redirecting from 8080 to 8443, https listening on ${port}...`))
 } else {
 	httpServer.listen(80);
-	httpsServer.listen(port, () => console.log(`http redirecting from 80 to 443, https listening on ${port}...`));
+	httpsServer.listen(port, () => console.log(`http redirecting from 80 to 443, https listening on ${port}...`))
 }

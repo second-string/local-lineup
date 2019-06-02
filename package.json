@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/dot4qu/Show-Finder#readme",
   "dependencies": {
-    "async-request": "^1.2.0",
     "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.2",
     "dotenv": "^6.0.0",
@@ -28,6 +27,7 @@
     "form-urlencoded": "^3.0.0",
     "inquirer": "^6.2.0",
     "morgan": "^1.9.1",
+    "node-fetch": "^2.6.0",
     "nodemon": "^1.18.10"
   },
   "devDependencies": {

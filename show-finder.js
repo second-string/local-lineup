@@ -1,4 +1,3 @@
-var request = require('async-request');
 var inquirer = require('inquirer');
 var constants = require('./constants');
 var helpers = require('./helpers');
@@ -13,7 +12,7 @@ var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`
 async function getSpotifyToken() {
 	let postOptions = {
 		method: 'POST',
-		data: {
+		body: {
 			'grant_type': 'client_credentials'
 		},
 		headers: {
@@ -23,9 +22,8 @@ async function getSpotifyToken() {
 	};
 
 	console.log('Getting spotify API token...');
-	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions);
-
-	return success ? `Bearer ${JSON.parse(response.body).access_token}` : response;
+	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, false);
+	return success ? `Bearer ${response.access_token}` : response;
 }
 
 async function getPlaylists(spotifyToken, userId) {
@@ -38,15 +36,14 @@ async function getPlaylists(spotifyToken, userId) {
 	};
 
 	console.log('Getting playlists...');
-	let { success, response } = await helpers.instrumentCall(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions);
+	let { success, response } = await helpers.instrumentCall(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions, false);
 
 	if (!success) {
 		return response;
 	}
 
-	let body = JSON.parse(response.body);
 	let playlistNamesById = {};
-	body.items.forEach(x => playlistNamesById[x.id] = x.name);
+	response.items.forEach(x => playlistNamesById[x.id] = x.name);
 	return playlistNamesById;
 }
 
@@ -59,25 +56,25 @@ async function getArtists(spotifyToken, playlistId) {
 		}
 	};
 
-	let body = {};
+	let page = {};
 	let artists = [];
 	console.log('Getting artists...');
 	do {
-		let { success, response } = await helpers.instrumentCall(body.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions);
+		let { success, response } = await helpers.instrumentCall(page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions, false);
 		if (!success) {
 			return response;
 		}
 
-		body = JSON.parse(response.body);
+		page = response;
 
 		// Amalgamates a list of lists, where each top-level list is one endpoint page
-		artists.push(body.items
+		artists.push(page.items
 			.map(x => x.track)
 			.map(x => x.artists)
 				.map(x => x[0])							// each artist is a list of a single object (ew)
 				.map(x => encodeURIComponent(x.name)));	// encode to URL-safe characters
 
-		} while (body.next != null);
+		} while (page.next != null);
 
 	// Filter out duplicates
 	hasSeen = {};
@@ -125,7 +122,7 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 			continue;
 		}
 
-		let cleanedShowObjects = parsers.parseBandsInTownResponse(responseObject.response.body, location);
+		let cleanedShowObjects = parsers.parseBandsInTownResponse(responseObject.response, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			bandsInTownShowsFound++;
 			if (showsByArtistId[promiseObject.artistId]){
@@ -164,7 +161,7 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 			continue;
 		}
 
-		let cleanedShowObjects = parsers.parseSongkickResponse(responseObject.response.body, location);
+		let cleanedShowObjects = parsers.parseSongkickResponse(responseObject.response, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			songkickShowsFound++;
 			if (showsByArtistId[promiseObject.artistId]){
@@ -201,7 +198,7 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 			continue;
 		}
 
-		let cleanedShowObjects = parsers.parseSeatGeekResponse(responseObject.response.body, location);
+		let cleanedShowObjects = parsers.parseSeatGeekResponse(responseObject.response, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			seatGeekShowsFound++;
 			if (showsByArtistId[promiseObject.artistId]){
@@ -381,7 +378,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
 				getOptions,
 				false);
 
-			responseBody = JSON.parse(response.response.body);
+			responseBody = response.response;
 			fullEventsList = fullEventsList.concat(responseBody.events);
 			total = responseBody.meta.total;
 		} while (perPage * page <= total);
@@ -390,7 +387,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
 		// list out of its body. Here we rip open the final response from the last page request, show the full events list in there, and then
 		// stringify it all back up and act like nothing happened
 		responseBody.events = fullEventsList;
-		response.response.body = JSON.stringify(responseBody);
+		response.response = JSON.stringify(responseBody);
 		resolve({ artistId: artistId, queryResponse: response });
 	});
 }
