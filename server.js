@@ -20,7 +20,7 @@ fs.mkdir('logs', err => {
 	}
 });
 let requestLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'requests.log'), { flags: 'a' });
-app.use(morgan('[:date[clf]] - ":method :url" | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms', { stream: requestLogStream }));
+app.use(morgan('[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent', { stream: requestLogStream }));
 
 app.use(bodyParser.json());
 
