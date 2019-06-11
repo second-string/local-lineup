@@ -140,11 +140,9 @@ if (process.env.DEPLOY_STAGE === 'PROD') {
 }
 
 app.use(express.static(static_app_dir));
-
 app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: static_app_dir }));
-
+app.get('/show-finder/venue-search', (req, res) => res.sendFile('venue-search.html', { root: static_app_dir }));
 app.get('/show-finder/', (req, res) => res.sendFile('show-finder.html', { root: static_app_dir }));
-
 app.get('*', (req, res) => res.sendFile('index.html', { root: static_app_dir }));
 
 // HTTPS certs

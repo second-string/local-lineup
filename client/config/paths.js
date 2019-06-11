@@ -85,7 +85,9 @@ module.exports = {
   // publicUrl: getPublicUrl(resolveApp('package.json')),
   // servedPath: getServedPath(resolveApp('package.json')),
   spotifySearchJs: resolveModule(resolveApp, 'src/spotify-search'),
-  spotifyHtml: resolveApp('public/spotify-search.html')
+  spotifyHtml: resolveApp('public/spotify-search.html'),
+  venueSearchJs: resolveModule(resolveApp, 'src/venue-search'),
+  venueHtml: resolveApp('public/venue-search.html')
 };
 
 

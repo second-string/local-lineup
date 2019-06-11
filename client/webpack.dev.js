@@ -13,7 +13,8 @@ module.exports = {
 	 //    	'webpack-hot-middleware/client'
   //   	],
 		app: paths.appIndexJs,
-		spotify: paths.spotifySearchJs
+		spotify: paths.spotifySearchJs,
+    venue: paths.venueSearchJs
 	},
 	devServer: {
 		publicPath: '/',
@@ -91,6 +92,12 @@ module.exports = {
 			template: 'public/show-finder.html',
 			filename: 'show-finder.html',
 			chunks: [],
-		})
+		}),
+    new HtmlWebpackPlugin({
+      template: paths.venueHtml,
+      filename: 'venue-search.html',
+      chunks: ['venue'],
+      inject: true
+    })
 	]
 };
