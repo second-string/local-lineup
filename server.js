@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const showFinder = require('./show-finder');
+const venueShowSearch = require('./venue-show-finder');
 
 const app = express();
 const port = parseInt(process.env.PORT, 10) || process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
@@ -31,7 +32,7 @@ app.post('/show-finder/playlists', async (req, res) => {
 
 		// If we have no status, that means we got our playlist json object back (success). If we have a code,
 		// instrumentCall returned our full failed response to us, so refresh the token and continue.
-		if (cachedAttempt.statusCode === undefined) {
+		if (cachedAttempt.ok === undefined) {
 			console.log('Using cached spotify token...')
 			return res.send(cachedAttempt);
 		}
@@ -41,16 +42,16 @@ app.post('/show-finder/playlists', async (req, res) => {
 
 	spotifyToken = await showFinder.getSpotifyToken();
 
-	if (spotifyToken.statusCode) {
-		console.log(`Call to get spotify token failed with status ${spotifyToken.statusCode}`);
-		return res.status(spotifyToken.statusCode)
+	if (!spotifyToken.ok) {
+		console.log(`Call to get spotify token failed with status ${spotifyToken.status}`);
+		return res.status(spotifyToken.status)
 			.json(spotifyToken);
 	}
 
 	let playlists = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.body.username : 'bteamer');
-	if (playlists.statusCode) {
-		console.log(`Call to get users playlists failed with status ${playlists.statusCode}`);
-		return res.status(playlists.statusCode)
+	if (!playlists.ok) {
+		console.log(`Call to get users playlists failed with status ${playlists.status}`);
+		return res.status(playlists.status)
 			.json(playlists);
 	}
 
@@ -59,13 +60,25 @@ app.post('/show-finder/playlists', async (req, res) => {
 
 app.get('/show-finder/artists', async (req, res) => {
 	let artists = await showFinder.getArtists(spotifyToken, req.query.playlistId);
-	if (artists.statusCode) {
-		console.log(`Call to get artists for playlist failed with status ${artists.statusCode}`);
-		return res.status(artists.statusCode)
+	if (!artists.ok) {
+		console.log(`Call to get artists for playlist failed with status ${artists.status}`);
+		return res.status(artists.status)
 			.json(artists);
 	}
 
 	res.json(artists);
+});
+
+app.get('/show-finder/venues', async (req, res) => {
+	let venues = await venueShowSearch.getVenues(req.query.city);
+	console.log(venues.ok);
+	if (!venues.ok) {
+		console.log(`Call to get venues for ${req.query.city} failed with status ${venues.status}`);
+		return res.status(venues.status)
+			.json(venues);
+	}
+
+	res.json(venues);
 });
 
 app.post('/show-finder/shows', async (req, res) => {
