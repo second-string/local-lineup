@@ -384,7 +384,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
 		} while (perPage * page <= total);
 
 		// This is where it gets hacky - our parser is conditioned to check the success field of a single response, and then pull the events
-		// list out of its body. Here we rip open the final response from the last page request, show the full events list in there, and then
+		// list out of its body. Here we rip open the final response from the last page request, shove the full events list in there, and then
 		// stringify it all back up and act like nothing happened
 		responseBody.events = fullEventsList;
 		response.response = JSON.stringify(responseBody);

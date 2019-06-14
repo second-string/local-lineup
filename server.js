@@ -42,14 +42,14 @@ app.post('/show-finder/playlists', async (req, res) => {
 
 	spotifyToken = await showFinder.getSpotifyToken();
 
-	if (!spotifyToken.ok) {
+	if (spotifyToken.ok !== undefined && !spotifyToken.ok) {
 		console.log(`Call to get spotify token failed with status ${spotifyToken.status}`);
 		return res.status(spotifyToken.status)
 			.json(spotifyToken);
 	}
 
 	let playlists = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.body.username : 'bteamer');
-	if (!playlists.ok) {
+	if (plalists.ok !== undefined && !playlists.ok) {
 		console.log(`Call to get users playlists failed with status ${playlists.status}`);
 		return res.status(playlists.status)
 			.json(playlists);
@@ -60,7 +60,7 @@ app.post('/show-finder/playlists', async (req, res) => {
 
 app.get('/show-finder/artists', async (req, res) => {
 	let artists = await showFinder.getArtists(spotifyToken, req.query.playlistId);
-	if (!artists.ok) {
+	if (artists.ok !== undefined && !artists.ok) {
 		console.log(`Call to get artists for playlist failed with status ${artists.status}`);
 		return res.status(artists.status)
 			.json(artists);
@@ -71,8 +71,7 @@ app.get('/show-finder/artists', async (req, res) => {
 
 app.get('/show-finder/venues', async (req, res) => {
 	let venues = await venueShowSearch.getVenues(req.query.city);
-	console.log(venues.ok);
-	if (!venues.ok) {
+	if (venues.ok !== undefined && !venues.ok) {
 		console.log(`Call to get venues for ${req.query.city} failed with status ${venues.status}`);
 		return res.status(venues.status)
 			.json(venues);
