@@ -32,7 +32,10 @@ async function getVenues(city) {
 	} while (page * perPage <= total);
 
 	console.log(`Took ${totalMillis} milliseconds to get ${total} venues`);
-	return venueList;
+
+	// De-dupe venues cause they send a ton of repeats
+	let hasSeen = {};
+	return venueList.filter(x => hasSeen.hasOwnProperty(x.id) ? false : (hasSeen[x.id] = true))
 }
 
 module.exports = {

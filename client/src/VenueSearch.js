@@ -6,7 +6,9 @@ class VenueSearch extends Component {
 	state = {
 		locations: [],
 		selectedLocation: null,
-		venues: [],
+		allVenues: [],
+		filteredVenues: [],
+		selectedVenues: []
 	};
 
 	locations = [
@@ -54,8 +56,44 @@ class VenueSearch extends Component {
 		let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(e.target.value)}`, getOptions);
 		let venues = await res.json();
 
-		this.setState({ venues: venues });
+		this.setState({ allVenues: venues, filteredVenues: venues });
 	}
+
+	venueSearchTextChanged = e => {
+		let text = e.target.value.toLowerCase();
+		let newVenues = this.state.allVenues.filter(x => x.name.toLowerCase().includes(text));
+		this.setState({ filteredVenues: newVenues });
+	}
+
+	venueSelected = id => {
+		console.log(id);
+	}
+
+	/*
+	  { links: [],
+    metro_code: 602,
+    postal_code: '60614',
+    timezone: 'America/Chicago',
+    has_upcoming_events: true,
+    id: 13271,
+    city: 'Chicago',
+    stats: { event_count: 25 },
+    extended_address: 'Chicago, IL 60614',
+    display_location: 'Chicago, IL',
+    state: 'IL',
+    score: 0.36037397,
+    location: { lat: 41.9268, lon: -87.6486 },
+    access_method: null,
+    num_upcoming_events: 25,
+    address: '2447 N. Halsted St.',
+    capacity: 0,
+    slug: 'tonic-room',
+    name: 'Tonic Room',
+    url: 'https://seatgeek.com/venues/tonic-room/tickets',
+    country: 'US',
+    popularity: 0,
+    name_v2: 'Tonic Room' },
+    */
 
 	render() {
 		return (
@@ -66,8 +104,9 @@ class VenueSearch extends Component {
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
 				</select>
 				<div>
+					<input type='text' onChange={this.venueSearchTextChanged}></input>
 					<ul id='venue-list'>
-						{ this.state.venues.map(x => <li key={x.slug} value={x.slug}>{x.name}</li>) }
+						{ this.state.filteredVenues.map(x => <li onClick={() => this.venueSelected(x.id)} key={x.id} value={x.id}>{x.name}</li>) }
 					</ul>
 				</div>
 			</div>
