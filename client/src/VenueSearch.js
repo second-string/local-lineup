@@ -8,7 +8,7 @@ class VenueSearch extends Component {
 		selectedLocation: null,
 		allVenues: [],
 		filteredVenues: [],
-		selectedVenues: []
+		selectedVenueIds: []
 	};
 
 	locations = [
@@ -66,7 +66,11 @@ class VenueSearch extends Component {
 	}
 
 	venueSelected = id => {
-		console.log(id);
+		let oldSelected = this.state.selectedVenueIds;
+		console.log(oldSelected);
+		oldSelected.push(id)
+		console.log(oldSelected);
+		this.setState({ selectedVenueIds: oldSelected })
 	}
 
 	/*
@@ -104,6 +108,7 @@ class VenueSearch extends Component {
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
 				</select>
 				<div>
+
 					<input type='text' onChange={this.venueSearchTextChanged}></input>
 					<ul id='venue-list'>
 						{ this.state.filteredVenues.map(x => <li onClick={() => this.venueSelected(x.id)} key={x.id} value={x.id}>{x.name}</li>) }
