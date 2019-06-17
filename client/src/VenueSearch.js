@@ -8,7 +8,8 @@ class VenueSearch extends Component {
 		selectedLocation: null,
 		allVenues: [],
 		filteredVenues: [],
-		selectedVenueIds: []
+		selectedVenuesById: {},
+		shows: []
 	};
 
 	locations = [
@@ -65,39 +66,44 @@ class VenueSearch extends Component {
 		this.setState({ filteredVenues: newVenues });
 	}
 
-	venueSelected = id => {
-		let oldSelected = this.state.selectedVenueIds;
-		console.log(oldSelected);
-		oldSelected.push(id)
-		console.log(oldSelected);
-		this.setState({ selectedVenueIds: oldSelected })
+	venueSelected = venue => {
+		this.setState(prevState => ({ selectedVenuesById: {...prevState.selectedVenuesById, [venue.id]: venue} }));
 	}
 
-	/*
-	  { links: [],
-    metro_code: 602,
-    postal_code: '60614',
-    timezone: 'America/Chicago',
-    has_upcoming_events: true,
-    id: 13271,
-    city: 'Chicago',
-    stats: { event_count: 25 },
-    extended_address: 'Chicago, IL 60614',
-    display_location: 'Chicago, IL',
-    state: 'IL',
-    score: 0.36037397,
-    location: { lat: 41.9268, lon: -87.6486 },
-    access_method: null,
-    num_upcoming_events: 25,
-    address: '2447 N. Halsted St.',
-    capacity: 0,
-    slug: 'tonic-room',
-    name: 'Tonic Room',
-    url: 'https://seatgeek.com/venues/tonic-room/tickets',
-    country: 'US',
-    popularity: 0,
-    name_v2: 'Tonic Room' },
-    */
+	selectVenues = async e => {
+		e.preventDefault();
+
+		let postBody = {
+			'seatgeek': Object.keys(this.state.selectedVenuesById).reduce((obj, id) => {
+				obj[id] = this.state.selectedVenuesById[id].name;
+				return obj;
+			}, {})
+		};
+
+		let postOptions = {
+			method: 'POST',
+			headers: {
+				'Content-type': 'application/json'
+			},
+			body: JSON.stringify({ 'selectedVenues': postBody })
+		}
+
+		let res = await this.instrumentCall(`/show-finder/shows`, postOptions);
+		let venueIdsByService = await res.json();
+		let seatGeekShowsByVenueId = venueIdsByService['seatgeek'];
+
+		console.log(seatGeekShowsByVenueId);
+		this.setState({
+			shows: Object.keys(seatGeekShowsByVenueId).map(x =>
+				<div>
+					<h4>{this.state.selectedVenuesById[x].name}</h4>
+					<ul id='{x}'>
+						{ seatGeekShowsByVenueId[x].map(y => <li key={y.id} value={y.id}>{y.title}</li>) }
+					</ul>
+				</div>
+			)
+		});
+	}
 
 	render() {
 		return (
@@ -107,12 +113,18 @@ class VenueSearch extends Component {
 					<option id='' disabled defaultValue>Choose a location</option>
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
 				</select>
-				<div>
-
+				<form onSubmit={this.selectVenues}>
+					<ul id='selected-venues'>
+						{ Object.keys(this.state.selectedVenuesById).map(x => <li key={x} value={x}>{this.state.selectedVenuesById[x].name}</li>) }
+					</ul>
 					<input type='text' onChange={this.venueSearchTextChanged}></input>
 					<ul id='venue-list'>
-						{ this.state.filteredVenues.map(x => <li onClick={() => this.venueSelected(x.id)} key={x.id} value={x.id}>{x.name}</li>) }
+						{ this.state.filteredVenues.slice(0, 10).map(x => <li onClick={() => this.venueSelected(x)} key={x.id} value={x.id}>{x.name}</li>) }
 					</ul>
+					<button type="submit">Select venues</button>
+				</form>
+				<div>
+					{ this.state.shows }
 				</div>
 			</div>
 		);

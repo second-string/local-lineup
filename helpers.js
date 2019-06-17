@@ -48,7 +48,7 @@ async function instrumentCall(url, options, logCurl) {
 			res = await unparsedRes.json();
 		}
 	} catch (e) {
-		error = unparsedRes;
+		error = unparsedRes === null ? {} : unparsedRes;
 	} finally {
 		// Log out a curl for every call we instrument.
 		if (logCurl && process.env.DEPLOY_STAGE !== 'PROD') {

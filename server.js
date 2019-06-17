@@ -49,7 +49,7 @@ app.post('/show-finder/playlists', async (req, res) => {
 	}
 
 	let playlists = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.body.username : 'bteamer');
-	if (plalists.ok !== undefined && !playlists.ok) {
+	if (playlists.ok !== undefined && !playlists.ok) {
 		console.log(`Call to get users playlists failed with status ${playlists.status}`);
 		return res.status(playlists.status)
 			.json(playlists);
@@ -80,6 +80,8 @@ app.get('/show-finder/venues', async (req, res) => {
 	res.json(venues);
 });
 
+
+
 app.post('/show-finder/shows', async (req, res) => {
 	/*
 	refactor these back again when we support individual service querying for the api
@@ -106,6 +108,16 @@ app.post('/show-finder/shows', async (req, res) => {
 		return res.json(response);
 	}
 	*/
+	if (req.body.selectedVenues) {
+		let showsById = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
+		if (showsById.ok !== undefined && !showsById.ok) {
+			console.log(`Call to get shows for selected venues failed with status ${showsById.status}`);
+			return res.status(showsById.status)
+				.json(showsById);
+		}
+
+		return res.json(showsById);
+	}
 
 	// No query param, need to group artist by id to be
 	// able to bundle and serve consolidated response
