@@ -90,7 +90,7 @@ function datesEqual(dateString1, dateString2) {
 
 function getUTCDate(inputDate) {
 	let date = new Date(inputDate);
-	return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0);
+	return Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0);
 }
 
 function addDedupedShows(previouslyAddedShows, newArtistShowList)
@@ -138,5 +138,6 @@ function dedupeShows(showsByArtistId) {
 module.exports = {
 	instrumentCall,
 	datesEqual,
-	dedupeShows
+	dedupeShows,
+	getUTCDate
 };

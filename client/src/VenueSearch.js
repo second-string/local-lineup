@@ -9,7 +9,7 @@ class VenueSearch extends Component {
 		allVenues: [],
 		filteredVenues: [],
 		selectedVenuesById: {},
-		shows: []
+		showsByDate: {}
 	};
 
 	locations = [
@@ -89,19 +89,12 @@ class VenueSearch extends Component {
 		}
 
 		let res = await this.instrumentCall(`/show-finder/shows`, postOptions);
-		let venueIdsByService = await res.json();
-		let seatGeekShowsByVenueId = venueIdsByService['seatgeek'];
+		let showDatesByService = await res.json();
+		let showsByDate = showDatesByService['seatgeek'];
 
-		console.log(seatGeekShowsByVenueId);
+		console.log(showsByDate);
 		this.setState({
-			shows: Object.keys(seatGeekShowsByVenueId).map(x =>
-				<div>
-					<h4>{this.state.selectedVenuesById[x].name}</h4>
-					<ul id='{x}'>
-						{ seatGeekShowsByVenueId[x].map(y => <li key={y.id} value={y.id}>{y.title}</li>) }
-					</ul>
-				</div>
-			)
+			showsByDate: showsByDate
 		});
 	}
 
@@ -124,7 +117,14 @@ class VenueSearch extends Component {
 					<button type="submit">Select venues</button>
 				</form>
 				<div>
-					{ this.state.shows }
+					{ Object.keys(this.state.showsByDate).map(x =>
+						<div>
+							<h4>{(new Date(x)).toLocaleDateString('en-US')}</h4>
+							<ul id='{x}'>
+								{ this.state.showsByDate[x].map(y => <li key={y.id} value={y.id}>{y.title} --- {y.venue.name}</li>) }
+							</ul>
+						</div>
+					) }
 				</div>
 			</div>
 		);

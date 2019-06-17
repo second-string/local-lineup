@@ -90,16 +90,20 @@ async function getSeatGeekShows(venuesById) {
 	} while (page * perPage <= total);
 	console.log(`Took ${totalMillis} milliseconds to get ${total} shows from ${venuesById.length}`);
 
-	let showsById = {};
+	let showsByDate = {};
 	for (let show of showList) {
-		if (showsById[show.venue.id]) {
-			showsById[show.venue.id] = showsById[show.venue.id].concat(show);
+		let showDate = new Date(show.datetime_local);
+		showDate.setHours(0);
+		showDate.setMinutes(0);
+		showDate.setSeconds(0);
+		if (showsByDate[showDate]) {
+			showsByDate[showDate] = showsByDate[showDate].concat(show);
 		} else {
-			showsById[show.venue.id] = [show];
+			showsByDate[showDate] = [show];
 		}
 	}
-	
-	return showsById;
+
+	return showsByDate;
 }
 
 /*

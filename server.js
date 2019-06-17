@@ -109,14 +109,14 @@ app.post('/show-finder/shows', async (req, res) => {
 	}
 	*/
 	if (req.body.selectedVenues) {
-		let showsById = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
-		if (showsById.ok !== undefined && !showsById.ok) {
-			console.log(`Call to get shows for selected venues failed with status ${showsById.status}`);
-			return res.status(showsById.status)
-				.json(showsById);
+		let showsByDate = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
+		if (showsByDate.ok !== undefined && !showsByDate.ok) {
+			console.log(`Call to get shows for selected venues failed with status ${showsByDate.status}`);
+			return res.status(showsByDate.status)
+				.json(showsByDate);
 		}
 
-		return res.json(showsById);
+		return res.json(showsByDate);
 	}
 
 	// No query param, need to group artist by id to be
