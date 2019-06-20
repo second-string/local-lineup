@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const sqlite = require('sqlite3');
 const showFinder = require('./show-finder');
 const venueShowSearch = require('./venue-show-finder');
 
@@ -13,6 +14,16 @@ const port = parseInt(process.env.PORT, 10) || process.env.DEPLOY_STAGE === 'PRO
 
 // Poor man's in-mem cache
 var spotifyToken;
+
+// TODO :: BT how to async have db open or open db and wait to get record to return it with http response
+let db = sqlite.Database('USER_VENUES.db', err => {
+	if (err) {
+		console.log(err);
+		return res.status(500);
+	}
+
+	console.log('DB connection opened successfully');
+});
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -80,7 +91,18 @@ app.get('/show-finder/venues', async (req, res) => {
 	res.json(venues);
 });
 
+app.post('/show-finder/save-venues', async (req, res) => {
+	if (!req.body) {
+		console.log('Did not receive any email or venue IDs in POST body');
+		return res.status(400);
+	}
 
+	let email = req.body.email;
+	let venueIds = req.body.showIds;
+
+
+	return res.status(204);
+});
 
 app.post('/show-finder/shows', async (req, res) => {
 	/*

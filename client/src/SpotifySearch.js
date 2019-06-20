@@ -201,7 +201,7 @@ class SpotifySearch extends Component {
   }
 
   userNameStateChange = (entry) => {
-    console.log(entry.target.value); 
+    console.log(entry.target.value);
     this.setState({ userName: entry.target.value });
   }
 

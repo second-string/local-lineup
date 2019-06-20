@@ -98,6 +98,26 @@ class VenueSearch extends Component {
 		});
 	}
 
+	saveVenuesForEmail = async e => {
+		e.preventDefault();
+
+		let postBody = {
+			email: 'brian.team.jr@gmail.com',
+			showIds: Object.keys(this.state.selectedVenuesById)
+		};
+
+		let postOptions = {
+			method: 'POST',
+			headers: {
+				'Content-type': 'application/json'
+			},
+			body: JSON.stringify(postBody)
+		};
+
+		let res = await this.instrumentCall('/show-finder/save-venues', postOptions);
+		console.log(`done, ${res.status}`);
+	}
+
 	render() {
 		return (
 			<div className="VenueSearch">
@@ -112,9 +132,10 @@ class VenueSearch extends Component {
 					</ul>
 					<input type='text' onChange={this.venueSearchTextChanged}></input>
 					<ul id='venue-list'>
-						{ this.state.filteredVenues.slice(0, 10).map(x => <li onClick={() => this.venueSelected(x)} key={x.id} value={x.id}>{x.name}</li>) }
+						{ this.state.filteredVenues.map(x => <li onClick={() => this.venueSelected(x)} key={x.id} value={x.id}>{x.name}</li>) }
 					</ul>
 					<button type="submit">Select venues</button>
+					<button onClick={this.saveVenuesForEmail}>Save venues</button>
 				</form>
 				<div>
 					{ Object.keys(this.state.showsByDate).map(x =>
