@@ -28,8 +28,8 @@
     "inquirer": "^6.2.0",
     "morgan": "^1.9.1",
     "node-fetch": "^2.6.0",
-    "nodemon": "^1.18.10",
-    "sqlite3": "^4.0.9"
+    "nodemon": "^1.19.1",
+    "sqlite": "^3.0.3"
   },
   "devDependencies": {
     "webpack": "^4.31.0",

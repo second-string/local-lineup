@@ -79,5 +79,4 @@ nodemon.json
 
 # self-explanatory
 *.DS_STORE
-
-
+*.db

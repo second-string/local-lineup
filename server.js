@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const sqlite = require('sqlite3');
+const sqlite = require('sqlite');
 const showFinder = require('./show-finder');
 const venueShowSearch = require('./venue-show-finder');
 
@@ -15,15 +15,7 @@ const port = parseInt(process.env.PORT, 10) || process.env.DEPLOY_STAGE === 'PRO
 // Poor man's in-mem cache
 var spotifyToken;
 
-// TODO :: BT how to async have db open or open db and wait to get record to return it with http response
-let db = sqlite.Database('USER_VENUES.db', err => {
-	if (err) {
-		console.log(err);
-		return res.status(500);
-	}
-
-	console.log('DB connection opened successfully');
-});
+let dbPromise =  sqlite.open('USER_VENUES.db');
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -98,8 +90,27 @@ app.post('/show-finder/save-venues', async (req, res) => {
 	}
 
 	let email = req.body.email;
-	let venueIds = req.body.showIds;
+	let venueIds = req.body.venueIds;
+	let tableName = 'VenueLists';
+	let emailColumn = 'email';
+	let venueIdsColumn = 'venueIds';
 
+	let upsertSql = `
+INSERT INTO ${tableName} (${emailColumn}, ${venueIdsColumn})
+  VALUES ("${email}", "${venueIds}")
+  ON CONFLICT (${emailColumn})
+  DO UPDATE SET ${venueIdsColumn}="${venueIds}";
+ `;
+
+ 	let upsert;
+	try {
+		let db = await dbPromise;
+		upsert = await db.run(upsertSql);
+		console.log(`Upserted ${upsert.stmt.changes} row(s)`);
+	} catch (e) {
+		console.log(e);
+		return res.status(500);
+	}
 
 	return res.status(204);
 });
@@ -179,11 +190,12 @@ app.use((req, res, next) => {
 let static_app_dir = '';
 if (process.env.DEPLOY_STAGE === 'PROD') {
 	static_app_dir = path.join(__dirname, 'client/build');
-	console.log(`Routing to static files in ${static_app_dir}...`);
 } else {
 	//webpack dev server
 	static_app_dir = path.join(__dirname, 'client/devBuild')
 }
+
+console.log(`Routing to static files in ${static_app_dir}...`);
 
 app.use(express.static(static_app_dir));
 app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: static_app_dir }));

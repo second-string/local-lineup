@@ -103,7 +103,7 @@ class VenueSearch extends Component {
 
 		let postBody = {
 			email: 'brian.team.jr@gmail.com',
-			showIds: Object.keys(this.state.selectedVenuesById)
+			venueIds: Object.keys(this.state.selectedVenuesById)
 		};
 
 		let postOptions = {
