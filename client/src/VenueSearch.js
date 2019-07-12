@@ -115,7 +115,6 @@ class VenueSearch extends Component {
 		};
 
 		let res = await this.instrumentCall('/show-finder/save-venues', postOptions);
-		console.log(`done, ${res.status}`);
 	}
 
 	render() {

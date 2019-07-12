@@ -112,7 +112,7 @@ INSERT INTO ${tableName} (${emailColumn}, ${venueIdsColumn})
 		return res.status(500);
 	}
 
-	return res.status(204);
+	return res.status(204).send();
 });
 
 app.post('/show-finder/shows', async (req, res) => {
