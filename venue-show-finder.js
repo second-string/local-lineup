@@ -28,7 +28,7 @@ async function getVenues(city) {
 		}
 
 		venueList = venueList.concat(response.venues);
-		total = 1//response.meta.total;
+		total = response.meta.total;
 		totalMillis += response.meta.took
 	} while (page * perPage <= total);
 

@@ -387,7 +387,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
 		// list out of its body. Here we rip open the final response from the last page request, shove the full events list in there, and then
 		// stringify it all back up and act like nothing happened
 		responseBody.events = fullEventsList;
-		response.response = JSON.stringify(responseBody);
+		response.response = responseBody;
 		resolve({ artistId: artistId, queryResponse: response });
 	});
 }

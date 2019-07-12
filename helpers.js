@@ -20,6 +20,7 @@ async function instrumentCall(url, options, logCurl) {
 	let res;
 	let error = null;
 	let encodedBody = '';
+	let unparsedRes = null;
 
 	// Default value of true
 	logCurl = logCurl === undefined ? true : logCurl;
@@ -40,7 +41,7 @@ async function instrumentCall(url, options, logCurl) {
 			options.body = encodedBody;
 		}
 
-		let unparsedRes = await fetch(url, options);
+		unparsedRes = await fetch(url, options);
 
 		if (unparsedRes && !unparsedRes.ok) {
 			error = unparsedRes;
