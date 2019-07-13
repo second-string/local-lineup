@@ -89,7 +89,7 @@ async function getSeatGeekShows(venuesById) {
 		total = response.meta.total;
 		totalMillis += response.meta.took
 	} while (page * perPage <= total);
-	console.log(`Took ${totalMillis} milliseconds to get ${total} shows from ${venuesById.length}`);
+	console.log(`Took ${totalMillis} milliseconds to get ${total} shows from ${Object.keys(venuesById).length} venues`);
 
 	let showsByDate = {};
 	for (let show of showList) {

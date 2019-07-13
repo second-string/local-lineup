@@ -2,7 +2,12 @@ const Email = require('email-templates');
 const sqlite = require('sqlite');
 const venueShowSearch = require('./venue-show-finder');
 
-async function main(email) {
+async function sendShowsEmail(email) {
+	if (email === null || email === undefined) {
+		console.log('Must provide email to retrieve selected venues and send upcoming shows');
+		return -1;
+	}
+
 	const db = await sqlite.open('USER_VENUES.db');
 	const tableName = 'VenueLists';
 	const venueColumn = 'venueIds';
@@ -62,12 +67,9 @@ async function main(email) {
 	.catch(console.error)
 }
 
-if (process.argv.length < 3) {
-	console.log('Must provide email to retrieve selected venues and send upcoming shows');
-	process.exit(-1);
-}
-
-main(process.argv[2]);
+module.exports = {
+	sendShowsEmail
+};
 
 /*
 const email = new Email({
