@@ -73,6 +73,10 @@ app.get('/show-finder/artists', async (req, res) => {
 });
 
 app.get('/show-finder/venues', async (req, res) => {
+	if (req.query.city === undefined) {
+		res.status(400).send();
+	}
+
 	let venues = await venueShowSearch.getVenues(req.query.city);
 	if (venues.ok !== undefined && !venues.ok) {
 		console.log(`Call to get venues for ${req.query.city} failed with status ${venues.status}`);

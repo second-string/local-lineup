@@ -1,15 +1,18 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import Select from 'react-select';
+import './SpotifySearch.css';
 
 class VenueSearch extends Component {
 	state = {
 		locations: [],
 		selectedLocation: null,
 		allVenues: [],
-		filteredVenues: [],
-		selectedVenuesById: {},
-		showsByDate: {}
+		venueSelectList: [],	// separate variable allows us to switch between venuelist and custom single entry telling user to hit a key
+		selectedVenueNamesById: {},
+		showsByDate: {},
+		showVenueSearch: false,
+		showSpinner: false
 	};
 
 	locations = [
@@ -54,30 +57,33 @@ class VenueSearch extends Component {
 			}
 		}
 
+		this.setState({ showSpinner: true });
+
 		let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(e.target.value)}`, getOptions);
 		let venues = await res.json();
 
-		this.setState({ allVenues: venues, filteredVenues: venues });
+		this.setState({
+			allVenues: venues,
+			showSpinner: false,
+			showVenueSearch: true
+		});
 	}
 
-	venueSearchTextChanged = e => {
-		let text = e.target.value.toLowerCase();
-		let newVenues = this.state.allVenues.filter(x => x.name.toLowerCase().includes(text));
-		this.setState({ filteredVenues: newVenues });
-	}
-
-	venueSelected = venue => {
-		this.setState(prevState => ({ selectedVenuesById: {...prevState.selectedVenuesById, [venue.id]: venue} }));
+	selectedVenuesChanged = e => {
+		// venueObj is each of the selected venue objects in the shape of { value: venueId, label: venueName }
+		this.setState({
+			selectedVenueNamesById: e && e.reduce((obj, venueObj) => {
+				obj[venueObj.value] = venueObj.label;
+				return obj;
+			}, {})
+		});
 	}
 
 	selectVenues = async e => {
 		e.preventDefault();
 
 		let postBody = {
-			'seatgeek': Object.keys(this.state.selectedVenuesById).reduce((obj, id) => {
-				obj[id] = this.state.selectedVenuesById[id].name;
-				return obj;
-			}, {})
+			'seatgeek': this.state.selectedVenueNamesById
 		};
 
 		let postOptions = {
@@ -103,7 +109,7 @@ class VenueSearch extends Component {
 
 		let postBody = {
 			email: 'brian.team.jr@gmail.com',
-			venueIds: Object.keys(this.state.selectedVenuesById)
+			venueIds: Object.keys(this.state.selectedVenueNamesById)
 		};
 
 		let postOptions = {
@@ -121,18 +127,21 @@ class VenueSearch extends Component {
 		return (
 			<div className="VenueSearch">
 				<h3>hello helloaf</h3>
+        		<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
 				<select id='location-select' onChange={this.locationSelected}>
 					<option id='' disabled defaultValue>Choose a location</option>
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
 				</select>
-				<form onSubmit={this.selectVenues}>
-					<ul id='selected-venues'>
-						{ Object.keys(this.state.selectedVenuesById).map(x => <li key={x} value={x}>{this.state.selectedVenuesById[x].name}</li>) }
-					</ul>
-					<input type='text' onChange={this.venueSearchTextChanged}></input>
-					<ul id='venue-list'>
-						{ this.state.filteredVenues.map(x => <li onClick={() => this.venueSelected(x)} key={x.id} value={x.id}>{x.name}</li>) }
-					</ul>
+				<form onSubmit={this.selectVenues} style={{ display: this.state.showVenueSearch ? '' : 'none' }}>
+					<Select
+						isMulti
+						isSearchable
+						openMenuOnClick={false}
+						ref={ input => this.selectRef = input }
+						placeholder='Start typing to search for a venue...'
+						onChange={this.selectedVenuesChanged}
+						options={this.state.allVenues.map(x => ({ value: x.id, label: x.name }))}
+					/>
 					<button type="submit">Select venues</button>
 					<button onClick={this.saveVenuesForEmail}>Save venues</button>
 				</form>
