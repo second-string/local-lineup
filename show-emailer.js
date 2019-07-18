@@ -48,8 +48,7 @@ async function sendShowsEmail(email) {
 				user: '1123greenchores@gmail.com',
 				pass: process.env.CHORES_PW
 			}
-		},
-		send: false
+		}
 	});
 
 	emailObj.send({
