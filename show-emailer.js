@@ -49,13 +49,13 @@ async function sendShowsEmail(email) {
 				pass: process.env.CHORES_PW
 			}
 		},
-		send: false
+		send: true
 	});
 
-	emailObj.send({
+	return emailObj.send({
 		template: 'test',
 		message: {
-			to: 'brian.team.jr@gmail.com'
+			to: email
 		},
 		locals: {
 			startDate: startDate,
@@ -63,8 +63,7 @@ async function sendShowsEmail(email) {
 			showsByDate: showsByDate
 		}
 	})
-	.then(res => {})
-	.catch(console.error)
+	.catch(console.error);
 }
 
 module.exports = {

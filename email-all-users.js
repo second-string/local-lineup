@@ -52,7 +52,7 @@ async function main() {
 
 	console.log(`Successfully sent show emails to ${valid.length} emails`);
 	console.log(`Email failed for ${errored.length} emails:`)
-	console.log(errored);
+	errored && console.log(errored);
 
 	return 0;
 }
