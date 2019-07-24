@@ -37,7 +37,7 @@ async function main() {
 	if (results === null) {
 		return -1;
 	}
-	
+
 	let valid = [];
 	let errored = [];
 	results.forEach(x => {
@@ -51,7 +51,7 @@ async function main() {
 
 	console.log(`Successfully sent show emails to ${valid.length} emails`);
 	console.log(`Email failed for ${errored.length} emails:`)
-	errored && console.log(errored);
+	errored.length > 0 && console.log(errored);
 
 	return 0;
 }

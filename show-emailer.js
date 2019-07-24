@@ -34,8 +34,32 @@ async function sendShowsEmail(email) {
 	}, {});
 
 	// yes it's inefficient to redo this with another map but oh whale
-	let startDate = new Date(Math.min.apply(null, Object.keys(showsByDate).map(x => new Date(x)))).toLocaleDateString('en-US');
-	let endDate = new Date(Math.max.apply(null, Object.keys(showsByDate).map(x => new Date(x)))).toLocaleDateString('en-US');
+	// let startDate = new Date(Math.min.apply(null, Object.keys(showsByDate).map(x => new Date(x)))).toLocaleDateString('en-US');
+	// let endDate = new Date(Math.max.apply(null, Object.keys(showsByDate).map(x => new Date(x)))).toLocaleDateString('en-US');
+	let startDate = getStartDate();
+	let endDate = new Date();
+	endDate.setDate(startDate.getDate() + 7);
+
+	// Map to date for comparison and then back to locale string for retrieval of show object.
+	// Dict lookups with a key of a date weren't working and I didn't want to deal with it
+	let filteredShowsByDate = Object.keys(showsByDate)
+		.map(x => new Date(x))
+		.filter(x => x >= startDate && x <= endDate)
+		.reduce((obj, date) => {
+			let dateStringOptions = {
+				weekday: 'long',
+				month: 'long',
+				day: 'numeric'
+			};
+
+			obj[date.toLocaleDateString('en-US', dateStringOptions)] = showsByDate[date.toLocaleDateString('en-US')];
+			return obj;
+		}, {});
+
+
+	// Prettify for the email template
+	startDate = startDate.toLocaleDateString('en-US');
+	endDate = endDate.toLocaleDateString('en-US');
 
 	const emailObj = new Email({
 		message: {
@@ -59,10 +83,21 @@ async function sendShowsEmail(email) {
 		locals: {
 			startDate: startDate,
 			endDate: endDate,
-			showsByDate: showsByDate
+			showsByDate: filteredShowsByDate
 		}
 	})
 	.catch(console.error);
+}
+
+// return a date 7 days from now with all time elements zeroed
+function getStartDate() {
+	let d = new Date();
+	d.setDate(d.getDate() + 7);
+	d.setHours(0);
+	d.setMinutes(0);
+	d.setSeconds(0);
+	d.setMilliseconds(0);
+	return d;
 }
 
 module.exports = {
