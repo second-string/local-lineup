@@ -8,12 +8,13 @@ async function sendShowsEmail(email) {
 		return -1;
 	}
 
-	const db = await sqlite.open(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/USER_VENUES.db' : 'USER_VENUES.db');
+	const db = await sqlite.open('USER_VENUES.db');
 	const tableName = 'VenueLists';
 	const venueColumn = 'venueIds';
 	let sql = `SELECT ${venueColumn} FROM ${tableName} WHERE email='${email}';`;
 	let venueIdObject = await db.get(sql);
 	let venueIds = venueIdObject.venueIds.split(',');
+
 
 	let venues = {
 		'seatgeek': venueIds.reduce((obj, item) => {
@@ -23,7 +24,7 @@ async function sendShowsEmail(email) {
 	};
 
 	let services = await venueShowSearch.getShowsForVenues(venues);
-	if (services === undefined || services.status >= 300) {
+	if (services.ok !== undefined && !services.ok) {
 		console.log(`Call to get shows for selected venues failed with status ${services.status}`);
 	}
 
@@ -47,12 +48,16 @@ async function sendShowsEmail(email) {
 				user: '1123greenchores@gmail.com',
 				pass: process.env.CHORES_PW
 			}
+<<<<<<< HEAD
+		}
+=======
 		},
-		send: process.env.DEPLOY_STAGE === 'PROD' ? true : false
+		send: true
+>>>>>>> 866b7fdb0109b92620819c1a9085ade20a889592
 	});
 
 	return emailObj.send({
-		template: process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/emails/test' : 'test',
+		template: 'test',
 		message: {
 			to: email
 		},

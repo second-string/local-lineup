@@ -2,9 +2,8 @@ const sqlite = require('sqlite');
 const showEmailer = require('./show-emailer.js');
 
 async function main() {
-	const dbPromise = sqlite.open('./USER_VENUES.db');
+	const dbPromise = sqlite.open(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/USER_VENUES.db' : 'USER_VENUES.db');
 	const db = await dbPromise;
-
 	const emailColumn = 'email';
 	const tableName = 'VenueLists';
 
@@ -52,7 +51,7 @@ async function main() {
 
 	console.log(`Successfully sent show emails to ${valid.length} emails`);
 	console.log(`Email failed for ${errored.length} emails:`)
-	console.log(errored);
+	errored && console.log(errored);
 
 	return 0;
 }

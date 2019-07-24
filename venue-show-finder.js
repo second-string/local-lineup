@@ -79,7 +79,7 @@ async function getSeatGeekShows(venuesById) {
 	do {
 		let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/events?venue.id=${venueString}&per_page=${perPage}&page=${page++}`,
 			getOptions,
-			true);
+			false);
 
 		if (!success) {
 			return response;
