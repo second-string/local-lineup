@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Select from 'react-select';
-import './SpotifySearch.css';
+import './VenueSearch.css';
 
 class VenueSearch extends Component {
 	state = {
@@ -11,7 +11,10 @@ class VenueSearch extends Component {
 		venueSelectList: [],	// separate variable allows us to switch between venuelist and custom single entry telling user to hit a key
 		selectedVenueNamesById: {},
 		showsByDate: {},
+		email: '',
 		showVenueSearch: false,
+		showButtonChoices: false,
+		showEmailForm: false,
 		showSpinner: false
 	};
 
@@ -65,7 +68,8 @@ class VenueSearch extends Component {
 		this.setState({
 			allVenues: venues,
 			showSpinner: false,
-			showVenueSearch: true
+			showVenueSearch: true,
+			showButtonChoices: true
 		});
 	}
 
@@ -104,11 +108,39 @@ class VenueSearch extends Component {
 		});
 	}
 
-	saveVenuesForEmail = async e => {
+	saveShowsSelected = e => {
+		e.preventDefault();
+		this.setState({
+			showEmailForm: true,
+			showButtonChoices: false
+		});
+	}
+
+	emailChanged = e => {
+		this.setState({ email: e.target.value });
+	}
+
+	backButtonClicked = e => {
 		e.preventDefault();
 
+		this.setState({
+			showEmailForm: false,
+			showButtonChoices: true
+		});
+	}
+
+	saveShowsForEmail = async e => {
+		e.preventDefault();
+
+		// TODO :: BT basic email validation
+		let email = this.state.email;
+		if (email === undefined || email === null || email == '') {
+			alert('Please enter an email address');
+			return;
+		}
+
 		let postBody = {
-			email: 'brian.team.jr@gmail.com',
+			email: email,
 			venueIds: Object.keys(this.state.selectedVenueNamesById)
 		};
 
@@ -142,10 +174,28 @@ class VenueSearch extends Component {
 						onChange={this.selectedVenuesChanged}
 						options={this.state.allVenues.map(x => ({ value: x.id, label: x.name }))}
 					/>
-					<button type="submit">Select venues</button>
-					<button onClick={this.saveVenuesForEmail}>Save venues</button>
+					<div style={{ display: this.state.showButtonChoices ? '' : 'none' }}>
+						<div>
+							<button id='viewShowsButton' disabled={ this.state.selectedVenueNamesById === null || Object.keys(this.state.selectedVenueNamesById).length === 0 } type="submit">See upcoming shows</button>
+							<label htmlFor='viewShowsButton'>Select this option to view all upcoming shows in your browser</label>
+						</div>
+						<div>
+							<button id='saveShowsButton' disabled={ this.state.selectedVenueNamesById === null || Object.keys(this.state.selectedVenueNamesById).length === 0 } onClick={this.saveShowsSelected}>Save shows</button>
+							<label htmlFor='showsaveShowsButton'>Select this option if you want shows for the selected venues emailed to you weekly</label>
+						</div>
+					</div>
 				</form>
 				<div>
+
+				<form onSubmit={this.saveShowsForEmail} style={{ display: this.state.showEmailForm ? '' : 'none' }}>
+					<input type='text' className='textbox' style={{ marginTop: '20px', textAlign: 'center' }} onChange={this.emailChanged}></input>
+					<div id='buttonDiv' className='block'>
+						<button onClick={this.backButtonClicked}>Back</button>
+						<button type='submit' disabled={ this.state.email === undefined || this.state.email === null || this.state.email === '' }>Save</button>
+					</div>
+					<label htmlFor='buttonDiv'>When you click save, your email address will be saved along with your selected venues. You'll receive an email every sunday at 5pm outlining the shows at your venues for the week after the upcoming week.</label>
+				</form>
+
 					{ Object.keys(this.state.showsByDate).map(x =>
 						<div>
 							<h4>{(new Date(x)).toLocaleDateString('en-US')}</h4>
