@@ -8,6 +8,13 @@ async function sendShowsEmail(email) {
 		return -1;
 	}
 
+	if (process.env.OAUTH2_CLIENT_ID === undefined
+		|| process.env.OAUTH2_CLIENT_SECRET === undefined
+		|| process.env.OAUTH2_ACCESS_TOKEN === undefined) {
+		console.log('No env vars set for OAuth2, run setup_env.sh');
+		return -1;
+	}
+
 	const db = await sqlite.open(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/USER_VENUES.db' : 'USER_VENUES.db');
 	const tableName = 'VenueLists';
 	const venueColumn = 'venueIds';
@@ -61,6 +68,7 @@ async function sendShowsEmail(email) {
 	startDate = startDate.toLocaleDateString('en-US');
 	endDate = endDate.toLocaleDateString('en-US');
 
+	// oauth auth object fields: https://nodemailer.com/smtp/oauth2/
 	const emailObj = new Email({
 		message: {
 			from: '1123greenchores@gmail.com'
@@ -69,7 +77,11 @@ async function sendShowsEmail(email) {
 			service: 'gmail',
 			auth: {
 				user: '1123greenchores@gmail.com',
-				pass: process.env.CHORES_PW
+				type: 'OAuth2',
+				clientId: process.env.OAUTH2_CLIENT_ID,
+				clientSecret: process.env.OAUTH2_CLIENT_SECRET,
+				refreshToken: process.env.OAUTH2_REFRESH_TOKEN,
+				accessToken: process.env.OAUTH2_ACCESS_TOKEN
 			}
 		},
 		send: process.env.DEPLOY_STAGE === 'PROD' ? true : false
@@ -86,7 +98,10 @@ async function sendShowsEmail(email) {
 			showsByDate: filteredShowsByDate
 		}
 	})
-	.catch(console.error);
+	.catch(e => {
+		console.error(e);
+		return -1
+	});
 }
 
 // return a date 7 days from now with all time elements zeroed
