@@ -118,6 +118,7 @@ class VenueSearch extends Component {
 
 	emailChanged = e => {
 		this.setState({ email: e.target.value });
+		console.log(e.target.value);
 	}
 
 	backButtonClicked = e => {
