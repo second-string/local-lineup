@@ -9,7 +9,8 @@ module.exports = {
 	mode: 'production',
 	entry: {
 		app: paths.appIndexJs,
-		spotify: paths.spotifySearchJs
+		spotify: paths.spotifySearchJs,
+    venue: paths.venueSearchJs
 	},
 	module: {
 		rules: [
@@ -81,6 +82,12 @@ module.exports = {
 			template: 'public/show-finder.html',
 			filename: 'show-finder.html',
 			chunks: [],
-		})
+		}),
+    new HtmlWebpackPlugin({
+      template: paths.venueHtml,
+      filename: 'venue-search.html',
+      chunks: ['venue'],
+      inject: true
+    })
 	]
 };
