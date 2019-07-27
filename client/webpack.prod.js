@@ -9,7 +9,8 @@ module.exports = {
 	mode: 'production',
 	entry: {
 		app: paths.appIndexJs,
-		spotify: paths.spotifySearchJs
+		spotify: paths.spotifySearchJs,
+    venue: paths.venueSearchJs
 	},
 	module: {
 		rules: [
