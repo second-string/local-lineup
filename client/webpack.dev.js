@@ -98,6 +98,11 @@ module.exports = {
       filename: 'venue-search.html',
       chunks: ['venue'],
       inject: true
+    }),
+    new HtmlWebpackPlugin({
+      template: paths.emailDeleteSuccessHtml,
+      filename: 'email-delete-success.html',
+      chunks: [],
     })
 	]
 };

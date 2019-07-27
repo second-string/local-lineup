@@ -68,8 +68,7 @@ async function sendShowsEmail(email) {
 	startDate = startDate.toLocaleDateString('en-US');
 	endDate = endDate.toLocaleDateString('en-US');
 
-// TODO :: BT seems like this should be working but need to ternary it for dev/prod. Can test first by deploying and testing on prod
-	let unsubscribeUrl = `https://brianteam.dev/show-finder/delete-venues?email=${email}`;
+	let unsubscribeUrl = process.env.DEPLOY_STAGE === 'PROD' ? `https://brianteam.dev/show-finder/delete-venues?email=${email}` : `https://localhost/show-finder/delete-venues?email=${email}`;
 
 	// oauth auth object fields: https://nodemailer.com/smtp/oauth2/
 	const emailObj = new Email({
