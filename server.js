@@ -119,6 +119,35 @@ INSERT INTO ${tableName} (${emailColumn}, ${venueIdsColumn})
 	return res.status(204).send();
 });
 
+
+// TODO :: BT unsub success screen
+app.get('/show-finder/delete-venues', async (req, res) => {
+	if (req.query.email === undefined) {
+		console.log('Did not receive any email for venue-deletion in the query param');
+		return res.status(400);
+	}
+
+	let tableName = 'VenueLists';
+	let emailColumn = 'email';
+
+	let deleteSql = `
+DELETE FROM ${tableName}
+  WHERE ${emailColumn}='${req.query.email}';
+`;
+
+	let deleteOp;
+	try {
+		let db = await dbPromise;
+		deleteOp = await db.run(deleteSql);
+		console.log(`Deleted ${deleteOp.stmt.changes} rows for email '${req.query.email}'`);
+	} catch (e) {
+		console.log(e);
+		return res.status(500);
+	}
+
+	return res.status(204).send();
+});
+
 app.post('/show-finder/shows', async (req, res) => {
 	/*
 	refactor these back again when we support individual service querying for the api
