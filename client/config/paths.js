@@ -87,7 +87,8 @@ module.exports = {
   spotifySearchJs: resolveModule(resolveApp, 'src/spotify-search'),
   spotifyHtml: resolveApp('public/spotify-search.html'),
   venueSearchJs: resolveModule(resolveApp, 'src/venue-search'),
-  venueHtml: resolveApp('public/venue-search.html')
+  venueHtml: resolveApp('public/venue-search.html'),
+  emailDeleteSuccessHtml: resolveApp('public/email-delete-success.html')
 };
 
 

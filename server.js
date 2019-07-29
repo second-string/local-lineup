@@ -145,7 +145,7 @@ DELETE FROM ${tableName}
 		return res.status(500);
 	}
 
-	return res.status(204).send();
+	return res.sendFile('email-delete-success.html', { root: static_app_dir });
 });
 
 app.post('/show-finder/shows', async (req, res) => {
