@@ -44,8 +44,8 @@ async function sendShowsEmail(email) {
 	// let startDate = new Date(Math.min.apply(null, Object.keys(showsByDate).map(x => new Date(x)))).toLocaleDateString('en-US');
 	// let endDate = new Date(Math.max.apply(null, Object.keys(showsByDate).map(x => new Date(x)))).toLocaleDateString('en-US');
 	let startDate = getStartDate();
-	let endDate = new Date();
-	endDate.setDate(startDate.getDate() + 7);
+	let endDate = new Date(startDate);
+	endDate.setDate(endDate.getDate() + 7);
 
 	// Map to date for comparison and then back to locale string for retrieval of show object.
 	// Dict lookups with a key of a date weren't working and I didn't want to deal with it
