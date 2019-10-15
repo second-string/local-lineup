@@ -73,12 +73,12 @@ async function sendShowsEmail(email) {
 	// oauth auth object fields: https://nodemailer.com/smtp/oauth2/
 	const emailObj = new Email({
 		message: {
-			from: '1123greenchores@gmail.com'
+			from: 'show.finder.bot@gmail.com'
 		},
 		transport: {
 			service: 'gmail',
 			auth: {
-				user: '1123greenchores@gmail.com',
+				user: 'show.finder.bot@gmail.com',
 				type: 'OAuth2',
 				clientId: process.env.OAUTH2_CLIENT_ID,
 				clientSecret: process.env.OAUTH2_CLIENT_SECRET,
@@ -86,7 +86,7 @@ async function sendShowsEmail(email) {
 				accessToken: process.env.OAUTH2_ACCESS_TOKEN
 			}
 		},
-		send: process.env.DEPLOY_STAGE === 'PROD' ? true : false
+		send: true
 	});
 
 	return emailObj.send({
