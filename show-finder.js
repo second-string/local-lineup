@@ -398,5 +398,6 @@ module.exports = {
 	getArtists: getArtists,
 	// getSongkickShows: getSongkickShows,
 	// getBandsInTownShows: getBandsInTownShows,
-	getAllShows: getAllShows
+	getAllShows: getAllShows,
+	spotifyAuth
 };

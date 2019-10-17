@@ -5,17 +5,25 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const sqlite = require('sqlite');
+const sqlite = require('sqlite3');
+const querystring = require('querystring');
 const showFinder = require('./show-finder');
 const venueShowSearch = require('./venue-show-finder');
+const dbHelpers = require('./db-helpers');
+const authHandler = require('./auth-handler');
+const constants = require('./constants');
+const helpers = require('./helpers');
 
 const app = express();
-const port = parseInt(process.env.PORT, 10) || process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
+const envPort = parseInt(process.env.PORT, 10);
+const port = envPort === undefined ? (process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443) : envPort;
+
 
 // Poor man's in-mem cache
 var spotifyToken;
 
-let dbPromise =  sqlite.open('USER_VENUES.db');
+let db = dbHelpers.openDb('USER_VENUES.db');
+const userDb = dbHelpers.openDb("./users.db");
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -27,6 +35,9 @@ let requestLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'reques
 app.use(morgan('[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent', { stream: requestLogStream }));
 
 app.use(bodyParser.json());
+
+// Route everything through the auth function
+app.use((req, res, next) => authHandler.authenticate(userDb, req, res, next));
 
 app.post('/show-finder/playlists', async (req, res) => {
 	// If we have a token cached, give it a shot to see if it's still valid
@@ -108,9 +119,9 @@ INSERT INTO ${tableName} (${emailColumn}, ${venueIdsColumn})
 
  	let upsert;
 	try {
-		let db = await dbPromise;
-		upsert = await db.run(upsertSql);
-		console.log(`Upserted ${upsert.stmt.changes} row(s)`);
+		// let db = await dbPromise;
+		upsert = await db.runAsync(upsertSql);
+		// console.log(`Upserted ${upsert.stmt.changes} row(s)`);
 	} catch (e) {
 		console.log(e);
 		return res.status(500);
@@ -137,9 +148,9 @@ DELETE FROM ${tableName}
 
 	let deleteOp;
 	try {
-		let db = await dbPromise;
-		deleteOp = await db.run(deleteSql);
-		console.log(`Deleted ${deleteOp.stmt.changes} rows for email '${req.query.email}'`);
+		// let db = await dbPromise;
+		deleteOp = await db.runAsync(deleteSql);
+		// console.log(`Deleted ${deleteOp.stmt.changes} rows for email '${req.query.email}'`);
 	} catch (e) {
 		console.log(e);
 		return res.status(500);
@@ -205,6 +216,64 @@ app.post('/show-finder/shows', async (req, res) => {
 
 	console.log(`Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
 	res.json(mappedArtistsToShows);
+});
+
+
+app.get('/login/', (req, res) => {
+    // check if user has cookie? Might not be necessary, but if it is redirect if exists
+    // otherwise redirect to spotify login page
+    // todo :: include `state` query param in url
+    const rootHost = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+    const redirectUri = `https://${rootHost}/spotify-auth`;
+    const scopes = 'user-read-email playlist-read-private playlist-modify-private';
+
+    res.redirect('https://accounts.spotify.com/authorize?' +
+    	querystring.stringify({
+    		response_type: 'code',
+    		client_id: constants.clientId,
+    		scope: scopes,
+    		redirect_uri: redirectUri,
+    		state: 'test_state_token'
+    	}));
+});
+
+app.get('/spotify-auth/', async (req, res) => {
+	console.log('in spoot auth callback');
+	let code = req.query.code;
+	let state = req.query.state;
+	if (code === undefined && req.query.error) {
+		throw new Error(`Error getting preliminary auth code from spoot: ${req.query.error}`);
+	} else if (code === undefined) {
+		throw new Error('Shit is borked - no error nor code from spoot prelim auth');
+	}
+
+	if (state !== "test_state_token") {
+		throw new Error(`State is borked. Looking for '${"test_state_token"}' got '${state}'`);
+	}
+
+    const rootHost = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+	let postOptions = {
+		method: 'POST',
+		body: {
+			'grant_type': 'authorization_code',
+			'redirect_uri': `https://${rootHost}/spotify-auth`, 		// Doesn't matter, just needs to match what we sent previously
+			'code': code
+		},
+		headers: {
+			'Content-type': 'application/x-www-form-urlencoded',
+			'Authorization': showFinder.spotifyAuth()
+		}
+	};
+
+	console.log('Getting spotify access and refresh tokens ...');
+	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, true);
+	if (!success) {
+		console.error(response);
+		throw new Error(`something went wrong with request for access/refresh spoot tokens`);
+	}
+
+	console.log(response);
+	res.status(200).send('helloaf');
 });
 
 app.use((req, res, next) => {

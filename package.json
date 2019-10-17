@@ -31,10 +31,12 @@
     "node-fetch": "^2.6.0",
     "nodemon": "^1.19.1",
     "pug": "^2.0.4",
+    "querystring": "^0.2.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-select": "^3.0.4",
-    "sqlite": "^3.0.3"
+    "sqlite": "^3.0.3",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "webpack": "^4.31.0",
