@@ -7,6 +7,8 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const sqlite = require('sqlite3');
 const querystring = require('querystring');
+const uuid = require('uuid/v4');
+const cookieParser = require('cookie-parser');
 const showFinder = require('./show-finder');
 const venueShowSearch = require('./venue-show-finder');
 const dbHelpers = require('./db-helpers');
@@ -22,8 +24,8 @@ const port = envPort === undefined ? (process.env.DEPLOY_STAGE === 'PROD' ? 8443
 // Poor man's in-mem cache
 var spotifyToken;
 
-let db = dbHelpers.openDb('USER_VENUES.db');
-const userDb = dbHelpers.openDb("./users.db");
+let db = dbHelpers.openDb('user_venues.db');
+// const userDb = dbHelpers.openDb("./users.db");
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -35,9 +37,10 @@ let requestLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'reques
 app.use(morgan('[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent', { stream: requestLogStream }));
 
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 // Route everything through the auth function
-app.use((req, res, next) => authHandler.authenticate(userDb, req, res, next));
+app.use((req, res, next) => authHandler.authenticate(db, req, res, next));
 
 app.post('/show-finder/playlists', async (req, res) => {
 	// If we have a token cached, give it a shot to see if it's still valid
@@ -238,7 +241,6 @@ app.get('/login/', (req, res) => {
 });
 
 app.get('/spotify-auth/', async (req, res) => {
-	console.log('in spoot auth callback');
 	let code = req.query.code;
 	let state = req.query.state;
 	if (code === undefined && req.query.error) {
@@ -272,8 +274,29 @@ app.get('/spotify-auth/', async (req, res) => {
 		throw new Error(`something went wrong with request for access/refresh spoot tokens`);
 	}
 
-	console.log(response);
-	res.status(200).send('helloaf');
+	const access = response.access_token;
+	const refresh = response.refresh_token;
+
+	console.log('Getting user email from spotify using access token...');
+	let getOptions = {
+		method: 'GET',
+		headers: {
+			'Content-type': 'application/json',
+			'Authorization': 'Bearer ' + access
+		}
+	};
+
+	({success, response} = await helpers.instrumentCall('https://api.spotify.com/v1/me', getOptions));
+	if (!success) {
+		console.error(response);
+		throw new Error('Error getting user account using access token');
+	}
+
+	const sessionToken = uuid();
+	await db.runAsync('INSERT OR REPLACE INTO Users(Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken, SessionToken) VALUES (?, ?, ?, ?, ?, ?)', [response.email, response.id, response.display_name, access, refresh, sessionToken]);
+
+
+	res.cookie("show-finder-token", sessionToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder/');
 });
 
 app.use((req, res, next) => {

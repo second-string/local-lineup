@@ -1,15 +1,17 @@
 const sqlite = require('sqlite3');
 const dbHelpers = require('./db-helpers');
-const venueListDbPath = 'user_venues.db';
 
+const venueListDbPath = 'user_venues.db';
 const db = dbHelpers.openDb('user_venues.db');
 
 const createUsersTableSql = `
 CREATE TABLE IF NOT EXISTS Users (
-    Uid nvarchar NOT NULL PRIMARY KEY,
-    Email nvarchar,
+    Email nvarchar NOT NULL PRIMARY KEY,
+    SpotifyUsername nvarchar,
+    FullName nvarchar,
     SpotifyAccessToken nvarchar NOT NULL,
-    SpotifyRefreshToken nvarchar NOT NULL
+    SpotifyRefreshToken nvarchar NOT NULL,
+    SessionToken nvarchar
 )`;
 
 const createVenueListsTableSql = `

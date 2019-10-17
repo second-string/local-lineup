@@ -18,7 +18,6 @@ const uuid = require('uuid/v4');
 // ];
 
 async function authenticate(userDb, req, res, next) {
-    console.log(req.path);
     if (req.path === "/" || req.path.startsWith("/static") || req.path === "/login" || req.path === "/spotify-auth") {
         return next();
     }
@@ -26,13 +25,14 @@ async function authenticate(userDb, req, res, next) {
     // const loggedOutPath = loggedOutPaths.indexOf(req.path) > 0;
 
     // if ((!req.cookies || !req.cookies.token) && !loggedOutPath) {
-    if (!req.cookies || !req.cookies.token) {
-        return res.status(401).redirect("/");
+    if (!req.cookies || !req.cookies['show-finder-token']) {
+        return res.redirect(401, "/");
     }
 
     // TODO :: sanitize?
-    const reqToken = req.cookies.token;
-    const tokenObj = await userDb.getAsync(`SELECT CurrentToken FROM Users WHERE CurrentToken=?`, [reqToken]);
+    // TODO :: index on this token
+    const reqToken = req.cookies['show-finder-token'];
+    const tokenObj = await userDb.getAsync(`SELECT SessionToken FROM Users WHERE SessionToken=?`, [reqToken]);
 
     // TODO :: LOGIC ISN"T WORKING
     // TODO :: this logic really needs to be looked into, the second check of this OR is totally redundant
@@ -54,6 +54,8 @@ async function authenticate(userDb, req, res, next) {
     if (tokenObj === undefined) {
         return res.status(403).redirect("/");
     }
+
+    return next();
     // return tokenObj === undefined || tokenObj.CurrentToken !== reqToken ? res.status(403).redirect("/pari") : next();
 }
 
