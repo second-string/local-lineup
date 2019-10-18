@@ -17,10 +17,10 @@ async function sendShowsEmail(email) {
 
 	const db = await sqlite.open(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/USER_VENUES.db' : 'USER_VENUES.db');
 	const tableName = 'VenueLists';
-	const venueColumn = 'venueIds';
-	let sql = `SELECT ${venueColumn} FROM ${tableName} WHERE email='${email}';`;
+	const venueColumn = 'VenueIds';
+	let sql = `SELECT ${venueColumn} FROM ${tableName} WHERE Email='${email}';`;
 	let venueIdObject = await db.get(sql);
-	let venueIds = venueIdObject.venueIds.split(',');
+	let venueIds = venueIdObject.VenueIds.split(',');
 
 	let venues = {
 		'seatgeek': venueIds.reduce((obj, item) => {

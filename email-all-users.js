@@ -1,28 +1,42 @@
-const sqlite = require('sqlite');
-const showEmailer = require('./show-emailer.js');
+const sqlite = require('sqlite3');
+const showEmailer = require('./show-emailer');
+const dbHelpers = require('./db-helpers');
+const playlistBuilder = require('./playlist-builder');
 
 async function main() {
-	const dbPromise = sqlite.open(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/USER_VENUES.db' : 'USER_VENUES.db');
-	const db = await dbPromise;
-	const emailColumn = 'email';
+	// const dbPromise = sqlite.open(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/user_venues.db' : 'user_venues.db');
+	const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/user_venues.db' : 'user_venues.db');
+	// const db = await dbPromise;
+	const emailColumn = 'Email';
 	const tableName = 'VenueLists';
 
 	let sql = `SELECT ${emailColumn} from ${tableName};`;
-	let emails = await db.all(sql);
+	let emails = await db.allAsync(sql, []);
 	let emailPromises = [];
+	let playlistPromises = [];
 	for (emailObj of emails) {
-		let email = emailObj.email
+		let email = emailObj.Email
 		let emailPromise = new Promise(async (resolve, reject) => {
-			let responseCode = await showEmailer.sendShowsEmail(email);
+			// let responseCode = await showEmailer.sendShowsEmail(email);
+			// if (responseCode < 0) {
+			// 	return reject(Error(email));
+			// }
+
+			resolve(email);
+		})
+		.catch(e => e);
+
+		let playlistPromise = new Promise(async (resolve, reject) => {
+			let responseCode = await playlistBuilder.buildPlaylist(email);
 			if (responseCode < 0) {
 				return reject(Error(email));
 			}
 
 			resolve(email);
 		})
-		.catch(e => e);
 
 		emailPromises.push(emailPromise);
+		playlistPromises.push(playlistPromise);
 	}
 
 	let results = null;
@@ -48,6 +62,28 @@ async function main() {
 
 		valid.push(x);
 	});
+
+	try {
+		results = await Promise.all(playlistPromises);
+	} catch (e) {
+		console.log(e);
+		return -1;
+	}
+
+	// 	if (results === null) {
+	// 	return -1;
+	// }
+
+	// let valid = [];
+	// let errored = [];
+	// results.forEach(x => {
+	// 	if (x instanceof Error) {
+	// 		errored.push(x.message);
+	// 		return;
+	// 	}
+
+	// 	valid.push(x);
+	// });
 
 	console.log(`Successfully sent show emails to ${valid.length} emails`);
 	console.log(`Email failed for ${errored.length} emails:`)

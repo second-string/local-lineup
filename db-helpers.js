@@ -22,6 +22,16 @@ function errOrResolveObject(resolve, reject, err, obj) {
     resolve(obj);
 }
 
+// Simple handler to log and reject a promise on fail, resolve with list of objects on success
+function errOrResolveList(resolve, reject, err, objs) {
+    if (err) {
+        console.log(err);
+        return reject(err);
+    }
+
+    resolve(objs);
+}
+
 sqlite.Database.prototype.getAsync = function(sql, params){
     return new Promise((resolve, reject) => {
         if (params) {
@@ -42,7 +52,18 @@ sqlite.Database.prototype.runAsync = function(sql, params){
     });
 };
 
+sqlite.Database.prototype.allAsync = function(sql, params) {
+    return new Promise((resolve, reject) => {
+        if (params) {
+            this.all(sql, params, (err, rows) => errOrResolveList(resolve, reject, err, rows));
+        } else {
+            this.all(sql, (err, rows) => errOrResolveList(resolve, reject, err, rows));
+        }
+    });
+};
+
 module.exports = {
     openDb,
-    errOrResolveObject
+    errOrResolveObject,
+    errOrResolveList
 };
