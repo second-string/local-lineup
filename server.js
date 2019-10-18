@@ -103,15 +103,20 @@ app.get('/show-finder/venues', async (req, res) => {
 
 app.post('/show-finder/save-venues', async (req, res) => {
 	if (!req.body) {
-		console.log('Did not receive any email or venue IDs in POST body');
+		console.log('Did not receive any token or venue IDs in POST body');
 		return res.status(400);
 	}
 
-	let email = req.body.email;
+	// let email = req.body.email;
+	let token = req.body.token;
 	let venueIds = req.body.venueIds;
 	let tableName = 'VenueLists';
-	let emailColumn = 'email';
+	let emailColumn = 'Email';
 	let venueIdsColumn = 'venueIds';
+
+	// Get email from token
+	let emailObj = await db.getAsync('SELECT Email FROM Users WHERE SessionToken=?', [token]);
+	let email = emailObj.Email;
 
 	let upsertSql = `
 INSERT INTO ${tableName} (${emailColumn}, ${venueIdsColumn})
