@@ -240,6 +240,27 @@ app.get('/login/', (req, res) => {
     	}));
 });
 
+// Function called from our react code to handle showing different page states for logged-in users. Only necessary
+// for pages shown to non-logged-in users that you want to display differently for logged-in (i.e. hiding a login button)
+app.post('/token-auth/', async (req, res) => {
+	// Get token from body
+	let suppliedToken = req.body.token;
+
+	// Get user for token in db
+	let dbToken = await db.getAsync('SELECT * FROM Users WHERE SessionToken=?', [suppliedToken]);
+
+	// If user exists, send back logged in, if not don't
+	// Yes I know this doesn't actually validate anything. I don't want to
+	// implement actual auth yet
+	if (dbToken)
+	{
+		return res.json({ isLoggedIn: true });
+	} else {
+		return res.json({ isLoggedIn: false });
+	}
+});
+
+// Redirect function passed to spotify.com's auth to handle getting the access/refresh tokens and storing them
 app.get('/spotify-auth/', async (req, res) => {
 	let code = req.query.code;
 	let state = req.query.state;
@@ -268,7 +289,7 @@ app.get('/spotify-auth/', async (req, res) => {
 	};
 
 	console.log('Getting spotify access and refresh tokens ...');
-	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, true);
+	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, false);
 	if (!success) {
 		console.error(response);
 		throw new Error(`something went wrong with request for access/refresh spoot tokens`);

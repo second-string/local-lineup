@@ -3,28 +3,11 @@ const express = require('express');
 const sqlite = require('sqlite3');
 const uuid = require('uuid/v4');
 
-// interface HashInfo {
-//     hash: string;
-//     salt: string;
-//     iterations: number;
-// }
-
-// const loggedOutPaths: string[] = [
-//     "/pari/login",
-//     "/v0/login",
-//     "/pari/register",
-//     "/v0/register",
-//     "/pari"
-// ];
-
 async function authenticate(userDb, req, res, next) {
-    if (req.path === "/" || req.path.startsWith("/static") || req.path === "/login" || req.path === "/spotify-auth") {
+    if (req.path === "/" || req.path.startsWith("/static") || req.path.startsWith("/login") || req.path.startsWith("/spotify-auth") || req.path.startsWith("/token-auth")) {
         return next();
     }
 
-    // const loggedOutPath = loggedOutPaths.indexOf(req.path) > 0;
-
-    // if ((!req.cookies || !req.cookies.token) && !loggedOutPath) {
     if (!req.cookies || !req.cookies['show-finder-token']) {
         return res.redirect(401, "/");
     }
@@ -58,47 +41,6 @@ async function authenticate(userDb, req, res, next) {
     return next();
     // return tokenObj === undefined || tokenObj.CurrentToken !== reqToken ? res.status(403).redirect("/pari") : next();
 }
-
-// async function login(userDb, req, res, next) {
-//     const { email, password } = req.body;
-//     const userAndHashInfo = await userDb.getAsync(`SELECT Uid, Hash, Salt, Iterations FROM Users WHERE Email=?`, [email]);
-
-//     if (!userAndHashInfo) {
-//         console.log(`No user found for email '${email}'`);
-//         return res.status(401).send("User not found");
-//     }
-
-//     const attemptHashInfo = await getHashInfo(password, userAndHashInfo.Salt, userAndHashInfo.Iterations);
-//     if (attemptHashInfo.hash !== userAndHashInfo.Hash) {
-//         return res.status(403).send("Incorrect login details");
-//     }
-
-//     // Give them a new token regardless since re-login should refresh session
-//     const token = await new Promise((resolve, reject) => crypto.randomBytes(32, (err, buf) => errOrResolveObject(resolve, reject, err, buf.toString("hex"))));
-//     await userDb.runAsync(`UPDATE Users SET CurrentToken=? WHERE Uid=?`, [token, userAndHashInfo.Uid]);
-
-//     return res.cookie("token", token, { maxAge: 1000 * 60 * 60 /* 1 hr */ }).redirect(301, "/pari/bets");
-// }
-
-// export async function register(userDb, req, res, next) {
-//     const { email, password } = req.body;
-//     const hashInfo = await getHashInfo(password);
-
-//     const user = await userDb.getAsync(`SELECT * FROM Users WHERE Email=?`, [email]);
-
-//     if (user) {
-//         return res.status(400).send("User already exists");
-//     }
-
-//     try {
-//         await userDb.runAsync(`INSERT INTO Users (Uid, Email, Hash, Salt, Iterations) VALUES (?, ?, ?, ?, ?)`, [uuid(), email, hashInfo.hash, hashInfo.salt, hashInfo.iterations]);
-//     } catch (e) {
-//         console.log(e);
-//         return res.status(503).send("Failed to register user, try again");
-//     }
-
-//     return await login(userDb, req, res, next);
-// }
 
 async function logout(userDb, req, res, next) {
     // Make the assumption since it passed auth
