@@ -32,7 +32,7 @@ async function buildPlaylist(db, userObj, shows) {
     try {
         let artistObjs = await getArtistObjs(db, artists, userObj, spotifyToken);
         let trackUris = await getTrackUris(artistObjs, spotifyToken);
-        let playlistObj = await getOrCreatePlaylist(spotifyToken);
+        let playlistObj = await getOrCreatePlaylist(userObj, spotifyToken);
         await addTracksToPlaylist(playlistObj, trackUris, spotifyToken);
     } catch (e) {
         console.log(e.message);
@@ -60,7 +60,6 @@ async function getArtistObjs(db, artists, userObj, spotifyToken) {
     }
 
     let artistObjs = await Promise.all(artistPromises);
-    console.log(artistObjs.length);
     artistObjs = artistObjs.filter(x => x !== null);
 
     console.log(`Received ${artistObjs.length} artists`);
@@ -87,26 +86,38 @@ async function getTrackUris(artistObjs, spotifyToken) {
     }
 
     let trackUris = await Promise.all(trackPromises);
-    trackUris = trackUris.reduce((list, trackUriList) => list.concat(trackUriList), []);
+    trackUris = trackUris.reduce((list, trackUriList) => {
+        list = list.concat(trackUriList);
+        return list;
+    }, []);
+
     console.log(`Received ${trackUris.length} tracks`);
     return trackUris;
 }
 
-async function getOrCreatePlaylist(spotifyToken) {
+async function getOrCreatePlaylist(userObj, spotifyToken) {
     let getOptions = baseSpotifyHeaders('GET', spotifyToken);
 
-    // TODO :: this only gets 50 playlist, we need to page response to check them all if > 50
-    let currentPlaylistsResponse = await helpers.instrumentCall('https://api.spotify.com/v1/me/playlists', getOptions, false);
-    if (currentPlaylistsResponse.success === undefined || !currentPlaylistsResponse.success) {
-        console.log(`Error getting playlist for current user`);
-        console.log(currentPlaylistsResponse.response);
-        throw new Error(-1);
-    }
+    // Page through getting playlists 50 at a time
+    let playlists = [];
+    let url = 'https://api.spotify.com/v1/me/playlists?limit=50';
+    let hasNext = false;
+    do {
+        let currentPlaylistsResponse = await helpers.instrumentCall(url, getOptions, false);
+        if (currentPlaylistsResponse.success === undefined || !currentPlaylistsResponse.success) {
+            console.log(`Error getting playlist for current user`);
+            console.log(currentPlaylistsResponse.response);
+            throw new Error(-1);
+        }
 
-    // TODO :: we need to check to make sure we only find showfinder playlist they own (<playlistobj>.owner.id    )
-    let playlistObj = currentPlaylistsResponse.response.items.find(x => x.name === 'Show Finder');
+        playlists = playlists.concat(currentPlaylistsResponse.response.items);
+        url = currentPlaylistsResponse.response.next;
+        hasNext = url !== null;
+    } while (hasNext);
+
+    let playlistObj = playlists.find(x => x.name === 'Show Finder' && x.owner.id === userObj.SpotifyUsername);
     if (playlistObj === undefined) {
-        // They don't have a showfinder playlist yet, create it
+        // They don't have their own showfinder playlist yet, create it
         let postOptions = baseSpotifyHeaders('POST', spotifyToken);
         postOptions.body = {
             name: 'Show Finder',
@@ -131,20 +142,22 @@ async function getOrCreatePlaylist(spotifyToken) {
 async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken) {
     // PUT overwrites all other tracks in the playlist
     let putOptions = baseSpotifyHeaders('PUT', spotifyToken);
-    putOptions.body = {
-        "uris": trackUris.slice(0, 100)
-    };
-    // TODO batch add for > 100 tracks
 
-    // This response gives us an object with a single 'snapshot_id' element, who cares
-    let addTracksResponse = await helpers.instrumentCall(`https://api.spotify.com/v1/playlists/${playlistObj.id}/tracks`, putOptions, false);
-    if (addTracksResponse.success === undefined || !addTracksResponse.success) {
-        console.log('Error adding tracks to playlist');
-        console.log(addTracksResponse.response);
-        throw new Error(-1);
+    for (let i = 0; i <= Math.floor(trackUris.length / 100); i++) {
+        putOptions.body = {
+            "uris": trackUris.slice(i * 100, i * 100 + 99)
+        };
+
+        // This response gives us an object with a single 'snapshot_id' element, who cares
+        let addTracksResponse = await helpers.instrumentCall(`https://api.spotify.com/v1/playlists/${playlistObj.id}/tracks`, putOptions, false);
+        if (addTracksResponse.success === undefined || !addTracksResponse.success) {
+            console.log('Error adding tracks to playlist');
+            console.log(addTracksResponse.response);
+            throw new Error(-1);
+        }
+
+        console.log(`Added a page of tracks to playlist: ${i * 100} to ${i * 100 + 99}`);
     }
-
-    console.log(`Added all tracks to playlist`);
 }
 
 async function refreshSpotifyToken(db, userObj) {
