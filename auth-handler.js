@@ -3,8 +3,15 @@ const express = require('express');
 const sqlite = require('sqlite3');
 const uuid = require('uuid/v4');
 
+const loggedOutPaths = [
+    "/",
+    "/login",
+    "/spotify-auth",
+    "/token-auth"
+];
+
 async function authenticate(userDb, req, res, next) {
-    if (req.path === "/" || req.path.startsWith("/static") || req.path.startsWith("/login") || req.path.startsWith("/spotify-auth") || req.path.startsWith("/token-auth")) {
+    if (loggedOutPaths.filter(x => req.path === x).length > 0 || req.path.startsWith("/static")) {
         return next();
     }
 

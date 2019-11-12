@@ -11,7 +11,7 @@ async function main() {
 	if (process.env.DEPLOY_STAGE === 'PROD') {
 		let venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
 	} else {
-		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE Email=?;`, ['show.finder.bot@gmail.com']);
+		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE Email=?;`, ['dot4qu@virginia.edu']);
 		if (venueListObjs.length !== 1) {
 			throw new Error(`Got ${venueListObjs.length} users from db when only expecting the single show.finder.bot one`);
 		}

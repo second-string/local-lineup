@@ -47,7 +47,7 @@ async function getArtistObjs(db, artists, userObj, spotifyToken) {
             let getOptions = baseSpotifyHeaders('GET', spotifyToken);
             let artistResponse = await helpers.instrumentCall(`https://api.spotify.com/v1/search?q="${encodeURIComponent(artist)}"&type=artist`, getOptions, false);
 
-            if (artistResponse.response.artists.items.length > 0) {
+            if (artistResponse.response.artists && artistResponse.response.artists.items.length > 0) {
                 // Take the first one, it's almost always correct
                 resolve(artistResponse.response.artists.items[0]);
             } else {

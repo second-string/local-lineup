@@ -2,7 +2,7 @@
   "name": "show-finder",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "npm run devBuild --prefix client && nodemon server.js",
     "devOld": "nodemon server.js & npm run --prefix client/",

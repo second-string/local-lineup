@@ -3,12 +3,8 @@
   text-align: center;
 }
 
-h1 {
-  font-size: 50px;
-}
-
 button {
-  font-size: 30px;
+  font-size: 15px;
   padding: 10px;
   border-style: solid;
   background-color: white;
@@ -46,7 +42,7 @@ cursor: default;
 
 .textbox {
   min-width: 200px;
-  font-size: 40px;
+  font-size: 30px;
   padding: 10px;
   border-radius: 10px;
   border-style: solid;

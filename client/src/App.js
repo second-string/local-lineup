@@ -65,10 +65,10 @@ async componentDidMount() {
       <div className="App">
         <h3>helloaf</h3>
         <div style={{ display: this.state.isLoggedIn ? '' : 'none' }}>
-            <a href="./show-finder/">Show Finder</a>
+            <a href="./show-finder">Show Finder</a>
         </div>
         <div style={{ display: this.state.isLoggedIn ? 'none' : '' }}>
-            <a href="./login/">Login</a>
+            <a href="./login">Login</a>
         </div>
       </div>
     );

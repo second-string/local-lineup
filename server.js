@@ -227,7 +227,7 @@ app.post('/show-finder/shows', async (req, res) => {
 });
 
 
-app.get('/login/', (req, res) => {
+app.get('/login', (req, res) => {
     // check if user has cookie? Might not be necessary, but if it is redirect if exists
     // otherwise redirect to spotify login page
     // todo :: include `state` query param in url
@@ -247,7 +247,7 @@ app.get('/login/', (req, res) => {
 
 // Function called from our react code to handle showing different page states for logged-in users. Only necessary
 // for pages shown to non-logged-in users that you want to display differently for logged-in (i.e. hiding a login button)
-app.post('/token-auth/', async (req, res) => {
+app.post('/token-auth', async (req, res) => {
 	// Get token from body
 	let suppliedToken = req.body.token;
 
@@ -266,7 +266,7 @@ app.post('/token-auth/', async (req, res) => {
 });
 
 // Redirect function passed to spotify.com's auth to handle getting the access/refresh tokens and storing them
-app.get('/spotify-auth/', async (req, res) => {
+app.get('/spotify-auth', async (req, res) => {
 	let code = req.query.code;
 	let state = req.query.state;
 	if (code === undefined && req.query.error) {
@@ -351,7 +351,7 @@ console.log(`Routing to static files in ${static_app_dir}...`);
 app.use(express.static(static_app_dir));
 app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: static_app_dir }));
 app.get('/show-finder/venue-search', (req, res) => res.sendFile('venue-search.html', { root: static_app_dir }));
-app.get('/show-finder/', (req, res) => res.sendFile('show-finder.html', { root: static_app_dir }));
+app.get('/show-finder', (req, res) => res.sendFile('show-finder.html', { root: static_app_dir }));
 app.get('*', (req, res) => res.sendFile('index.html', { root: static_app_dir }));
 
 // HTTPS certs

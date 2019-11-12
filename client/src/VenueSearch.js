@@ -153,8 +153,9 @@ class VenueSearch extends Component {
 	render() {
 		return (
 			<div className="VenueSearch">
+				<a href="/show-finder"><button className="unselectable block">Back to main menu</button></a>
 				<h3>Venue search</h3>
-        		<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
+				<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
 				<select id='location-select' onChange={this.locationSelected}>
 					<option id='' disabled defaultValue>Choose a location</option>
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
