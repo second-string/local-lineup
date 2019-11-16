@@ -22,7 +22,7 @@ async function authenticate(userDb, req, res, next) {
     // TODO :: sanitize?
     // TODO :: index on this token
     const reqToken = req.cookies['show-finder-token'];
-    const tokenObj = await userDb.getAsync(`SELECT SessionToken FROM Users WHERE SessionToken=?`, [reqToken]);
+    const tokenObj = await userDb.getAsync(`SELECT * FROM Users WHERE Uid=?`, [reqToken]);
 
     // TODO :: LOGIC ISN"T WORKING
     // TODO :: this logic really needs to be looked into, the second check of this OR is totally redundant
@@ -53,12 +53,12 @@ async function logout(userDb, req, res, next) {
     // Make the assumption since it passed auth
     const reqToken = req.cookies.token;
 
-    try {
-        await userDb.runAsync(`UPDATE Users SET CurrentToken='' WHERE CurrentToken=?`, [reqToken]);
-    } catch (e) {
-        console.log(e);
-        res.status(500).send("Error try again");
-    }
+    // try {
+    //     await userDb.runAsync(`UPDATE Users SET CurrentToken='' WHERE CurrentToken=?`, [reqToken]);
+    // } catch (e) {
+    //     console.log(e);
+    //     res.status(500).send("Error try again");
+    // }
 
     res.cookie("token", "", { maxAge: 0 }).redirect(200, "/");
 }

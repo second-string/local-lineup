@@ -6,12 +6,12 @@ const db = dbHelpers.openDb('user_venues.db');
 
 const createUsersTableSql = `
 CREATE TABLE IF NOT EXISTS Users (
-    Email nvarchar NOT NULL PRIMARY KEY,
+    Uid nvarchar NOT NULL PRIMARY KEY,
+    Email nvarchar NOT NULL,
     SpotifyUsername nvarchar,
     FullName nvarchar,
     SpotifyAccessToken nvarchar NOT NULL,
-    SpotifyRefreshToken nvarchar NOT NULL,
-    SessionToken nvarchar
+    SpotifyRefreshToken nvarchar NOT NULL
 )`;
 
 const createVenueListsTableSql = `

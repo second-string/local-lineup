@@ -115,7 +115,7 @@ app.post('/show-finder/save-venues', async (req, res) => {
 	let venueIdsColumn = 'venueIds';
 
 	// Get email from token
-	let emailObj = await db.getAsync('SELECT Email FROM Users WHERE SessionToken=?', [token]);
+	let emailObj = await db.getAsync('SELECT Email FROM Users WHERE Uid=?', [token]);
 	let email = emailObj.Email;
 
 	let upsertSql = `
@@ -252,7 +252,7 @@ app.post('/token-auth', async (req, res) => {
 	let suppliedToken = req.body.token;
 
 	// Get user for token in db
-	let dbToken = await db.getAsync('SELECT * FROM Users WHERE SessionToken=?', [suppliedToken]);
+	let dbToken = await db.getAsync('SELECT * FROM Users WHERE Uid=?', [suppliedToken]);
 
 	// If user exists, send back logged in, if not don't
 	// Yes I know this doesn't actually validate anything. I don't want to
@@ -318,11 +318,10 @@ app.get('/spotify-auth', async (req, res) => {
 		throw new Error('Error getting user account using access token');
 	}
 
-	const sessionToken = uuid();
-	await db.runAsync('INSERT OR REPLACE INTO Users(Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken, SessionToken) VALUES (?, ?, ?, ?, ?, ?)', [response.email, response.id, response.display_name, access, refresh, sessionToken]);
+	let userUid = uuid();
+	await db.runAsync('INSERT OR REPLACE INTO Users(Uid, Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken) VALUES (?, ?, ?, ?, ?, ?)', [userUid, response.email, response.id, response.display_name, access, refresh]);
 
-
-	res.cookie("show-finder-token", sessionToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder/');
+	res.cookie("show-finder-token", userUid, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder/');
 });
 
 app.use((req, res, next) => {
