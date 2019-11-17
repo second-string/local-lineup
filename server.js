@@ -17,8 +17,7 @@ const constants = require('./constants');
 const helpers = require('./helpers');
 
 const app = express();
-const envPort = parseInt(process.env.PORT, 10);
-const port = envPort === undefined ? (process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443) : envPort;
+const port = process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
 
 
 // Poor man's in-mem cache
