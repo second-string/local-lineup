@@ -73,16 +73,31 @@ async function logout(userDb, req, res) {
 // Function called from our react code to handle showing different page states for logged-in users. Only necessary
 // for pages shown to non-logged-in users that you want to display differently for logged-in (i.e. hiding a login button)
 async function tokenAuth(db, req, res) {
-    // Get token from body
-    let suppliedToken = req.body['show-finder-token'];
+    // Just 'token' key because it's what we're manually sending from inside our react homepage
+    let reqToken = req.body.token;
 
-    // Get user for token in db
-    let dbToken = await db.getAsync('SELECT * FROM Users WHERE Uid=?', [suppliedToken]);
+    if (reqToken === undefined || reqToken === null) {
+        return res.json({ isLoggedIn: false });
+    }
 
-    // If user exists, send back logged in, if not don't
-    // Yes I know this doesn't actually validate anything. I don't want to
-    // implement actual auth yet
-    if (dbToken)
+    let token = null;
+    try {
+        token = jwt.verify(reqToken, constants.jwtSigningSecret);
+    } catch (e) {
+        console.log("Error decoding JWT!");
+        console.log("req.cookies.token:");
+        console.log(reqToken);
+        console.log("Exception:");
+        console.log(e);
+
+        return res.json({ isLoggedIn: false });
+    }
+
+
+    let dbUser = await db.getAsync('SELECT * FROM Users WHERE Uid=?', [token.userUid]);
+
+    // If user exists, send back logged in, if not, they somehow have a jwt-valid token with a user that doesn't exist...?
+    if (dbUser)
     {
         return res.json({ isLoggedIn: true });
     } else {
