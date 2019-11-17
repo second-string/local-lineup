@@ -67,8 +67,8 @@ async function login(req, res) {
         }));
 }
 
-async function logout(userDb, req, res) {
-    res.cookie("show-finder-token", "", { maxAge: 0 }).redirect(200, "/");
+async function logout(req, res) {
+    res.cookie("show-finder-token", "", { maxAge: 0 }).redirect("/");
 }
 
 // Function called from our react code to handle showing different page states for logged-in users. Only necessary
@@ -174,7 +174,7 @@ async function spotifyLoginCallback(db, req, res) {
     await db.runAsync('INSERT OR REPLACE INTO Users(Uid, Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken) VALUES (?, ?, ?, ?, ?, ?)', [userUid, response.email, response.id, response.display_name, access, refresh]);
 
     let signedToken = jwt.sign({ userUid: userUid }, constants.jwtSigningSecret, { expiresIn: "1h" });
-    res.cookie("show-finder-token", signedToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder/');
+    res.cookie("show-finder-token", signedToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder');
 }
 
 async function getHashInfo(password, salt, iterations) {

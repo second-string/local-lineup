@@ -42,8 +42,9 @@ app.use((req, res, next) => authHandler.authenticate(db, req, res, next));
 
 // auth-centric routes
 app.get('/login', (req, res) => authHandler.login(req, res));
-app.post('/token-auth', async (req, res) => authHandler.tokenAuth(db, req, res));
 app.get('/spotify-auth', async (req, res) => authHandler.spotifyLoginCallback(db, req, res));
+app.post('/logout', (req, res) => authHandler.logout(req, res));
+app.post('/token-auth', async (req, res) => authHandler.tokenAuth(db, req, res));
 
 app.post('/show-finder/playlists', async (req, res) => {
 	let userObj = await db.getAsync(`SELECT SpotifyUsername FROM Users WHERE Uid=?`, [req.userUid]);

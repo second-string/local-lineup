@@ -11,14 +11,19 @@
     <title>Show Finder</title>
 </head>
 <body>
-	<div id="root" style="text-align: center; padding: 3em;">
-        <div style="max-width: 500px; text-align: center; margin: auto;">
-            <a href="/show-finder/venue-search">Venue search</a>
-            <p>Choose venues in your city and receive both a weekly email and an automatically-updated Spotify playlist of all the artists playing the following week</p>
-        </div>
-        <div style="max-width: 500px; text-align: center; margin: auto; margin-top: 3em">
-		    <a href="/show-finder/spotify-search">Spotify search</a>
-            <p>Choose one of your Spotify playlists and see all upcoming shows for those artists in your city</p>
+	<div id="root" style="padding: 2em">
+        <form method="POST" action="/logout">
+            <button type="submit">Logout</button>
+        </form>
+        <div style="text-align: center; padding: 3em;">
+            <div style="max-width: 500px; text-align: center; margin: auto;">
+                <a href="/show-finder/venue-search">Venue search</a>
+                <p>Choose venues in your city and receive both a weekly email and an automatically-updated Spotify playlist of all the artists playing the following week</p>
+            </div>
+            <div style="max-width: 500px; text-align: center; margin: auto; margin-top: 3em">
+    		    <a href="/show-finder/spotify-search">Spotify search</a>
+                <p>Choose one of your Spotify playlists and see all upcoming shows for those artists in your city</p>
+            </div>
         </div>
 	</div>
 </body>
