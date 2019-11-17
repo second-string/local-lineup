@@ -13,7 +13,8 @@ const loggedOutPaths = [
     "/",
     "/login",
     "/spotify-auth",
-    "/token-auth"
+    "/token-auth",
+    "/show-finder/delete-venues"
 ];
 
 async function authenticate(userDb, req, res, next) {

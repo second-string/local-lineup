@@ -141,12 +141,17 @@ app.get('/show-finder/delete-venues', async (req, res) => {
 		return res.status(400);
 	}
 
+	let userObj = await db.getAsync(`SELECT * FROM Users WHERE Email=?`, req.query.email);
+	if (userObj === undefined) {
+		return res.status(404).send('User not found');
+	}
+
 	let tableName = 'VenueLists';
-	let emailColumn = 'email';
+	let userUidColumn = 'UserUid';
 
 	let deleteSql = `
 DELETE FROM ${tableName}
-  WHERE ${emailColumn}='${req.query.email}';
+  WHERE ${userUidColumn}='${userObj.Uid}';
 `;
 
 	let deleteOp;
