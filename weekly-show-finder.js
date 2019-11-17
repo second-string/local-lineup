@@ -11,7 +11,7 @@ async function main() {
 	if (process.env.DEPLOY_STAGE === 'PROD') {
 		let venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
 	} else {
-		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE Email=?;`, ['dot4qu@virginia.edu']);
+		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`, ['dot4qu@virginia.edu']);
 		if (venueListObjs.length !== 1) {
 			throw new Error(`Got ${venueListObjs.length} users from db when only expecting the single show.finder.bot one`);
 		}
@@ -20,11 +20,11 @@ async function main() {
 	let emailPromises = [];
 	let playlistPromises = [];
 	for (let venueListObj of venueListObjs) {
-		let email = venueListObj.Email
+		const userUid = venueListObj.UserUid;
 		let venueIds = venueListObj.VenueIds.split(',');
 
 		// TODO :: get rid of this query and have the initial SELECT above join the two tables
-		let userObj = await db.getAsync('SELECT * FROM Users WHERE Email=?', [email]);
+		let userObj = await db.getAsync('SELECT * FROM Users WHERE Uid=?', [userUid]);
 
 		let venues = {
 			'seatgeek': venueIds.reduce((obj, item) => {
@@ -58,12 +58,12 @@ async function main() {
 			}, {});
 
 		let emailPromise = new Promise(async (resolve, reject) => {
-			let exitCode = await showEmailer.sendShowsEmail(email, showsByDate, startDate, endDate);
+			let exitCode = await showEmailer.sendShowsEmail(userObj, showsByDate, startDate, endDate);
 			if (exitCode < 0) {
-				return reject(Error(email));
+				return reject(Error(userObj.Email));
 			}
 
-			resolve(email);
+			resolve(userObj.Email);
 		})
 		.catch(e => e);
 
@@ -75,7 +75,7 @@ async function main() {
 				return reject(Error(userObj.SpotifyUsername));
 			}
 
-			resolve(email);
+			resolve(userObj.Email);
 		})
 
 		emailPromises.push(emailPromise);

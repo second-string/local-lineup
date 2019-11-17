@@ -2,9 +2,9 @@ const Email = require('email-templates');
 // const sqlite = require('sqlite');
 const venueShowSearch = require('./venue-show-finder');
 
-async function sendShowsEmail(email, shows, startDate, endDate) {
-	if (email === null || email === undefined) {
-		console.log('Must provide email to retrieve selected venues and send upcoming shows');
+async function sendShowsEmail(userObj, shows, startDate, endDate) {
+	if (userObj === null || userObj === undefined) {
+		console.log('Must provide user object to retrieve selected venues and send upcoming shows');
 		return -1;
 	}
 
@@ -15,23 +15,12 @@ async function sendShowsEmail(email, shows, startDate, endDate) {
 		return -1;
 	}
 
-	// Transform shows by date object into shows by user-facing short date string for email display
-	// let showsByDateString = Object.keys(shows).reduce((obj, item) => {
-	// 	let dateStringOptions = {
-	// 		weekday: 'long',
-	// 		month: 'long',
-	// 		day: 'numeric'
-	// 	};
-
-	// 	obj[item.toLocaleDateString('en-US', dateStringOptions)] = shows[item];
-	// 	return obj;
-	// }, {});
-
 	// Prettify for the email template
 	startDate = startDate.toLocaleDateString('en-US');
 	endDate = endDate.toLocaleDateString('en-US');
 
-	let unsubscribeUrl = process.env.DEPLOY_STAGE === 'PROD' ? `https://brianteam.dev/show-finder/delete-venues?email=${email}` : `https://localhost/show-finder/delete-venues?email=${email}`;
+	let baseUrl = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+	let unsubscribeUrl = `https://${baseUrl}/show-finder/delete-venues?uid=${userObj.Uid}`;
 
 	// oauth auth object fields: https://nodemailer.com/smtp/oauth2/
 	const emailObj = new Email({
@@ -55,7 +44,7 @@ async function sendShowsEmail(email, shows, startDate, endDate) {
 	return emailObj.send({
 		template: process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/emails/test' : 'test',
 		message: {
-			to: email
+			to: userObj.Email
 		},
 		locals: {
 			startDate: startDate,
@@ -73,31 +62,3 @@ async function sendShowsEmail(email, shows, startDate, endDate) {
 module.exports = {
 	sendShowsEmail
 };
-
-/*
-const email = new Email({
-	message: {
-		from: '1123greenchores@gmail.com'
-	},
-	transport: {
- 		service: 'gmail',
- 		auth: {
-        	user: '1123greenchores@gmail.com',
-        	pass: process.env.CHORES_PW
-    	}
-	},
-	send: true
-});
-
-email.send({
-	template: 'test',
-	message: {
-		to: 'brian.team.jr@gmail.com'
-	},
-	locals: {
-		testLocal: 'helloaf'
-	}
-})
-.then(console.log)
-.catch(console.error)
-*/

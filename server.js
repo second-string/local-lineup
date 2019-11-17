@@ -23,7 +23,7 @@ const port = process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
 // Poor man's in-mem cache
 var spotifyToken;
 
-let db = dbHelpers.openDb('user_venues.db');
+let db = dbHelpers.openDb('user_venues.db').trace();
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -136,12 +136,12 @@ INSERT INTO ${tableName} (${userUidColumn}, ${venueIdsColumn})
 
 // TODO :: BT unsub success screen
 app.get('/show-finder/delete-venues', async (req, res) => {
-	if (req.query.email === undefined) {
-		console.log('Did not receive any email for venue-deletion in the query param');
+	if (req.query.uid === undefined) {
+		console.log('Did not receive any user uid for venue-deletion in the query param');
 		return res.status(400);
 	}
 
-	let userObj = await db.getAsync(`SELECT * FROM Users WHERE Email=?`, req.query.email);
+	let userObj = await db.getAsync(`SELECT * FROM Users WHERE Uid=?`, req.query.uid);
 	if (userObj === undefined) {
 		return res.status(404).send('User not found');
 	}
@@ -159,7 +159,7 @@ DELETE FROM ${tableName}
 		deleteOp = await db.runAsync(deleteSql);
 	} catch (e) {
 		console.log(e);
-		return res.status(500);
+		return res.status(500).send('Error unsubscribing user');
 	}
 
 	return res.sendFile('email-delete-success.html', { root: static_app_dir });
