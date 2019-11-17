@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS Users (
 
 const createVenueListsTableSql = `
 CREATE TABLE IF NOT EXISTS VenueLists(
-    UserUid nvarchar NOT NULL PRIMARY KEY,
-    VenueIds nvarchar NOT NULL
+    UserUid nvarchar NOT NULL,
+    Location nvarchar NOT NULL,
+    VenueIds nvarchar NOT NULL,
+    PRIMARY KEY (UserUid, Location) ON CONFLICT REPLACE
 )`;
 
 db.serialize(async () => {

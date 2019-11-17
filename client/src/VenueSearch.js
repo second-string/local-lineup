@@ -60,7 +60,7 @@ class VenueSearch extends Component {
 			}
 		}
 
-		this.setState({ showSpinner: true });
+		this.setState({ showSpinner: true, selectedLocation: e.target.value });
 
 		let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(e.target.value)}`, getOptions);
 		let venues = await res.json();
@@ -102,7 +102,6 @@ class VenueSearch extends Component {
 		let showDatesByService = await res.json();
 		let showsByDate = showDatesByService['seatgeek'];
 
-		console.log(showsByDate);
 		this.setState({
 			showsByDate: showsByDate
 		});
@@ -123,7 +122,8 @@ class VenueSearch extends Component {
 
 		let postBody = {
 			token: token,
-			venueIds: Object.keys(this.state.selectedVenueNamesById)
+			venueIds: Object.keys(this.state.selectedVenueNamesById),
+			location: this.state.selectedLocation
 		};
 
 		let postOptions = {

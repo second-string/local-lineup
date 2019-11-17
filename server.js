@@ -117,17 +117,16 @@ app.post('/show-finder/save-venues', async (req, res) => {
 	let tableName = 'VenueLists';
 	let userUidColumn = 'UserUid';
 	let venueIdsColumn = 'VenueIds';
+	let locationColumn = 'Location';
 
 	let upsertSql = `
-INSERT INTO ${tableName} (${userUidColumn}, ${venueIdsColumn})
-  VALUES ("${req.userUid}", "${venueIds}")
-  ON CONFLICT (${userUidColumn})
-  DO UPDATE SET ${venueIdsColumn}="${venueIds}";
+INSERT INTO ${tableName} (${userUidColumn}, ${venueIdsColumn}, ${locationColumn})
+  VALUES (?, ?, ?);
  `;
 
  	let upsert;
 	try {
-		upsert = await db.runAsync(upsertSql);
+		upsert = await db.runAsync(upsertSql, [req.userUid, venueIds.join(','), req.body.location]);
 	} catch (e) {
 		console.log(e);
 		return res.status(500);
