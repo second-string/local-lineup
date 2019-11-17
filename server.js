@@ -23,7 +23,7 @@ const port = process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
 // Poor man's in-mem cache
 var spotifyToken;
 
-let db = dbHelpers.openDb('user_venues.db').trace();
+let db = dbHelpers.openDb('user_venues.db');
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -46,9 +46,11 @@ app.post('/token-auth', async (req, res) => authHandler.tokenAuth(db, req, res))
 app.get('/spotify-auth', async (req, res) => authHandler.spotifyLoginCallback(db, req, res));
 
 app.post('/show-finder/playlists', async (req, res) => {
+	let userObj = await db.getAsync(`SELECT SpotifyUsername FROM Users WHERE Uid=?`, [req.userUid]);
+
 	// If we have a token cached, give it a shot to see if it's still valid
 	if (spotifyToken) {
-		let cachedAttempt = await showFinder.getPlaylists(spotifyToken, process.env.DEPLOY_STAGE === 'PROD' ? req.body.username : 'bteamer');
+		let cachedAttempt = await showFinder.getPlaylists(spotifyToken, userObj.SpotifyUsername);
 
 		// If we have no status, that means we got our playlist json object back (success). If we have a code,
 		// instrumentCall returned our full failed response to us, so refresh the token and continue.

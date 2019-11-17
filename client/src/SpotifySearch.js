@@ -5,7 +5,6 @@ import './SpotifySearch.css';
 
 class SpotifySearch extends Component {
   baseState = {
-    userName: null,
     headerText: 'Show Finder',
     playlists: [],
     playlistNamesById: {},
@@ -74,22 +73,24 @@ class SpotifySearch extends Component {
   }
 
   newSearch = () => {
-    this.resetState({ userName: this.state.userName, locations: this.locations, selectedLocation: this.state.selectedLocation });
+    this.resetState({ locations: this.locations, selectedLocation: this.state.selectedLocation });
   }
 
   getPlaylists = async e => {
     e.preventDefault();
-    if (this.state.selectedLocation == null || this.state.userName == null || this.state.userName === undefined || this.state.userName === '') {
-      alert('You must enter a username and location');
+
+    if (e.target.value == null) {
+      alert('You must enter a location');
       return;
     }
+
+    this.setState({ selectedLocation: e.target.value });
 
     let postOptions = {
       method: 'POST',
       headers: {
         'Content-type': 'application/json'
-      },
-      body: JSON.stringify({ username: this.state.userName })
+      }
     };
 
     this.setState({ showSpinner: true, showingForm: false, headerText: 'Fetching playlists...' });
@@ -198,14 +199,6 @@ class SpotifySearch extends Component {
     });
   }
 
-  userNameStateChange = (entry) => {
-    this.setState({ userName: entry.target.value });
-  }
-
-  locationStateChange = (selection) => {
-    this.setState({ selectedLocation: selection.target.value });
-  }
-
   render() {
     return (
       <div className="SpotifySearch">
@@ -214,17 +207,12 @@ class SpotifySearch extends Component {
         <h3>{ this.state.headerText }</h3>
         <div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
         <div style={{ display: this.state.showingForm ? '' : 'none' }}>
-          <h4>Enter your spotify username:</h4>
-          <form onSubmit={this.getPlaylists}>
-            <div>
-              <input className="textbox" type="text" onChange={this.userNameStateChange} />
-              <select id='location-select' onChange={this.locationStateChange}>
-                <option id='' disabled defaultValue> Choose a location </option>
-                { this.state.locations.map(x => <option key={x.value} value={x.value}> {x.displayName} </option>) }
-               </select>
-           </div>
-            <button className="unselectable" type="submit" disabled={this.state.selectedLocation == null || this.state.userName == null || this.state.userName === undefined || this.state.userName === ''}>Submit</button>
-          </form>
+          <div>
+            <select id='location-select' onChange={this.getPlaylists}>
+              <option id='' disabled defaultValue> Choose a location </option>
+              { this.state.locations.map(x => <option key={x.value} value={x.value}> {x.displayName} </option>) }
+             </select>
+         </div>
         </div>
         <div>
         <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? '' : 'none' }}>
