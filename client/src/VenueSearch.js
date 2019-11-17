@@ -48,7 +48,20 @@ class VenueSearch extends Component {
 	    return res;
   	}
 
-	componentDidMount() {
+	async componentDidMount() {
+		const getOptions = {
+			method: 'GET',
+			headers: {
+				'Content-type': 'application/json',
+			}
+		};
+
+		const res = await this.instrumentCall('/show-finder/user-venues', getOptions);
+		const venueIdsObj = await res.json();
+		if (venueIdsObj.VenueIds) {
+			
+		}
+
 		this.setState({ locations: this.locations });
 	}
 

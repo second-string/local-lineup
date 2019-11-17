@@ -226,6 +226,15 @@ app.post('/show-finder/shows', async (req, res) => {
 	res.json(mappedArtistsToShows);
 });
 
+app.get('/show-finder/user-venues', async (req, res) => {
+	const venueListObj = await db.getAsync(`SELECT VenueIds FROM VenueLists WHERE UserUid=?`, [req.userUid]);
+	if (venueListObj === undefined) {
+		return res.json({});
+	}
+
+	res.json(venueListObj);
+});
+
 app.use((req, res, next) => {
 	// https://expressjs.com/en/api.html#req.secure
 	if (req.headers['x-forwarded-proto'] === 'http' || !req.secure) {
