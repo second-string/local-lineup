@@ -14,7 +14,7 @@ class VenueSearch extends Component {
 		email: '',
 		showVenueSearch: false,
 		showButtonChoices: false,
-		showEmailForm: false,
+		saveSuccess: false,
 		showSpinner: false
 	};
 
@@ -108,40 +108,21 @@ class VenueSearch extends Component {
 		});
 	}
 
-	saveShowsSelected = e => {
-		e.preventDefault();
-		this.setState({
-			showEmailForm: true,
-			showButtonChoices: false
-		});
-	}
-
-	emailChanged = e => {
-		this.setState({ email: e.target.value });
-		console.log(e.target.value);
-	}
-
-	backButtonClicked = e => {
+	saveShowsSelected = async e => {
 		e.preventDefault();
 
-		this.setState({
-			showEmailForm: false,
-			showButtonChoices: true
-		});
-	}
-
-	saveShowsForEmail = async e => {
-		e.preventDefault();
-
-		// TODO :: BT basic email validation
-		let email = this.state.email;
-		if (email === undefined || email === null || email == '') {
-			alert('Please enter an email address');
-			return;
-		}
+	    let cookies = document.cookie.split(';');
+	    let token = null;
+	    for (let cookiePairString of cookies) {
+	        let cookiePair = cookiePairString.split('=');
+	        if (cookiePair[0] === 'show-finder-token') {
+	            token = cookiePair[1];
+	            break;
+	        }
+	    }
 
 		let postBody = {
-			email: email,
+			token: token,
 			venueIds: Object.keys(this.state.selectedVenueNamesById)
 		};
 
@@ -154,13 +135,27 @@ class VenueSearch extends Component {
 		};
 
 		let res = await this.instrumentCall('/show-finder/save-venues', postOptions);
+		if (res.status === 204)
+		{
+			this.setState({ saveSuccess: true });
+		}
+	}
+
+	backButtonClicked = e => {
+		e.preventDefault();
+
+		this.setState({
+			// showEmailForm: false,
+			showButtonChoices: true
+		});
 	}
 
 	render() {
 		return (
 			<div className="VenueSearch">
-				<h3>hello helloaf</h3>
-        		<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
+				<a href="/show-finder"><button className="unselectable block">Back to main menu</button></a>
+				<h3>Venue search</h3>
+				<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
 				<select id='location-select' onChange={this.locationSelected}>
 					<option id='' disabled defaultValue>Choose a location</option>
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
@@ -183,19 +178,11 @@ class VenueSearch extends Component {
 						<div>
 							<button id='saveShowsButton' disabled={ this.state.selectedVenueNamesById === null || Object.keys(this.state.selectedVenueNamesById).length === 0 } onClick={this.saveShowsSelected}>Save shows</button>
 							<label htmlFor='showsaveShowsButton'>Select this option if you want shows for the selected venues emailed to you weekly</label>
+							<h3 style={{ display: this.state.saveSuccess ? '' : 'none' }}>Venues saved successfully</h3>
 						</div>
 					</div>
 				</form>
 				<div>
-
-				<form onSubmit={this.saveShowsForEmail} style={{ display: this.state.showEmailForm ? '' : 'none' }}>
-					<input type='text' className='textbox' style={{ marginTop: '20px', textAlign: 'center' }} onChange={this.emailChanged}></input>
-					<div id='buttonDiv' className='block'>
-						<button onClick={this.backButtonClicked}>Back</button>
-						<button type='submit' disabled={ this.state.email === undefined || this.state.email === null || this.state.email === '' }>Save</button>
-					</div>
-					<label htmlFor='buttonDiv'>When you click save, your email address will be saved along with your selected venues. You'll receive an email every sunday at 5pm outlining the shows at your venues for the week after the upcoming week.</label>
-				</form>
 
 					{ Object.keys(this.state.showsByDate).map(x =>
 						<div>

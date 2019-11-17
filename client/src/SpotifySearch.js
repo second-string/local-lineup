@@ -69,9 +69,7 @@ class SpotifySearch extends Component {
   }
 
   resetState(overrides) {
-    console.log(this.baseState);
     let newState = {...this.baseState, ...overrides };
-    console.log(newState);
     this.setState(newState);
   }
 
@@ -201,20 +199,19 @@ class SpotifySearch extends Component {
   }
 
   userNameStateChange = (entry) => {
-    console.log(entry.target.value);
     this.setState({ userName: entry.target.value });
   }
 
   locationStateChange = (selection) => {
-    console.log(selection.target.value);
     this.setState({ selectedLocation: selection.target.value });
   }
 
   render() {
     return (
       <div className="SpotifySearch">
+        <a href="/show-finder"><button className="unselectable block">Back to main menu</button></a>
         <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingForm ? 'none' : '' }}>New Search</button>
-        <h1>{ this.state.headerText }</h1>
+        <h3>{ this.state.headerText }</h3>
         <div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
         <div style={{ display: this.state.showingForm ? '' : 'none' }}>
           <h4>Enter your spotify username:</h4>

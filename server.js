@@ -5,17 +5,26 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const sqlite = require('sqlite');
+const sqlite = require('sqlite3');
+const uuid = require('uuid/v4');
+const cookieParser = require('cookie-parser');
+
 const showFinder = require('./show-finder');
 const venueShowSearch = require('./venue-show-finder');
+const dbHelpers = require('./db-helpers');
+const authHandler = require('./auth-handler');
+const constants = require('./constants');
+const helpers = require('./helpers');
 
 const app = express();
-const port = parseInt(process.env.PORT, 10) || process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
+const envPort = parseInt(process.env.PORT, 10);
+const port = envPort === undefined ? (process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443) : envPort;
+
 
 // Poor man's in-mem cache
 var spotifyToken;
 
-let dbPromise =  sqlite.open('USER_VENUES.db');
+let db = dbHelpers.openDb('user_venues.db');
 
 // Logging setup
 fs.mkdir('logs', err => {
@@ -27,6 +36,15 @@ let requestLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'reques
 app.use(morgan('[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent', { stream: requestLogStream }));
 
 app.use(bodyParser.json());
+app.use(cookieParser());
+
+// Route everything through the auth function
+app.use((req, res, next) => authHandler.authenticate(db, req, res, next));
+
+// auth-centric routes
+app.get('/login', (req, res) => authHandler.login(req, res));
+app.post('/token-auth', async (req, res) => authHandler.tokenAuth(db, req, res));
+app.get('/spotify-auth', async (req, res) => authHandler.spotifyLoginCallback(db, req, res));
 
 app.post('/show-finder/playlists', async (req, res) => {
 	// If we have a token cached, give it a shot to see if it's still valid
@@ -89,28 +107,25 @@ app.get('/show-finder/venues', async (req, res) => {
 
 app.post('/show-finder/save-venues', async (req, res) => {
 	if (!req.body) {
-		console.log('Did not receive any email or venue IDs in POST body');
+		console.log('Did not receive any token or venue IDs in POST body');
 		return res.status(400);
 	}
 
-	let email = req.body.email;
 	let venueIds = req.body.venueIds;
 	let tableName = 'VenueLists';
-	let emailColumn = 'email';
-	let venueIdsColumn = 'venueIds';
+	let userUidColumn = 'UserUid';
+	let venueIdsColumn = 'VenueIds';
 
 	let upsertSql = `
-INSERT INTO ${tableName} (${emailColumn}, ${venueIdsColumn})
-  VALUES ("${email}", "${venueIds}")
-  ON CONFLICT (${emailColumn})
+INSERT INTO ${tableName} (${userUidColumn}, ${venueIdsColumn})
+  VALUES ("${req.userUid}", "${venueIds}")
+  ON CONFLICT (${userUidColumn})
   DO UPDATE SET ${venueIdsColumn}="${venueIds}";
  `;
 
  	let upsert;
 	try {
-		let db = await dbPromise;
-		upsert = await db.run(upsertSql);
-		console.log(`Upserted ${upsert.stmt.changes} row(s)`);
+		upsert = await db.runAsync(upsertSql);
 	} catch (e) {
 		console.log(e);
 		return res.status(500);
@@ -137,9 +152,7 @@ DELETE FROM ${tableName}
 
 	let deleteOp;
 	try {
-		let db = await dbPromise;
-		deleteOp = await db.run(deleteSql);
-		console.log(`Deleted ${deleteOp.stmt.changes} rows for email '${req.query.email}'`);
+		deleteOp = await db.runAsync(deleteSql);
 	} catch (e) {
 		console.log(e);
 		return res.status(500);
@@ -233,7 +246,7 @@ console.log(`Routing to static files in ${static_app_dir}...`);
 app.use(express.static(static_app_dir));
 app.get('/show-finder/spotify-search', (req, res) => res.sendFile('spotify-search.html', { root: static_app_dir }));
 app.get('/show-finder/venue-search', (req, res) => res.sendFile('venue-search.html', { root: static_app_dir }));
-app.get('/show-finder/', (req, res) => res.sendFile('show-finder.html', { root: static_app_dir }));
+app.get('/show-finder', (req, res) => res.sendFile('show-finder.html', { root: static_app_dir }));
 app.get('*', (req, res) => res.sendFile('index.html', { root: static_app_dir }));
 
 // HTTPS certs
