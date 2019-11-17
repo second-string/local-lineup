@@ -79,4 +79,6 @@ nodemon.json
 
 # self-explanatory
 *.DS_STORE
-*.db
+*.db*
+
+email_cron_*.txt
