@@ -2,6 +2,12 @@ const crypto = require('crypto');
 const express = require('express');
 const sqlite = require('sqlite3');
 const uuid = require('uuid/v4');
+const jwt = require('jsonwebtoken');
+const querystring = require('querystring');
+
+const constants = require('./constants');
+const showFinder = require('./show-finder');
+const helpers = require('./helpers');
 
 const loggedOutPaths = [
     "/",
@@ -19,48 +25,140 @@ async function authenticate(userDb, req, res, next) {
         return res.redirect(401, "/");
     }
 
-    // TODO :: sanitize?
-    // TODO :: index on this token
     const reqToken = req.cookies['show-finder-token'];
-    const tokenObj = await userDb.getAsync(`SELECT * FROM Users WHERE Uid=?`, [reqToken]);
+    let token = null;
+    try {
+        token = jwt.verify(reqToken, constants.jwtSigningSecret);
+    } catch (e) {
+        console.log("Error decoding JWT!");
+        console.log("req.cookies.token:");
+        console.log(reqToken);
+        console.log("Exception:");
+        console.log(e);
 
-    // TODO :: LOGIC ISN"T WORKING
-    // TODO :: this logic really needs to be looked into, the second check of this OR is totally redundant
-    // woof this is beat and needs to be handled better badly
-    // if (loggedOutPath) {
-    //     if (tokenObj === undefined) {
-    //         return next();
-    //     } else {
-    //         return res.redirect(301, "/pari/bets");
-    //     }
-    // } else {
-    //     if (tokenObj === undefined) {
-    //         return res.status(403).redirect("/pari");
-    //     } else {
-    //         return next();
-    //     }
-    // }
-
-    if (tokenObj === undefined) {
-        return res.status(403).redirect("/");
+        return res.redirect(401, "/");
     }
 
-    return next();
-    // return tokenObj === undefined || tokenObj.CurrentToken !== reqToken ? res.status(403).redirect("/pari") : next();
+    const userObj = await userDb.getAsync(`SELECT * FROM Users WHERE Uid=?`, [token.userUid]);
+
+    if (userObj === undefined) {
+        console.log(`Got no user obj from db from jwt decoded token ${token.userUid}, redirecting to /`);
+        return res.redirect(403, "/");
+    } else {
+        // Save user UID in req object for potential use in requests rather than doubling up on the users table lookup
+        req.userUid = userObj.Uid;
+        return next();
+    }
 }
 
-async function logout(userDb, req, res, next) {
-    // Make the assumption since it passed auth
-    const reqToken = req.cookies.token;
+async function login(req, res) {
+    const rootHost = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+    const redirectUri = `https://${rootHost}/spotify-auth`;
+    const scopes = 'user-read-email playlist-read-private playlist-modify-private';
 
-    // try {
-    //     await userDb.runAsync(`UPDATE Users SET CurrentToken='' WHERE CurrentToken=?`, [reqToken]);
-    // } catch (e) {
-    //     console.log(e);
-    //     res.status(500).send("Error try again");
-    // }
+    res.redirect('https://accounts.spotify.com/authorize?' +
+        querystring.stringify({
+            response_type: 'code',
+            client_id: constants.clientId,
+            scope: scopes,
+            redirect_uri: redirectUri,
+            state: 'test_state_token'
+        }));
+}
 
-    res.cookie("token", "", { maxAge: 0 }).redirect(200, "/");
+async function logout(userDb, req, res) {
+    res.cookie("show-finder-token", "", { maxAge: 0 }).redirect(200, "/");
+}
+
+// Function called from our react code to handle showing different page states for logged-in users. Only necessary
+// for pages shown to non-logged-in users that you want to display differently for logged-in (i.e. hiding a login button)
+async function tokenAuth(db, req, res) {
+    // Get token from body
+    let suppliedToken = req.body['show-finder-token'];
+
+    // Get user for token in db
+    let dbToken = await db.getAsync('SELECT * FROM Users WHERE Uid=?', [suppliedToken]);
+
+    // If user exists, send back logged in, if not don't
+    // Yes I know this doesn't actually validate anything. I don't want to
+    // implement actual auth yet
+    if (dbToken)
+    {
+        return res.json({ isLoggedIn: true });
+    } else {
+        return res.json({ isLoggedIn: false });
+    }
+}
+
+// Redirect function passed to spotify.com's auth to handle getting the access/refresh tokens and storing them
+async function spotifyLoginCallback(db, req, res) {
+    let code = req.query.code;
+    let state = req.query.state;
+    if (code === undefined && req.query.error) {
+        throw new Error(`Error getting preliminary auth code from spoot: ${req.query.error}`);
+    } else if (code === undefined) {
+        throw new Error('Shit is borked - no error nor code from spoot prelim auth');
+    }
+
+    if (state !== "test_state_token") {
+        throw new Error(`State is borked. Looking for '${"test_state_token"}' got '${state}'`);
+    }
+
+    const rootHost = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+    let postOptions = {
+        method: 'POST',
+        body: {
+            'grant_type': 'authorization_code',
+            'redirect_uri': `https://${rootHost}/spotify-auth`,         // Doesn't matter, just needs to match what we sent previously
+            'code': code
+        },
+        headers: {
+            'Content-type': 'application/x-www-form-urlencoded',
+            'Authorization': showFinder.spotifyAuth()
+        }
+    };
+
+    console.log('Getting spotify access and refresh tokens ...');
+    let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, false);
+    if (!success) {
+        console.error(response);
+        throw new Error(`something went wrong with request for access/refresh spoot tokens`);
+    }
+
+    const access = response.access_token;
+    const refresh = response.refresh_token;
+
+    console.log('Getting user email from spotify using access token...');
+    let getOptions = {
+        method: 'GET',
+        headers: {
+            'Content-type': 'application/json',
+            'Authorization': 'Bearer ' + access
+        }
+    };
+
+    ({success, response} = await helpers.instrumentCall('https://api.spotify.com/v1/me', getOptions));
+    if (!success) {
+        console.error(response);
+        throw new Error('Error getting user account using access token');
+    }
+
+    // Lookup email in DB to see if they have an account
+    let userObj = await db.getAsync(`SELECT * FROM Users WHERE Email=?`, [response.email]);
+    let userUid = null;
+    if (userObj === undefined) {
+        // New user, new uid
+        userUid = uuid();
+        console.log(`new user with email ${response.email}, giving them uid '${userUid}'`);
+    } else {
+        userUid = userObj.Uid;
+        console.log(`existing user with uid '${userUid}'' and email ${response.email}`);
+    }
+
+    await db.runAsync('INSERT OR REPLACE INTO Users(Uid, Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken) VALUES (?, ?, ?, ?, ?, ?)', [userUid, response.email, response.id, response.display_name, access, refresh]);
+
+    let signedToken = jwt.sign({ userUid: userUid }, constants.jwtSigningSecret, { expiresIn: "1h" });
+    res.cookie("show-finder-token", signedToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder/');
 }
 
 async function getHashInfo(password, salt, iterations) {
@@ -84,5 +182,8 @@ async function getHashInfo(password, salt, iterations) {
 
 module.exports = {
     authenticate,
-    logout
+    login,
+    logout,
+    tokenAuth,
+    spotifyLoginCallback
 }

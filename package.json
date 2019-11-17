@@ -28,6 +28,7 @@
     "express": "^4.16.4",
     "form-urlencoded": "^3.0.0",
     "inquirer": "^6.2.0",
+    "jsonwebtoken": "^8.5.1",
     "morgan": "^1.9.1",
     "node-fetch": "^2.6.0",
     "nodemon": "^1.19.1",

@@ -6,5 +6,6 @@ module.exports = {
 	spotifyUserId: process.env.SPOTIFY_USERNAME,
 	bandsInTownSecret: process.env.BANDS_IN_TOWN_SECRET,
 	songkickSecret: process.env.SONGKICK_SECRET,
-	seatGeekClientId: process.env.SEATGEEK_CLIENT_ID
+	seatGeekClientId: process.env.SEATGEEK_CLIENT_ID,
+    jwtSigningSecret: process.env.JWT_SIGNING_SECRET
 };

@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS Users (
 
 const createVenueListsTableSql = `
 CREATE TABLE IF NOT EXISTS VenueLists(
-    Email nvarchar NOT NULL PRIMARY KEY,
+    UserUid nvarchar NOT NULL PRIMARY KEY,
     VenueIds nvarchar NOT NULL
 )`;
 

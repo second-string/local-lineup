@@ -62,6 +62,10 @@ sqlite.Database.prototype.allAsync = function(sql, params) {
     });
 };
 
+sqlite.Database.prototype.trace = function() {
+    return this.on("trace", sql => console.log(sql));
+};
+
 module.exports = {
     openDb,
     errOrResolveObject,
