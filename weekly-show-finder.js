@@ -9,7 +9,7 @@ async function main() {
 
 	let venueListObjs;
 	if (process.env.DEPLOY_STAGE === 'PROD') {
-		let venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
+		venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
 	} else {
 		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`, ['dot4qu@virginia.edu']);
 		if (venueListObjs.length !== 1) {
