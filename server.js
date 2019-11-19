@@ -227,7 +227,15 @@ app.post('/show-finder/shows', async (req, res) => {
 });
 
 app.get('/show-finder/user-venues', async (req, res) => {
-	const venueListObj = await db.getAsync(`SELECT VenueIds FROM VenueLists WHERE UserUid=?`, [req.userUid]);
+	// Support querying for a specific location for this user if they have multiple
+	// Allows us to keep populating their different venue lists as they switch locations
+	let venueListObj = null;
+	if (req.query.location) {
+		venueListObj = await db.getAsync(`SELECT VenueIds, Location FROM VenueLists WHERE UserUid=? AND Location=?`, [req.userUid, req.query.location]);
+	} else {
+		venueListObj = await db.getAsync(`SELECT VenueIds, Location FROM VenueLists WHERE UserUid=?`, [req.userUid]);
+	}
+
 	if (venueListObj === undefined) {
 		return res.json({});
 	}

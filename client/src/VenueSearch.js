@@ -6,7 +6,7 @@ import './VenueSearch.css';
 class VenueSearch extends Component {
 	state = {
 		locations: [],
-		selectedLocation: null,
+		selectedLocation: this.defaultLocationLabel,
 		allVenues: [],
 		venueSelectList: [],	// separate variable allows us to switch between venuelist and custom single entry telling user to hit a key
 		selectedVenueNamesById: {},
@@ -17,6 +17,8 @@ class VenueSearch extends Component {
 		saveSuccess: false,
 		showSpinner: false
 	};
+
+	defaultLocationLabel = "Choose a location";
 
 	locations = [
      { value: 'san francisco', displayName: 'San Francisco' },
@@ -49,6 +51,8 @@ class VenueSearch extends Component {
   	}
 
 	async componentDidMount() {
+		this.setState({ locations: this.locations });
+
 		const getOptions = {
 			method: 'GET',
 			headers: {
@@ -59,13 +63,33 @@ class VenueSearch extends Component {
 		const res = await this.instrumentCall('/show-finder/user-venues', getOptions);
 		const venueIdsObj = await res.json();
 		if (venueIdsObj.VenueIds) {
-			
+
 		}
 
-		this.setState({ locations: this.locations });
+		if (venueIdsObj.Location) {
+			await this.getVenues(venueIdsObj.Location);
+		}
 	}
 
 	locationSelected = async e => {
+		// cache the value b/c react synthetic events and whatnot
+		const location = e.target.value;
+		const getOptions = {
+			method: 'GET',
+			headers: {
+				'Content-type': 'application/json',
+			}
+		};
+
+		const res = await this.instrumentCall(`/show-finder/user-venues?location=${location}`, getOptions);
+		const venueIdsObj = await res.json();
+
+		await this.getVenues(location);
+	}
+
+	getVenues = async location => {
+		this.setState({ showSpinner: true, selectedLocation: location });
+
 		let getOptions = {
 			method: 'GET',
 			headers: {
@@ -73,9 +97,7 @@ class VenueSearch extends Component {
 			}
 		}
 
-		this.setState({ showSpinner: true, selectedLocation: e.target.value });
-
-		let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(e.target.value)}`, getOptions);
+		let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
 		let venues = await res.json();
 
 		this.setState({
@@ -169,8 +191,8 @@ class VenueSearch extends Component {
 				<a href="/show-finder"><button className="unselectable block">Back to main menu</button></a>
 				<h3>Venue search</h3>
 				<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
-				<select id='location-select' onChange={this.locationSelected}>
-					<option id='' disabled defaultValue>Choose a location</option>
+				<select id='location-select' value={this.state.selectedLocation} onChange={this.locationSelected}>
+					<option id='' disabled defaultValue>{this.defaultLocationLabel}</option>
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
 				</select>
 				<form onSubmit={this.selectVenues} style={{ display: this.state.showVenueSearch ? '' : 'none' }}>
