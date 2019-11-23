@@ -1,1 +1,0 @@
-Create table third(uid nvarchar);
