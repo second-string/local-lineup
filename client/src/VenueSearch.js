@@ -93,8 +93,21 @@ class VenueSearch extends Component {
 		let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
 		let venues = await res.json();
 
+		// Take our name-less venue list from our backend and fill in the venue names from the recently-received full venue list
+		let filledOutSelectedVenues = [];
+		for (const selectedVenue of this.state.selectedVenues) {
+			let venueObj = venues.find(x => x.id === parseInt(selectedVenue.key));
+
+			if (venueObj && venueObj.name) {
+				selectedVenue.label = venueObj.name;
+			}
+
+			filledOutSelectedVenues.push(selectedVenue);
+		}
+
 		this.setState({
 			allVenues: venues,
+			selectedVenues: filledOutSelectedVenues,
 			showSpinner: false,
 			showVenueSearch: true,
 			showButtonChoices: true
@@ -106,6 +119,16 @@ class VenueSearch extends Component {
 	locationSelected = async e => {
 		// cache the value b/c react synthetic events and whatnot
 		const location = e.target.value;
+
+		// Reset everything
+		this.setState({
+			showVenueSearch: false,
+			showButtonChoices: false,
+			saveSuccess: false,
+			showsByDate: {},
+			selectedVenues: []
+		});
+
 		const getOptions = {
 			method: 'GET',
 			headers: {
@@ -115,6 +138,11 @@ class VenueSearch extends Component {
 
 		const res = await this.instrumentCall(`/show-finder/user-venues?location=${location}`, getOptions);
 		const venueIdsObj = await res.json();
+
+		if (venueIdsObj.VenueIds) {
+			const emptyVenues = venueIdsObj.VenueIds.split(',').map(x => ({ key: x, value: x, label: null }));
+			this.setState({ selectedVenues: emptyVenues });
+		}
 
 		await this.getVenues(location);
 	}
@@ -138,7 +166,7 @@ class VenueSearch extends Component {
 				return obj;
 			}, {})
 		};
-
+console.log(postBody);
 		let postOptions = {
 			method: 'POST',
 			headers: {
@@ -151,9 +179,12 @@ class VenueSearch extends Component {
 		let showDatesByService = await res.json();
 		let showsByDate = showDatesByService['seatgeek'];
 
-		this.setState({
-			showsByDate: showsByDate
-		});
+		if (showsByDate !== undefined && showsByDate !== null)
+		{
+			this.setState({
+				showsByDate: showsByDate
+			});
+		}
 	}
 
 	saveShowsSelected = async e => {
