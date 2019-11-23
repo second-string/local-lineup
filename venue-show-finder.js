@@ -20,7 +20,8 @@ async function getVenues(city) {
 	let totalMillis = 0;
 	console.log(`Getting ${city} venues...`);
 	do {
-		let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`, getOptions,
+		let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`,
+            getOptions,
 			false);
 
 		if (!success) {

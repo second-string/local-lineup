@@ -9,7 +9,7 @@ class VenueSearch extends Component {
 		selectedLocation: this.defaultLocationLabel,
 		allVenues: [],
 		venueSelectList: [],	// separate variable allows us to switch between venuelist and custom single entry telling user to hit a key
-		selectedVenueNamesById: {},
+		selectedVenues: [],
 		showsByDate: {},
 		email: '',
 		showVenueSearch: false,
@@ -62,29 +62,22 @@ class VenueSearch extends Component {
 
 		const res = await this.instrumentCall('/show-finder/user-venues', getOptions);
 		const venueIdsObj = await res.json();
-		if (venueIdsObj.VenueIds) {
-
-		}
 
 		if (venueIdsObj.Location) {
-			await this.getVenues(venueIdsObj.Location);
-		}
-	}
+			// Location state will be set within getVenues
+			let venues = await this.getVenues(venueIdsObj.Location);
 
-	locationSelected = async e => {
-		// cache the value b/c react synthetic events and whatnot
-		const location = e.target.value;
-		const getOptions = {
-			method: 'GET',
-			headers: {
-				'Content-type': 'application/json',
+			if (venueIdsObj.VenueIds) {
+				let userVenues = [];
+				for (let id of venueIdsObj.VenueIds.split(',')) {
+					const venueName = venues.find(x => x.id === parseInt(id)).name;
+					const option = { key: id, value: id, label: venueName };
+					userVenues.push(option);
+				}
+
+				this.setState({ selectedVenues: userVenues });
 			}
-		};
-
-		const res = await this.instrumentCall(`/show-finder/user-venues?location=${location}`, getOptions);
-		const venueIdsObj = await res.json();
-
-		await this.getVenues(location);
+		}
 	}
 
 	getVenues = async location => {
@@ -106,23 +99,44 @@ class VenueSearch extends Component {
 			showVenueSearch: true,
 			showButtonChoices: true
 		});
+
+		return venues;
+	}
+
+	locationSelected = async e => {
+		// cache the value b/c react synthetic events and whatnot
+		const location = e.target.value;
+		const getOptions = {
+			method: 'GET',
+			headers: {
+				'Content-type': 'application/json',
+			}
+		};
+
+		const res = await this.instrumentCall(`/show-finder/user-venues?location=${location}`, getOptions);
+		const venueIdsObj = await res.json();
+
+		await this.getVenues(location);
 	}
 
 	selectedVenuesChanged = e => {
-		// venueObj is each of the selected venue objects in the shape of { value: venueId, label: venueName }
-		this.setState({
-			selectedVenueNamesById: e && e.reduce((obj, venueObj) => {
-				obj[venueObj.value] = venueObj.label;
-				return obj;
-			}, {})
-		});
+		if (e === undefined || e === null) {
+			return;
+		}
+
+		// e is a list of the selected venue objects in the shape of { value: venueId, label: venueName }
+		this.setState({ selectedVenues: e });
 	}
 
 	selectVenues = async e => {
 		e.preventDefault();
 
+		// Send in the format [ { [key]: [name] } ]
 		let postBody = {
-			'seatgeek': this.state.selectedVenueNamesById
+			'seatgeek': this.state.selectedVenues.reduce((obj, current) => {
+				obj[current.key] = current.label;
+				return obj;
+			}, {})
 		};
 
 		let postOptions = {
@@ -157,7 +171,7 @@ class VenueSearch extends Component {
 
 		let postBody = {
 			token: token,
-			venueIds: Object.keys(this.state.selectedVenueNamesById),
+			venueIds: this.state.selectedVenues.map(x => x.value),
 			location: this.state.selectedLocation
 		};
 
@@ -192,7 +206,7 @@ class VenueSearch extends Component {
 				<h3>Venue search</h3>
 				<div className="loader" style={{ display: this.state.showSpinner ? '' : 'none' }}></div>
 				<select id='location-select' value={this.state.selectedLocation} onChange={this.locationSelected}>
-					<option id='' disabled defaultValue>{this.defaultLocationLabel}</option>
+					<option key ='defaultLocation' value='defaultLocation' disabled defaultValue>{this.defaultLocationLabel}</option>
 					{ this.state.locations.map(x => <option key={x.value} value={x.value}>{x.displayName}</option>) }
 				</select>
 				<form onSubmit={this.selectVenues} style={{ display: this.state.showVenueSearch ? '' : 'none' }}>
@@ -203,16 +217,17 @@ class VenueSearch extends Component {
 						ref={ input => this.selectRef = input }
 						placeholder='Start typing to search for a venue...'
 						onChange={this.selectedVenuesChanged}
-						options={this.state.allVenues.map(x => ({ value: x.id, label: x.name }))}
+						options={this.state.allVenues.map(x => ({ key: x.id, value: x.id, label: x.name }))}
+						value={this.state.selectedVenues}
 					/>
 					<div style={{ display: this.state.showButtonChoices ? '' : 'none' }}>
 						<div>
-							<button id='viewShowsButton' disabled={ this.state.selectedVenueNamesById === null || Object.keys(this.state.selectedVenueNamesById).length === 0 } type="submit">See upcoming shows</button>
+							<button id='viewShowsButton' disabled={ this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0 } type="submit">See upcoming shows</button>
 							<label htmlFor='viewShowsButton'>Select this option to view all upcoming shows in your browser</label>
 						</div>
 						<div>
-							<button id='saveShowsButton' disabled={ this.state.selectedVenueNamesById === null || Object.keys(this.state.selectedVenueNamesById).length === 0 } onClick={this.saveShowsSelected}>Save shows</button>
-							<label htmlFor='showsaveShowsButton'>Select this option if you want shows for the selected venues emailed to you weekly</label>
+							<button id='saveShowsButton' disabled={ this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0 } onClick={this.saveShowsSelected}>Save shows</button>
+							<label htmlFor='saveShowsButton'>Select this option if you want shows for the selected venues emailed to you weekly</label>
 							<h3 style={{ display: this.state.saveSuccess ? '' : 'none' }}>Venues saved successfully</h3>
 						</div>
 					</div>
