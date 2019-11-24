@@ -22,7 +22,7 @@ async function getVenues(city) {
 	do {
 		let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`,
             getOptions,
-			false);
+			true);
 
 		if (!success) {
 			return response;
