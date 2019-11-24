@@ -3,41 +3,18 @@ const constants = require('./constants')
 
 var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
 
-async function getVenues(city) {
-	let getOptions = {
-		method: 'GET',
-		headers: {
-			'Content-type': 'application/json',
-			'Authorization': seatGeekAuth()
-		}
-	};
+async function getVenues(location, db) {
+    const venueObjs = await db.allAsync('SELECT * FROM Venues WHERE Location=?', [location]);
+    if (!venueObjs) {
+        return {};
+    }
 
-	let encodedCity = encodeURIComponent(city);
-	let venueList = [];
-	let page = 1;
-	let perPage = 100;
-	let total = 0;
-	let totalMillis = 0;
-	console.log(`Getting ${city} venues...`);
-	do {
-		let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`,
-            getOptions,
-			true);
-
-		if (!success) {
-			return response;
-		}
-
-		venueList = venueList.concat(response.venues);
-		total = response.meta.total;
-		totalMillis += response.meta.took
-	} while (page * perPage <= total);
-
-	console.log(`Took ${totalMillis} milliseconds to get ${total} venues`);
-
-	// De-dupe venues cause they send a ton of repeats
-	let hasSeen = {};
-	return venueList.filter(x => hasSeen.hasOwnProperty(x.id) ? false : (hasSeen[x.id] = true))
+    // Map to api lowercase values. Should probably refactor the react code to use DB column names at some point
+    return venueObjs.map(x => ({
+        id: x.Id,
+        name: x.Name,
+        ticketUrl: x.TicketUrl
+    }));
 }
 
 /*

@@ -97,7 +97,7 @@ app.get('/show-finder/venues', async (req, res) => {
 		res.status(400).send();
 	}
 
-	let venues = await venueShowSearch.getVenues(req.query.city);
+	let venues = await venueShowSearch.getVenues(req.query.city, db);
 	if (venues.ok !== undefined && !venues.ok) {
 		console.log(`Call to get venues for ${req.query.city} failed with status ${venues.status}`);
 		return res.status(venues.status)
