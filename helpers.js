@@ -46,7 +46,23 @@ async function instrumentCall(url, options, logCurl) {
 		if (unparsedRes && !unparsedRes.ok) {
 			error = unparsedRes;
 		} else {
-			res = await unparsedRes.json();
+			let backoff = true;
+			while (backoff) {
+				res = await unparsedRes.json();
+
+				if (res.status === 429) {
+					backoff = true;
+					let backoffTime = res.headers.get('Retry-after');
+					if (!backoffTime) {
+						backoffTime = 1;
+					}
+
+					console.log(`Got a 429, backing off or ${backoffTime} seconds`);
+					await sleep(backoffTime * 1000);
+				} else {
+					backoff = false;
+				}
+			}
 		}
 	} catch (e) {
 		error = unparsedRes === null ? {} : unparsedRes;
@@ -136,9 +152,14 @@ function dedupeShows(showsByArtistId) {
 	}
 }
 
+async function sleep(ms) {
+    return await new Promise((resolve, reject) => setTimeout(resolve, ms));
+}
+
 module.exports = {
 	instrumentCall,
 	datesEqual,
 	dedupeShows,
-	getUTCDate
+	getUTCDate,
+	sleep
 };
