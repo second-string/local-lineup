@@ -41,7 +41,7 @@ Sample venue object
 */
 
 const locations = [
-    'san francisco', ,
+    'san francisco',
     'los angeles',
     'washington',
     'new york',
