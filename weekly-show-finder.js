@@ -11,9 +11,9 @@ async function main() {
 	if (process.env.DEPLOY_STAGE === 'PROD') {
 		venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
 	} else {
-		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`, ['dot4qu@virginia.edu']);
+		venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`, ['show.finder.bot@gmail.com']);
 		if (venueListObjs.length !== 1) {
-			throw new Error(`Got ${venueListObjs.length} users from db when only expecting the single show.finder.bot one`);
+			console.log(`Warning, got ${venueListObjs.length} users from db when only expecting the single show.finder.bot one`);
 		}
 	}
 
