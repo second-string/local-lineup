@@ -41,31 +41,32 @@ async function instrumentCall(url, options, logCurl) {
 			options.body = encodedBody;
 		}
 
-		unparsedRes = await fetch(url, options);
+		let backoff = true;
+		while (backoff) {
+			unparsedRes = await fetch(url, options);
+
+			if (unparsedRes.status === 429) {
+				backoff = true;
+				let backoffTime = unparsedRes.headers.get('Retry-after');
+				if (!backoffTime) {
+					backoffTime = 1;
+				}
+
+				console.log(`Got a 429, backing off for ${backoffTime} seconds`);
+				await sleep(backoffTime * 1000);
+			} else {
+				backoff = false;
+			}
+		}
 
 		if (unparsedRes && !unparsedRes.ok) {
 			error = unparsedRes;
 		} else {
-			let backoff = true;
-			while (backoff) {
-				res = await unparsedRes.json();
-
-				if (res.status === 429) {
-					backoff = true;
-					let backoffTime = res.headers.get('Retry-after');
-					if (!backoffTime) {
-						backoffTime = 1;
-					}
-
-					console.log(`Got a 429, backing off or ${backoffTime} seconds`);
-					await sleep(backoffTime * 1000);
-				} else {
-					backoff = false;
-				}
-			}
+			res = await unparsedRes.json();
 		}
 	} catch (e) {
 		error = unparsedRes === null ? {} : unparsedRes;
+		throw e;
 	} finally {
 		// Log out a curl for every call we instrument.
 		if (logCurl && process.env.DEPLOY_STAGE !== 'PROD') {
