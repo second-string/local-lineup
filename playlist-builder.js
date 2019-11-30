@@ -1,10 +1,9 @@
 const sqlite = require('sqlite3');
 const fetch = require('node-fetch');
-
-const venueShowSearch = require('../venue-show-finder');
-const showFinder = require('../show-finder');
-const dbHelpers = require('../helpers/db-helpers');
-const helpers = require('../helpers/helpers');
+const venueShowSearch = require('./venue-show-finder');
+const showFinder = require('./show-finder');
+const dbHelpers = require('./db-helpers');
+const helpers = require('./helpers');
 
 async function buildPlaylist(db, userObj, shows) {
     if (userObj === null || userObj === undefined || shows === null || shows === undefined) {
@@ -28,6 +27,11 @@ async function buildPlaylist(db, userObj, shows) {
 
     console.log(`Refreshing token. Value before: ${spotifyToken.slice(0, 10)}...`);
     spotifyToken = await refreshSpotifyToken(db, userObj);
+    if (!spotifyToken) {
+        console.log(`Error refreshing spotify token, bailing out of building a playlist for ${userObj.Email}`);
+        return -1;
+    }
+
     console.log(`Value after: ${spotifyToken.slice(0, 10)}...`);
 
     try {
@@ -77,7 +81,7 @@ async function getTrackUris(artistObjs, spotifyToken) {
 
             if (tracksResponse.success === undefined || !tracksResponse.success) {
                 console.log(`Error getting tracks for artist '${artistObj.name}'`);
-                reject(tracksResponse.response);
+                return reject(tracksResponse.response);
             }
 
             resolve(tracksResponse.response.tracks.slice(0, 2).map(x => x.uri));
@@ -168,14 +172,21 @@ async function refreshSpotifyToken(db, userObj) {
             'Content-type': 'application/x-www-form-urlencoded',
             'Authorization': showFinder.spotifyAuth()
         },
-        body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(userObj.SpotifyRefreshToken)}`
+        body: {
+            'grant_type': 'refresh_token',
+            'refresh_token': encodeURIComponent(userObj.SpotifyRefreshToken)
+        }
     };
 
-    let responseJson = await fetch('https://accounts.spotify.com/api/token', postOptions);
-    let response = await responseJson.json();
+    let response = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, false);
+    if (!response.success) {
+        console.log('Error refreshing spotify token:');
+        console.log(response.response);
+        return null;
+    }
 
-    await db.runAsync('UPDATE Users SET SpotifyAccessToken=? WHERE Email=?', [response.access_token, userObj.Email]);
-    return response.access_token;
+    await db.runAsync('UPDATE Users SET SpotifyAccessToken=? WHERE Email=?', [response.response.access_token, userObj.Email]);
+    return response.response.access_token;
 }
 
 function baseSpotifyHeaders(method, spotifyToken) {

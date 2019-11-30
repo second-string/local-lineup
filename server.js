@@ -9,18 +9,14 @@ const sqlite = require('sqlite3');
 const uuid = require('uuid/v4');
 const cookieParser = require('cookie-parser');
 
-const authHandler = require('./auth-handler');
-const constants = require('./constants');
-const dbHelpers = require('./db-helpers');
+const authHandler = require('./routes/auth-handler');
+const constants = require('./helpers/constants');
+const dbHelpers = require('./helpers/db-helpers');
 const pageRouter = require('./routes/pages');
 const apiRouter = require('./routes/api');
 
 const app = express();
 const port = process.env.DEPLOY_STAGE === 'PROD' ? 8443 : 443;
-
-
-// Poor man's in-mem cache
-var spotifyToken;
 
 let db = dbHelpers.openDb('user_venues.db');
 

@@ -1,9 +1,10 @@
-var inquirer = require('inquirer');
-var constants = require('./constants');
-var helpers = require('./helpers');
-var parsers = require('./response-parsers');
-var foopee = require('./foopee-scrape');
 var fs = require('fs');
+
+var inquirer = require('inquirer');
+var constants = require('./helpers/constants');
+var helpers = require('./helpers/helpers');
+var parsers = require('./helpers/response-parsers');
+var foopee = require('./scripts/foopee-scrape');
 
 
 var spotifyAuth = () => 'Basic ' + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString('base64');

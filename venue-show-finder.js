@@ -1,5 +1,5 @@
-const helpers = require('./helpers');
-const constants = require('./constants')
+const helpers = require('./helpers/helpers');
+const constants = require('./helpers/constants')
 
 var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
 

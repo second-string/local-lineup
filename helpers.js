@@ -1,6 +1,7 @@
 var fetch = require('node-fetch');
 var formUrlEncode = require('form-urlencoded').default;
 
+
 function requestError(response, exception = null) {
 	console.log('REQUEST ERROR');
 	if (response) {
@@ -40,7 +41,23 @@ async function instrumentCall(url, options, logCurl) {
 			options.body = encodedBody;
 		}
 
-		unparsedRes = await fetch(url, options);
+		let backoff = true;
+		while (backoff) {
+			unparsedRes = await fetch(url, options);
+
+			if (unparsedRes.status === 429) {
+				backoff = true;
+				let backoffTime = unparsedRes.headers.get('Retry-after');
+				if (!backoffTime) {
+					backoffTime = 1;
+				}
+
+				console.log(`Got a 429, backing off for ${backoffTime} seconds`);
+				await sleep(backoffTime * 1000);
+			} else {
+				backoff = false;
+			}
+		}
 
 		if (unparsedRes && !unparsedRes.ok) {
 			error = unparsedRes;
@@ -135,9 +152,14 @@ function dedupeShows(showsByArtistId) {
 	}
 }
 
+async function sleep(ms) {
+    return await new Promise((resolve, reject) => setTimeout(resolve, ms));
+}
+
 module.exports = {
 	instrumentCall,
 	datesEqual,
 	dedupeShows,
-	getUTCDate
+	getUTCDate,
+	sleep
 };

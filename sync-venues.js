@@ -1,6 +1,6 @@
-const helpers = require('../helpers/helpers');
-const dbHelpers = require('../helpers/db-helpers');
-const constants = require('../helpers/constants')
+const helpers = require('./helpers');
+const dbHelpers = require('./db-helpers');
+const constants = require('./constants')
 
 /*
 Sample venue object
@@ -41,7 +41,7 @@ Sample venue object
 */
 
 const locations = [
-    'san francisco',
+    'san francisco', ,
     'los angeles',
     'washington',
     'new york',

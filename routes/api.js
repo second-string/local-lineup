@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-const authHandler = require('../auth-handler');
+const authHandler = require('./auth-handler');
 const showFinder = require('../show-finder');
 const venueShowSearch = require('../venue-show-finder');
-const dbHelpers = require('../db-helpers');
-const constants = require('../constants');
-const helpers = require('../helpers');
+const dbHelpers = require('../helpers/db-helpers');
+const constants = require('../helpers/constants');
+const helpers = require('../helpers/helpers');
+
+// Poor man's in-mem cache
+var spotifyToken;
 
 function setRoutes(routerDependencies) {
     const db = routerDependencies.db;

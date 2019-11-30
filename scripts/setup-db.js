@@ -2,13 +2,13 @@ const sqlite = require('sqlite3');
 const path = require('path');
 const { promises: fs } = require('fs');
 
-const dbHelpers = require('./db-helpers');
+const dbHelpers = require('../helpers/db-helpers');
 
-const venueListDbPath = 'user_venues.db';
-const migrationsDir = './migrations';
-const dbBacksupsDir = './db_backups';
+const venueListDbPath = '../user_venues.db';
+const migrationsDir = '../migrations';
+const dbBacksupsDir = '../db_backups';
 
-const db = dbHelpers.openDb('user_venues.db');
+const db = dbHelpers.openDb(venueListDbPath);
 
 async function migrate() {
     try {

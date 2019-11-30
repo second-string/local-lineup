@@ -5,9 +5,9 @@ const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
 const querystring = require('querystring');
 
-const constants = require('./constants');
-const showFinder = require('./show-finder');
-const helpers = require('./helpers');
+const constants = require('../helpers/constants');
+const showFinder = require('../show-finder');
+const helpers = require('../helpers/helpers');
 
 const loggedOutPaths = [
     "/",

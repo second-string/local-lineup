@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const router = express.Router();
 
-const authHandler = require('../auth-handler');
+const authHandler = require('./auth-handler');
 
 function setRoutes(routerDependencies) {
     const db = routerDependencies.db;
