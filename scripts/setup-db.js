@@ -4,7 +4,8 @@ const { promises: fs } = require('fs');
 
 const dbHelpers = require('../helpers/db-helpers');
 
-const venueListDbPath = '../user_venues.db';
+const venueListDb = 'user_venues.db';
+const venueListDbPath = path.join('..', venueListDb);
 const migrationsDir = '../migrations';
 const dbBacksupsDir = '../db_backups';
 
@@ -19,7 +20,7 @@ async function migrate() {
 
     // Copy db file to backup. Eventually just overwrite single backup but might as well keep em for now
     const now = new Date();
-    const dbBackupFilename = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${venueListDbPath}`;
+    const dbBackupFilename = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${venueListDb}`;
     await fs.copyFile(venueListDbPath, path.join(dbBacksupsDir, dbBackupFilename));
 
     const migrationFilenames = await fs.readdir(migrationsDir);
