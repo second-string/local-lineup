@@ -1,6 +1,6 @@
 const Email = require('email-templates');
-// const sqlite = require('sqlite');
-const venueShowSearch = require('./venue-show-finder');
+
+const venueShowSearch = require('../venue-show-finder');
 
 async function sendShowsEmail(userObj, shows, startDate, endDate) {
 	if (userObj === null || userObj === undefined) {

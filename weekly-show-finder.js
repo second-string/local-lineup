@@ -1,8 +1,9 @@
 const sqlite = require('sqlite3');
-const showEmailer = require('./show-emailer');
+
+const showEmailer = require('./helpers/show-emailer');
 const venueShowSearch = require('./venue-show-finder');
-const dbHelpers = require('./db-helpers');
-const playlistBuilder = require('./playlist-builder');
+const dbHelpers = require('./helpers/db-helpers');
+const playlistBuilder = require('./helpers/playlist-builder');
 
 async function main() {
 	const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/user_venues.db' : 'user_venues.db');
