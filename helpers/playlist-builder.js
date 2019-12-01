@@ -16,12 +16,14 @@ async function buildPlaylist(db, userObj, shows, songsPerArtist) {
 
     let artists = [];
     for (let show of shows) {
-        // If the show title contains the artist name, include them. This might result in some openers being included,
-        // like for shows with the title 'ArtistX with ArtistY' but oh whale. We don't want to include all performers
-        // since that will clutter the playlist with a bunch of openers (which could be an option to include in the future)
+        // If the show title contains the artist name, include them. We only take the first one because tons of the shows
+        // are listed as 'ArtistX with ArtistY', so checking each performer would include openers for most. From what I can tell
+        // the main act is always first in the performer list, but there's no other indication of who the main act is in the
+        // show object so this is all we got.
         for (let performer of show.performers) {
-            if (show.title.includes(performer.name)) {
+            if (show.title.toLowerCase().includes(performer.name.toLowerCase())) {
                 artists.push(performer.name);
+                break;
             }
         }
     }
