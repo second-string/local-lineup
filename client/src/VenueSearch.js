@@ -12,9 +12,9 @@ class VenueSearch extends Component {
         showsByDate: {},
         selectedSongsPerArtist: this.defaultSongsPerArtistLabel,
         showVenueSearch: false,
-        showButtonChoices: false,
         saveSuccess: false,
-        showSpinner: false
+        showSpinner: false,
+        showViewShowsInBrowserSection: false
     };
 
     defaultLocationLabel = "Choose a location";
@@ -118,8 +118,7 @@ class VenueSearch extends Component {
             allVenues: allVenuesForCity,
             selectedVenues: filledOutSelectedVenues,
             showSpinner: false,
-            showVenueSearch: true,
-            showButtonChoices: true
+            showVenueSearch: true
         });
 
         return allVenuesForCity;
@@ -132,8 +131,8 @@ class VenueSearch extends Component {
         // Reset everything
         this.setState({
             showVenueSearch: false,
-            showButtonChoices: false,
             saveSuccess: false,
+            showViewShowsInBrowserSection: false,
             showsByDate: {},
             selectedVenues: []
         });
@@ -217,40 +216,39 @@ class VenueSearch extends Component {
 
         let res = await this.instrumentCall("/show-finder/save-venues", postOptions);
         if (res.status === 204) {
-            this.setState({ saveSuccess: true });
+            this.setState({
+                saveSuccess: true,
+                showViewShowsInBrowserSection: true
+            });
         }
     };
 
     selectedVenuesChanged = e => {
         if (e === undefined || e === null) {
-            return;
+            this.setState({ selectedVenues: [] });
+        } else {
+            // e is a list of the selected venue objects in the shape of { value: venueId, label: venueName }
+            this.setState({ selectedVenues: e });
         }
-
-        // e is a list of the selected venue objects in the shape of { value: venueId, label: venueName }
-        this.setState({ selectedVenues: e });
     };
 
     selectedSongsPerArtistChanged = e => {
         this.setState({ selectedSongsPerArtist: e.target.value });
     };
 
-    backButtonClicked = e => {
-        e.preventDefault();
-
-        this.setState({
-            showButtonChoices: true
-        });
-    };
-
     render() {
         return (
             <div className="VenueSearch">
-                <a href="/show-finder">
-                    <button className="unselectable block">Back to main menu</button>
-                </a>
-                <h3>Venue search</h3>
+                <div>
+                    <form action="/show-finder" method="GET" style={{ position: "absolute" }}>
+                        <button className="unselectable" style={{ margin: "auto" }}>
+                            Back to main menu
+                        </button>
+                    </form>
+                    <h3>Venue search</h3>
+                </div>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
-                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected}>
+                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} style={{ margin: "3em auto 1em" }}>
                     <option key="defaultLocation" value="defaultLocation" disabled defaultValue>
                         {this.defaultLocationLabel}
                     </option>
@@ -264,8 +262,7 @@ class VenueSearch extends Component {
                     onSubmit={this.selectVenues}
                     style={{
                         display: this.state.showVenueSearch ? "" : "none"
-                    }}
-                >
+                    }}>
                     <Select
                         isMulti
                         isSearchable
@@ -280,51 +277,73 @@ class VenueSearch extends Component {
                         }))}
                         value={this.state.selectedVenues}
                     />
-                    <div
-                        style={{
-                            display: this.state.showButtonChoices ? "" : "none"
-                        }}
-                    >
+                    <div>
                         <div>
-                            <button
-                                id="viewShowsButton"
-                                disabled={this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0}
-                                type="submit"
-                            >
-                                See upcoming shows
-                            </button>
-                            <label htmlFor="viewShowsButton">Select this option to view all upcoming shows in your browser</label>
-                        </div>
-                        <div>
+                            <div style={{ display: "block", margin: "1em auto" }}>
+                                <label style={{ marginRight: "1em", fontSize: ".8em" }}>
+                                    Choose the number of songs per artist you'd like to appear in your playlist:
+                                </label>
+                                <select
+                                    value={this.state.selectedSongsPerArtist}
+                                    disabled={this.state.selectVenues === null || Object.keys(this.state.selectedVenues).length === 0}
+                                    onChange={this.selectedSongsPerArtistChanged}>
+                                    <option key="defaultSongsPerArtist" value="defaultSongsPerArtist" disabled>
+                                        {this.defaultSongsPerArtistLabel}
+                                    </option>
+                                    {this.songsPerArtistChoices.map(x => (
+                                        <option key={x} value={x} defaultValue={x === 2 ? "true" : "false"}>
+                                            {x}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <label htmlFor="saveShowsButton" style={{ margin: "1em auto" }}>
+                                By saving these venues, you'll get both a Sunday evening email listing all of the upcoming shows for the week after next and
+                                also a customized spotify playlist of all the artists playing
+                            </label>
                             <button
                                 id="saveShowsButton"
                                 disabled={this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0}
                                 onClick={this.saveShowsSelected}
-                            >
+                                style={{ display: "block", margin: "1em auto" }}>
                                 Save shows
                             </button>
-                            <select
-                                value={this.state.selectedSongsPerArtist}
-                                disabled={this.state.selectVenues === null || Object.keys(this.state.selectedVenues).length === 0}
-                                onChange={this.selectedSongsPerArtistChanged}
-                            >
-                                <option key="defaultSongsPerArtist" value="defaultSongsPerArtist" disabled>
-                                    {this.defaultSongsPerArtistLabel}
-                                </option>
-                                {this.songsPerArtistChoices.map(x => (
-                                    <option key={x} value={x} defaultValue={x === 2 ? "true" : "false"}>
-                                        {x}
-                                    </option>
-                                ))}
-                            </select>
-                            <label htmlFor="saveShowsButton">Select this option if you want shows for the selected venues emailed to you weekly</label>
+                            <a
+                                href="./#"
+                                onClick={this.selectVenues}
+                                style={{
+                                    display: this.state.saveSuccess ? "none" : "block",
+                                    margin: "auto",
+                                    marginTop: ".5em",
+                                    fontSize: ".7em",
+                                    color: "black",
+                                    opacity: ".7"
+                                }}>
+                                I don't want to save anything yet, just show me the upcoming shows
+                            </a>
                             <h3
                                 style={{
                                     display: this.state.saveSuccess ? "" : "none"
-                                }}
-                            >
+                                }}>
                                 Venues saved successfully
                             </h3>
+                        </div>
+
+                        <div
+                            style={{
+                                display: this.state.showViewShowsInBrowserSection ? "" : "none",
+                                textAlign: "center"
+                            }}>
+                            <label htmlFor="viewShowsButton" style={{ display: "block" }}>
+                                Can't wait until Sunday for the email? Click the button below to see the list of upcoming shows right here in your browser
+                            </label>
+                            <button
+                                id="viewShowsButton"
+                                disabled={this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0}
+                                type="submit"
+                                style={{ display: "inline-block" }}>
+                                Gimme
+                            </button>
                         </div>
                     </div>
                 </form>
