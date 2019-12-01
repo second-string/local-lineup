@@ -80,7 +80,7 @@ function setRoutes(routerDependencies) {
 
     router.post('/show-finder/save-venues', async (req, res) => {
         if (!req.body) {
-            console.log('Did not receive any token or venue IDs in POST body');
+            console.log('Did not receive any venue IDs or info in POST body');
             return res.status(400);
         }
 
@@ -91,13 +91,13 @@ function setRoutes(routerDependencies) {
         let locationColumn = 'Location';
 
         let upsertSql = `
-        INSERT INTO ${tableName} (${userUidColumn}, ${venueIdsColumn}, ${locationColumn})
-        VALUES (?, ?, ?);
+        INSERT INTO VenueLists (UserUid, VenueIds, Location, SongsPerArtist)
+        VALUES (?, ?, ?, ?);
         `;
 
         let upsert;
         try {
-            upsert = await db.runAsync(upsertSql, [req.userUid, venueIds.join(','), req.body.location]);
+            upsert = await db.runAsync(upsertSql, [req.userUid, venueIds.join(','), req.body.location, req.body.songsPerArtist]);
         } catch (e) {
             console.log(e);
             return res.status(500);
@@ -202,15 +202,15 @@ function setRoutes(routerDependencies) {
         // Allows us to keep populating their different venue lists as they switch locations
         let venueListObj = null;
         if (req.query.location) {
-            venueListObj = await db.getAsync(`SELECT VenueIds, Location FROM VenueLists WHERE UserUid=? AND Location=?`, [req.userUid, req.query.location]);
+            venueListObj = await db.getAsync(`SELECT VenueIds, Location, SongsPerArtist FROM VenueLists WHERE UserUid=? AND Location=?`, [req.userUid, req.query.location]);
         } else {
-            venueListObj = await db.getAsync(`SELECT VenueIds, Location FROM VenueLists WHERE UserUid=?`, [req.userUid]);
+            venueListObj = await db.getAsync(`SELECT VenueIds, Location, SongsPerArtist FROM VenueLists WHERE UserUid=?`, [req.userUid]);
         }
 
         if (venueListObj === undefined) {
             return res.json({});
         }
-console.log(venueListObj);
+
         res.json(venueListObj);
     });
 
