@@ -24,6 +24,7 @@ async function main() {
 		const userUid = venueListObj.UserUid;
 		const venueIds = venueListObj.VenueIds.split(",");
 		const songsPerArtist = venueListObj.SongsPerArtist;
+		const includeOpeners = venueListObj.IncludeOpeners;
 
 		// TODO :: get rid of this query and have the initial SELECT above join the two tables
 		let userObj = await db.getAsync("SELECT * FROM Users WHERE Uid=?", [userUid]);
@@ -71,7 +72,7 @@ async function main() {
 		let playlistPromise = new Promise(async (resolve, reject) => {
 			// Flatten showsByDate into one list of shows for the playlist builder
 			let shows = Object.keys(showsByDate).flatMap(x => showsByDate[x]);
-			let exitCode = await playlistBuilder.buildPlaylist(db, userObj, shows, songsPerArtist);
+			let exitCode = await playlistBuilder.buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners);
 			if (exitCode < 0) {
 				return reject(Error(userObj.SpotifyUsername));
 			}

@@ -11,6 +11,7 @@ class VenueSearch extends Component {
         selectedVenues: [],
         showsByDate: {},
         selectedSongsPerArtist: this.defaultSongsPerArtistLabel,
+        includeOpeners: true,
         showVenueSearch: false,
         saveSuccess: false,
         showSpinner: false,
@@ -82,9 +83,11 @@ class VenueSearch extends Component {
         }
 
         if (venueIdsObj.SongsPerArtist) {
-            this.setState({
-                selectedSongsPerArtist: venueIdsObj.SongsPerArtist
-            });
+            this.setState({ selectedSongsPerArtist: venueIdsObj.SongsPerArtist });
+        }
+
+        if (venueIdsObj.IncludeOpeners) {
+            this.setState({ includeOpeners: venueIdsObj.IncludeOpeners });
         }
     }
 
@@ -157,9 +160,11 @@ class VenueSearch extends Component {
         }
 
         if (venueIdsObj.SongsPerArtist) {
-            this.setState({
-                selectedSongsPerArtist: venueIdsObj.SongsPerArtist
-            });
+            this.setState({ selectedSongsPerArtist: venueIdsObj.SongsPerArtist });
+        }
+
+        if (venueIdsObj.IncludeOpeners) {
+            this.setState({ includeOpeners: venueIdsObj.IncludeOpeners });
         }
 
         await this.getVenues(location);
@@ -201,7 +206,8 @@ class VenueSearch extends Component {
         let postBody = {
             venueIds: this.state.selectedVenues.map(x => x.value),
             location: this.state.selectedLocation,
-            songsPerArtist: this.state.selectedSongsPerArtist
+            songsPerArtist: this.state.selectedSongsPerArtist,
+            includeOpeners: this.state.includeOpeners
         };
 
         console.log(postBody);
@@ -234,6 +240,11 @@ class VenueSearch extends Component {
 
     selectedSongsPerArtistChanged = e => {
         this.setState({ selectedSongsPerArtist: e.target.value });
+    };
+
+    includeOpenersChanged = e => {
+        console.log(e.target.checked);
+        this.setState({ includeOpeners: e.target.checked });
     };
 
     render() {
@@ -279,7 +290,7 @@ class VenueSearch extends Component {
                     />
                     <div>
                         <div>
-                            <div style={{ display: "block", margin: "1em auto" }}>
+                            <div style={{ display: "inline-block", margin: "2em auto auto" }}>
                                 <label style={{ marginRight: "1em", fontSize: ".8em" }}>
                                     Choose the number of songs per artist you'd like to appear in your playlist:
                                 </label>
@@ -297,7 +308,11 @@ class VenueSearch extends Component {
                                     ))}
                                 </select>
                             </div>
-                            <label htmlFor="saveShowsButton" style={{ margin: "1em auto" }}>
+                            <div style={{ display: "block", margin: "1em auto" }}>
+                                <label style={{ marginRight: "1em", fontSize: ".8em" }}>Do you want show openers to be included in your playlist?</label>
+                                <input type="checkbox" checked={this.state.includeOpeners} onChange={this.includeOpenersChanged} />
+                            </div>
+                            <label htmlFor="saveShowsButton" style={{ display: "inline-block", margin: "2em auto 1em" }}>
                                 By saving these venues, you'll get both a Sunday evening email listing all of the upcoming shows for the week after next and
                                 also a customized spotify playlist of all the artists playing
                             </label>
@@ -321,12 +336,12 @@ class VenueSearch extends Component {
                                 }}>
                                 I don't want to save anything yet, just show me the upcoming shows
                             </a>
-                            <h3
+                            <h4
                                 style={{
                                     display: this.state.saveSuccess ? "" : "none"
                                 }}>
                                 Venues saved successfully
-                            </h3>
+                            </h4>
                         </div>
 
                         <div

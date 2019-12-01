@@ -1,0 +1,1 @@
+ALTER TABLE VenueLists ADD COLUMN IncludeOpeners bit DEFAULT 0;

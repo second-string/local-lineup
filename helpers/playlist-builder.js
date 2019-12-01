@@ -6,7 +6,7 @@ const showFinder = require("../show-finder");
 const dbHelpers = require("../helpers/db-helpers");
 const helpers = require("../helpers/helpers");
 
-async function buildPlaylist(db, userObj, shows, songsPerArtist) {
+async function buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners) {
     if (userObj === null || userObj === undefined || shows === null || shows === undefined) {
         console.log("Must provide userObj and shows list to build spotify playlist");
         return -1;
@@ -16,15 +16,26 @@ async function buildPlaylist(db, userObj, shows, songsPerArtist) {
 
     let artists = [];
     for (let show of shows) {
-        // If the show title contains the artist name, include them. We only take the first one because tons of the shows
-        // are listed as 'ArtistX with ArtistY', so checking each performer would include openers for most. From what I can tell
-        // the main act is always first in the performer list, but there's no other indication of who the main act is in the
-        // show object so this is all we got.
+        let addedAnArtist = false;
         for (let performer of show.performers) {
-            if (show.title.toLowerCase().includes(performer.name.toLowerCase())) {
+            if (includeOpeners) {
                 artists.push(performer.name);
+                addedAnArtist = true;
+            } else if (show.title.toLowerCase().includes(performer.name.toLowerCase())) {
+                // If the show title contains the artist name, include them. We only take the first one because tons of the shows
+                // are listed as 'ArtistX with ArtistY', so checking each performer would include openers for most. From what I can tell
+                // the main act is always first in the performer list, but there's no other indication of who the main act is in the
+                // show object so this is all we got.
+                artists.push(performer.name);
+                addedAnArtist = true;
                 break;
             }
+        }
+
+        // If we've gone through every performer and none have matched the show title, stick the first one in anyway
+        if (!addedAnArtist && show.performers.length > 0) {
+            console.log(`Found no matching artists for show name '${show.title}', adding first performer '${show.performers[0]}' anyway`);
+            artists.push(show.performers[0].name);
         }
     }
 
@@ -83,7 +94,7 @@ async function getTrackUris(songsPerArtist, artistObjs, spotifyToken) {
 
             if (tracksResponse.success === undefined || !tracksResponse.success) {
                 console.log(`Error getting tracks for artist '${artistObj.name}'`);
-                return reject(tracksResponse.response);
+                return reject(tracksResponse.success === undefined ? tracksResponse : tracksResponse.response);
             }
 
             resolve(tracksResponse.response.tracks.slice(0, songsPerArtist).map(x => x.uri));
