@@ -5,7 +5,7 @@ import "./VenueSearch.css";
 
 class VenueSearch extends Component {
     state = {
-        locations: [],
+        // locations: [],
         selectedLocation: this.defaultLocationLabel,
         allVenues: [],
         selectedVenues: [],
@@ -53,79 +53,32 @@ class VenueSearch extends Component {
     }
 
     async componentDidMount() {
-        this.setState({ locations: this.locations });
+        const userSavedVenuesObj = await this.getUserSavedVenues();
+        let state = { showVenueSearch: false };
 
-        const getOptions = {
-            method: "GET",
-            headers: {
-                "Content-type": "application/json"
-            }
-        };
+        // See if this user has any saved locations already. If not, don't do anything
+        if (userSavedVenuesObj.Location) {
+            // If they have a location, go get all the venues for that location
+            let allVenuesForLocation = await this.getAllVenuesForLocation(userSavedVenuesObj.Location);
+            state.showVenueSearch = true;
 
-        // Get venues/songsPerArtist for first location we have for the user in the db on first load
-        const res = await this.instrumentCall("/show-finder/user-venues", getOptions);
-        const venueIdsObj = await res.json();
-
-        if (venueIdsObj.Location) {
-            // Location state will be set within getVenues
-            let venues = await this.getVenues(venueIdsObj.Location);
-
-            if (venueIdsObj.VenueIds) {
-                let userVenues = [];
-                for (let id of venueIdsObj.VenueIds.split(",")) {
-                    const venueName = venues.find(x => x.id === parseInt(id)).name;
-                    const option = { key: id, value: id, label: venueName };
-                    userVenues.push(option);
-                }
-
-                this.setState({ selectedVenues: userVenues });
+            // Map each solo venue ID to its venue to get the name for display
+            if (userSavedVenuesObj.VenueIds) {
+                const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
+                state.selectedVenues = uiVenueObjs;
             }
         }
 
-        if (venueIdsObj.SongsPerArtist) {
-            this.setState({ selectedSongsPerArtist: venueIdsObj.SongsPerArtist });
+        if (userSavedVenuesObj.SongsPerArtist) {
+            state.selectedSongsPerArtist = userSavedVenuesObj.SongsPerArtist;
         }
 
-        if (venueIdsObj.IncludeOpeners) {
-            this.setState({ includeOpeners: venueIdsObj.IncludeOpeners });
+        if (userSavedVenuesObj.IncludeOpeners !== undefined) {
+            state.includeOpeners = userSavedVenuesObj.IncludeOpeners;
         }
+
+        this.setState(state);
     }
-
-    getVenues = async location => {
-        this.setState({ showSpinner: true, selectedLocation: location });
-
-        let getOptions = {
-            method: "GET",
-            headers: {
-                "Content-type": "application/json"
-            }
-        };
-
-        let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
-
-        let allVenuesForCity = await res.json();
-
-        // Take our name-less venue list from our backend and fill in the venue names from the recently-received full venue list
-        let filledOutSelectedVenues = [];
-        for (const selectedVenue of this.state.selectedVenues) {
-            let venueObj = allVenuesForCity.find(x => x.id === parseInt(selectedVenue.key));
-
-            if (venueObj && venueObj.name) {
-                selectedVenue.label = venueObj.name;
-            }
-
-            filledOutSelectedVenues.push(selectedVenue);
-        }
-
-        this.setState({
-            allVenues: allVenuesForCity,
-            selectedVenues: filledOutSelectedVenues,
-            showSpinner: false,
-            showVenueSearch: true
-        });
-
-        return allVenuesForCity;
-    };
 
     locationSelected = async e => {
         // cache the value b/c react synthetic events and whatnot
@@ -140,6 +93,47 @@ class VenueSearch extends Component {
             selectedVenues: []
         });
 
+        const allVenuesForLocation = await this.getAllVenuesForLocation(location);
+        const userSavedVenuesObj = await this.getUserSavedVenues(location);
+        let state = { showVenueSearch: true };
+        if (userSavedVenuesObj.VenueIds) {
+            const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
+            state.selectedVenues = uiVenueObjs;
+        }
+
+        if (userSavedVenuesObj.SongsPerArtist) {
+            state.selectedSongsPerArtist = userSavedVenuesObj.SongsPerArtist;
+        }
+
+        if (userSavedVenuesObj.IncludeOpeners !== undefined) {
+            state.includeOpeners = userSavedVenuesObj.IncludeOpeners;
+        }
+
+        this.setState(state);
+    };
+
+    getAllVenuesForLocation = async location => {
+        this.setState({ showSpinner: true, selectedLocation: location });
+
+        let getOptions = {
+            method: "GET",
+            headers: {
+                "Content-type": "application/json"
+            }
+        };
+
+        let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
+        let allVenuesForLocation = await res.json();
+
+        this.setState({
+            showSpinner: false,
+            allVenues: allVenuesForLocation
+        });
+
+        return allVenuesForLocation;
+    };
+
+    getUserSavedVenues = async location => {
         const getOptions = {
             method: "GET",
             headers: {
@@ -147,27 +141,26 @@ class VenueSearch extends Component {
             }
         };
 
-        const res = await this.instrumentCall(`/show-finder/user-venues?location=${location}`, getOptions);
+        const res = await this.instrumentCall(`/show-finder/user-venues${location ? `?location=${location}` : ""}`, getOptions);
         const venueIdsObj = await res.json();
 
-        if (venueIdsObj.VenueIds) {
-            const emptyVenues = venueIdsObj.VenueIds.split(",").map(x => ({
-                key: x,
-                value: x,
-                label: null
-            }));
-            this.setState({ selectedVenues: emptyVenues });
+        return venueIdsObj;
+    };
+
+    // Takes in comma-delimited string of ids and a list of the full venue objects
+    // Returns a list of the jsx objects for display with key, value, and label
+    buildUiVenueObjects = (venueIdString, venueObjs) => {
+        let userVenues = [];
+        for (let id of venueIdString.split(",")) {
+            const venueName = venueObjs.find(x => x.id === parseInt(id)).name;
+            if (!venueName) {
+                console.log(`Didn't find a venue in all venues for this location for venue ID ${id}`);
+            }
+            const option = { key: id, value: id, label: venueName };
+            userVenues.push(option);
         }
 
-        if (venueIdsObj.SongsPerArtist) {
-            this.setState({ selectedSongsPerArtist: venueIdsObj.SongsPerArtist });
-        }
-
-        if (venueIdsObj.IncludeOpeners) {
-            this.setState({ includeOpeners: venueIdsObj.IncludeOpeners });
-        }
-
-        await this.getVenues(location);
+        return userVenues;
     };
 
     selectVenues = async e => {
@@ -210,8 +203,6 @@ class VenueSearch extends Component {
             includeOpeners: this.state.includeOpeners
         };
 
-        console.log(postBody);
-
         let postOptions = {
             method: "POST",
             headers: {
@@ -243,7 +234,6 @@ class VenueSearch extends Component {
     };
 
     includeOpenersChanged = e => {
-        console.log(e.target.checked);
         this.setState({ includeOpeners: e.target.checked });
     };
 
@@ -263,7 +253,7 @@ class VenueSearch extends Component {
                     <option key="defaultLocation" value="defaultLocation" disabled defaultValue>
                         {this.defaultLocationLabel}
                     </option>
-                    {this.state.locations.map(x => (
+                    {this.locations.map(x => (
                         <option key={x.value} value={x.value}>
                             {x.displayName}
                         </option>
