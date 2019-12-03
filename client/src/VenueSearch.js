@@ -152,11 +152,12 @@ class VenueSearch extends Component {
     buildUiVenueObjects = (venueIdString, venueObjs) => {
         let userVenues = [];
         for (let id of venueIdString.split(",")) {
-            const venueName = venueObjs.find(x => x.id === parseInt(id)).name;
-            if (!venueName) {
-                console.log(`Didn't find a venue in all venues for this location for venue ID ${id}`);
+            const venue = venueObjs.find(x => x.id === parseInt(id));
+            if (!venue) {
+                continue;
             }
-            const option = { key: id, value: id, label: venueName };
+
+            const option = { key: id, value: id, label: venue.name };
             userVenues.push(option);
         }
 

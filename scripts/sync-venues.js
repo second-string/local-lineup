@@ -1,6 +1,6 @@
-const helpers = require('../helpers/helpers');
-const dbHelpers = require('../helpers/db-helpers');
-const constants = require('../helpers/constants')
+const helpers = require("../helpers/helpers");
+const dbHelpers = require("../helpers/db-helpers");
+const constants = require("../helpers/constants");
 
 /*
 Sample venue object
@@ -40,24 +40,16 @@ Sample venue object
 },
 */
 
-const locations = [
-    'san francisco',
-    'los angeles',
-    'washington',
-    'new york',
-    'chicago',
-    'houston',
-    'philadelphia'
-];
+const locations = ["san francisco", "los angeles", "washington", "new york", "chicago", "houston", "philadelphia"];
 
-const seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
+const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
 async function getVenues(city) {
     let getOptions = {
-        method: 'GET',
+        method: "GET",
         headers: {
-            'Content-type': 'application/json',
-            'Authorization': seatGeekAuth()
+            "Content-type": "application/json",
+            Authorization: seatGeekAuth()
         }
     };
 
@@ -68,9 +60,11 @@ async function getVenues(city) {
     let total = 0;
     let totalMillis = 0;
     do {
-        let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`,
+        let { success, response } = await helpers.instrumentCall(
+            `https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`,
             getOptions,
-            false);
+            false
+        );
 
         if (!success) {
             return response;
@@ -78,39 +72,34 @@ async function getVenues(city) {
 
         venueList = venueList.concat(response.venues);
         total = response.meta.total;
-        totalMillis += response.meta.took
+        totalMillis += response.meta.took;
     } while (page * perPage <= total);
 
     console.log(`Took ${totalMillis} milliseconds to get ${total} venues`);
 
     // De-dupe venues cause they send a ton of repeats
     let hasSeen = {};
-    return venueList.filter(x => hasSeen.hasOwnProperty(x.id) ? false : (hasSeen[x.id] = true))
+    return venueList.filter(x => (hasSeen.hasOwnProperty(x.id) ? false : (hasSeen[x.id] = true)));
 }
 
 async function saveVenues(location, venues, db) {
-    await db.runAsync('BEGIN TRANSACTION');
+    await db.runAsync("BEGIN TRANSACTION");
     for (const venue of venues) {
-        const venueParams = [
-            venue.id,
-            location,
-            venue.name,
-            venue.url
-        ];
+        const venueParams = [venue.id, location, venue.name, venue.url];
 
-        await db.runAsync('INSERT OR REPLACE INTO Venues (Id, Location, Name, TicketUrl) VALUES (?, ?, ?, ?);', venueParams);
+        await db.runAsync("INSERT OR REPLACE INTO Venues (Id, Location, Name, TicketUrl) VALUES (?, ?, ?, ?);", venueParams);
     }
 
-    await db.runAsync('COMMIT');
+    await db.runAsync("COMMIT");
 }
 
 async function run() {
     if (!constants.seatGeekClientId) {
-        console.log('No seatgeek auth set up, source setup_env.sh');
+        console.log("No seatgeek auth set up, source setup_env.sh");
         process.exit(-1);
     }
 
-    const db = dbHelpers.openDb('./user_venues.db');
+    const db = dbHelpers.openDb("../user_venues.db");
 
     for (const location of locations) {
         console.log(`Syncing venues for ${location}`);
