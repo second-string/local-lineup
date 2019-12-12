@@ -63,11 +63,10 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <h3>helloaf</h3>
-        <div style={{ display: this.state.isLoggedIn ? "" : "none" }}>
-          <a href="./show-finder">Show Finder</a>
+        <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "" : "none" }}>
+          <h2>music n shit</h2>
         </div>
-        <div style={{ display: this.state.isLoggedIn ? "none" : "" }}>
+        <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "none" : "" }}>
           <a href="./login">Login</a>
         </div>
       </div>

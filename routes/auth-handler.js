@@ -1,32 +1,26 @@
-const crypto = require('crypto');
-const express = require('express');
-const sqlite = require('sqlite3');
-const uuid = require('uuid/v4');
-const jwt = require('jsonwebtoken');
-const querystring = require('querystring');
+const crypto = require("crypto");
+const express = require("express");
+const sqlite = require("sqlite3");
+const uuid = require("uuid/v4");
+const jwt = require("jsonwebtoken");
+const querystring = require("querystring");
 
-const constants = require('../helpers/constants');
-const showFinder = require('../show-finder');
-const helpers = require('../helpers/helpers');
+const constants = require("../helpers/constants");
+const showFinder = require("../show-finder");
+const helpers = require("../helpers/helpers");
 
-const loggedOutPaths = [
-    "/",
-    "/login",
-    "/spotify-auth",
-    "/token-auth",
-    "/show-finder/delete-venues"
-];
+const loggedOutPaths = ["/", "/login", "/spotify-auth", "/token-auth", "/show-finder/delete-venues"];
 
 async function authenticate(userDb, req, res, next) {
     if (loggedOutPaths.filter(x => req.path === x).length > 0 || req.path.startsWith("/static")) {
         return next();
     }
 
-    if (!req.cookies || !req.cookies['show-finder-token']) {
+    if (!req.cookies || !req.cookies["show-finder-token"]) {
         return res.redirect(401, "/");
     }
 
-    const reqToken = req.cookies['show-finder-token'];
+    const reqToken = req.cookies["show-finder-token"];
     let token = null;
     try {
         token = jwt.verify(reqToken, constants.jwtSigningSecret);
@@ -53,18 +47,20 @@ async function authenticate(userDb, req, res, next) {
 }
 
 async function login(req, res) {
-    const rootHost = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+    const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "brianteam.dev" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
-    const scopes = 'user-read-email playlist-read-private playlist-modify-private';
+    const scopes = "user-read-email playlist-read-private playlist-modify-private";
 
-    res.redirect('https://accounts.spotify.com/authorize?' +
-        querystring.stringify({
-            response_type: 'code',
-            client_id: constants.clientId,
-            scope: scopes,
-            redirect_uri: redirectUri,
-            state: 'test_state_token'
-        }));
+    res.redirect(
+        "https://accounts.spotify.com/authorize?" +
+            querystring.stringify({
+                response_type: "code",
+                client_id: constants.clientId,
+                scope: scopes,
+                redirect_uri: redirectUri,
+                state: "test_state_token"
+            })
+    );
 }
 
 async function logout(req, res) {
@@ -94,12 +90,10 @@ async function tokenAuth(db, req, res) {
         return res.json({ isLoggedIn: false });
     }
 
-
-    let dbUser = await db.getAsync('SELECT * FROM Users WHERE Uid=?', [token.userUid]);
+    let dbUser = await db.getAsync("SELECT * FROM Users WHERE Uid=?", [token.userUid]);
 
     // If user exists, send back logged in, if not, they somehow have a jwt-valid token with a user that doesn't exist...?
-    if (dbUser)
-    {
+    if (dbUser) {
         return res.json({ isLoggedIn: true });
     } else {
         return res.json({ isLoggedIn: false });
@@ -113,29 +107,29 @@ async function spotifyLoginCallback(db, req, res) {
     if (code === undefined && req.query.error) {
         throw new Error(`Error getting preliminary auth code from spoot: ${req.query.error}`);
     } else if (code === undefined) {
-        throw new Error('Shit is borked - no error nor code from spoot prelim auth');
+        throw new Error("Shit is borked - no error nor code from spoot prelim auth");
     }
 
     if (state !== "test_state_token") {
         throw new Error(`State is borked. Looking for '${"test_state_token"}' got '${state}'`);
     }
 
-    const rootHost = process.env.DEPLOY_STAGE === 'PROD' ? 'brianteam.dev' : 'localhost';
+    const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "brianteam.dev" : "localhost";
     let postOptions = {
-        method: 'POST',
+        method: "POST",
         body: {
-            'grant_type': 'authorization_code',
-            'redirect_uri': `https://${rootHost}/spotify-auth`,         // Doesn't matter, just needs to match what we sent previously
-            'code': code
+            grant_type: "authorization_code",
+            redirect_uri: `https://${rootHost}/spotify-auth`, // Doesn't matter, just needs to match what we sent previously
+            code: code
         },
         headers: {
-            'Content-type': 'application/x-www-form-urlencoded',
-            'Authorization': showFinder.spotifyAuth()
+            "Content-type": "application/x-www-form-urlencoded",
+            Authorization: showFinder.spotifyAuth()
         }
     };
 
-    console.log('Getting spotify access and refresh tokens ...');
-    let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, false);
+    console.log("Getting spotify access and refresh tokens ...");
+    let { success, response } = await helpers.instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
     if (!success) {
         console.error(response);
         throw new Error(`something went wrong with request for access/refresh spoot tokens`);
@@ -144,19 +138,19 @@ async function spotifyLoginCallback(db, req, res) {
     const access = response.access_token;
     const refresh = response.refresh_token;
 
-    console.log('Getting user email from spotify using access token...');
+    console.log("Getting user email from spotify using access token...");
     let getOptions = {
-        method: 'GET',
+        method: "GET",
         headers: {
-            'Content-type': 'application/json',
-            'Authorization': 'Bearer ' + access
+            "Content-type": "application/json",
+            Authorization: "Bearer " + access
         }
     };
 
-    ({success, response} = await helpers.instrumentCall('https://api.spotify.com/v1/me', getOptions));
+    ({ success, response } = await helpers.instrumentCall("https://api.spotify.com/v1/me", getOptions));
     if (!success) {
         console.error(response);
-        throw new Error('Error getting user account using access token');
+        throw new Error("Error getting user account using access token");
     }
 
     // Lookup email in DB to see if they have an account
@@ -171,10 +165,13 @@ async function spotifyLoginCallback(db, req, res) {
         console.log(`existing user with uid '${userUid}'' and email ${response.email}`);
     }
 
-    await db.runAsync('INSERT OR REPLACE INTO Users(Uid, Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken) VALUES (?, ?, ?, ?, ?, ?)', [userUid, response.email, response.id, response.display_name, access, refresh]);
+    await db.runAsync(
+        "INSERT OR REPLACE INTO Users(Uid, Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken) VALUES (?, ?, ?, ?, ?, ?)",
+        [userUid, response.email, response.id, response.display_name, access, refresh]
+    );
 
     let signedToken = jwt.sign({ userUid: userUid }, constants.jwtSigningSecret, { expiresIn: "1h" });
-    res.cookie("show-finder-token", signedToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect('/show-finder');
+    res.cookie("show-finder-token", signedToken, { maxAge: 1000 * 60 * 60 /* 1hr */ }).redirect("/");
 }
 
 async function getHashInfo(password, salt, iterations) {
@@ -202,4 +199,4 @@ module.exports = {
     logout,
     tokenAuth,
     spotifyLoginCallback
-}
+};

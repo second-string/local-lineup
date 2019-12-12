@@ -106,9 +106,7 @@ class SpotifySearch extends Component {
     let playlistNamesById = await res.json();
     this.setState({ playlistNamesById: playlistNamesById });
     let names = [];
-    Object.keys(playlistNamesById).forEach(x =>
-      names.push(playlistNamesById[x])
-    );
+    Object.keys(playlistNamesById).forEach(x => names.push(playlistNamesById[x]));
     this.setState(
       {
         showingPlaylists: true,
@@ -129,9 +127,7 @@ class SpotifySearch extends Component {
       return;
     }
 
-    let playlistId = Object.keys(this.state.playlistNamesById)[
-      selectedPlaylistIndex
-    ];
+    let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
     let encodedPlaylistId = encodeURIComponent(playlistId);
 
     this.setState({
@@ -139,10 +135,7 @@ class SpotifySearch extends Component {
       showSpinner: true,
       headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`
     });
-    let res = await this.instrumentCall(
-      `/show-finder/artists?playlistId=${encodedPlaylistId}`,
-      { method: "GET" }
-    );
+    let res = await this.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
     let artistJson = await res.json();
     let decodedArtists = [];
     for (let index in Object.keys(artistJson)) {
@@ -167,19 +160,12 @@ class SpotifySearch extends Component {
 
     // If no artists have been selected then selectedArtistIndices will be an iterator.
     // If any have, it will be an array. Fuck this list implementation
-    if (
-      selectedArtistIndices.length === undefined &&
-      selectedArtistIndices.next()
-    ) {
-      alert(
-        "You must select at least one artist. Select the list and all artists are included by default."
-      );
+    if (selectedArtistIndices.length === undefined && selectedArtistIndices.next()) {
+      alert("You must select at least one artist. Select the list and all artists are included by default.");
       return;
     }
 
-    let encodedArtists = this.state.allArtists
-      .filter((x, i) => selectedArtistIndices.includes(i))
-      .map(x => encodeURIComponent(x));
+    let encodedArtists = this.state.allArtists.filter((x, i) => selectedArtistIndices.includes(i)).map(x => encodeURIComponent(x));
 
     let postOptions = {
       method: "POST",
@@ -198,34 +184,19 @@ class SpotifySearch extends Component {
       headerText: "Searching for shows..."
     });
     // list of { artistName, shows[] } objects
-    let showsJson = await this.instrumentCall(
-      "/show-finder/shows",
-      postOptions
-    );
+    let showsJson = await this.instrumentCall("/show-finder/shows", postOptions);
     let shows = await showsJson.json();
 
     // shows.length is actually a count of number of artists returned
-    let showCount = shows
-      .map(x => x.shows.length || 0)
-      .reduce((x, y) => x + y, 0);
-    let location = this.state.locations
-      .filter(x => x.value === this.state.selectedLocation)
-      .map(x => x.displayName);
+    let showCount = shows.map(x => x.shows.length || 0).reduce((x, y) => x + y, 0);
+    let location = this.state.locations.filter(x => x.value === this.state.selectedLocation).map(x => x.displayName);
 
     let header;
     if (shows.length > 0) {
-      let selectedPlaylistIndex = this.playlistListRef.current.state
-        .lastSelected;
-      let playlistId = Object.keys(this.state.playlistNamesById)[
-        selectedPlaylistIndex
-      ];
-      header = `${showCount +
-        (showCount === 1
-          ? " show"
-          : " shows")} found in ${location} for ${shows.length +
-        (shows.length === 1 ? " artist" : " artists")} on '${
-        this.state.playlistNamesById[playlistId]
-      }'`;
+      let selectedPlaylistIndex = this.playlistListRef.current.state.lastSelected;
+      let playlistId = Object.keys(this.state.playlistNamesById)[selectedPlaylistIndex];
+      header = `${showCount + (showCount === 1 ? " show" : " shows")} found in ${location} for ${shows.length +
+        (shows.length === 1 ? " artist" : " artists")} on '${this.state.playlistNamesById[playlistId]}'`;
     } else {
       header = `No ${location} shows found for those artists`;
     }
@@ -248,22 +219,11 @@ class SpotifySearch extends Component {
   render() {
     return (
       <div className="SpotifySearch">
-        <a href="/show-finder">
-          <button className="unselectable block">Back to main menu</button>
-        </a>
-        <button
-          id="new-search-button"
-          className="unselectable block"
-          onClick={this.newSearch}
-          style={{ display: this.state.showingForm ? "none" : "" }}
-        >
+        <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingForm ? "none" : "" }}>
           New Search
         </button>
         <h3>{this.state.headerText}</h3>
-        <div
-          className="loader"
-          style={{ display: this.state.showSpinner ? "" : "none" }}
-        ></div>
+        <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
         <div style={{ display: this.state.showingForm ? "" : "none" }}>
           <div>
             <select id="location-select" onChange={this.getPlaylists}>
@@ -281,26 +241,16 @@ class SpotifySearch extends Component {
           </div>
         </div>
         <div>
-          <form
-            onSubmit={this.getArtists}
-            style={{ display: this.state.showingPlaylists ? "" : "none" }}
-          >
+          <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
             <div>
-              <ReactList
-                className="scroll-vertical"
-                ref={this.playlistListRef}
-                items={this.state.playlists}
-              />
+              <ReactList className="scroll-vertical" ref={this.playlistListRef} items={this.state.playlists} />
             </div>
             <button className="unselectable" type="submit">
               Select playlist
             </button>
           </form>
 
-          <form
-            onSubmit={this.getShowsForArtists}
-            style={{ display: this.state.showingArtists ? "" : "none" }}
-          >
+          <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? "" : "none" }}>
             <div>
               <ReactList
                 className="scroll-vertical"

@@ -241,14 +241,7 @@ class VenueSearch extends Component {
     render() {
         return (
             <div className="VenueSearch">
-                <div>
-                    <form action="/show-finder" method="GET" style={{ position: "absolute" }}>
-                        <button className="unselectable" style={{ margin: "auto" }}>
-                            Back to main menu
-                        </button>
-                    </form>
-                    <h3>Venue search</h3>
-                </div>
+                <h3>Venue search</h3>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
                 <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} style={{ margin: "3em auto 1em" }}>
                     <option key="defaultLocation" value="defaultLocation" disabled defaultValue>

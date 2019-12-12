@@ -3,6 +3,10 @@
   text-align: center;
 }
 
+#root {
+  padding: 0 3em 3em;
+}
+
 button {
   font-size: 15px;
   padding: 10px;
@@ -27,13 +31,13 @@ button {
 }
 
 .unselectable {
--webkit-user-select: none;
--khtml-user-select: none;
--moz-user-select: none;
--ms-user-select: none;
--o-user-select: none;
-user-select: none;
-cursor: default;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  cursor: default;
 }
 
 .scroll-vertical {
@@ -83,8 +87,12 @@ cursor: default;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .react-list-select--item {
@@ -117,10 +125,6 @@ ul {
   margin: 0;
 }
 
-body {
-  padding: 3em;
-}
-
 /* Add some style to the list */
 
 .react-list-select {
@@ -132,7 +136,7 @@ body {
 }
 .react-list-select:hover .react-list-select--item.is-focused::before,
 .react-list-select:hover .react-list-select--item.is-focused::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
@@ -155,4 +159,3 @@ body {
 .context-menu .react-list-select--item {
   font-size: 0.8125em;
 }
-
