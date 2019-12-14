@@ -22,6 +22,11 @@ module.exports = {
     // https: true,
     open: true
   },
+  target: "node",
+  node: {
+    __filename: true,
+    __dirname: true
+  },
   module: {
     rules: [
       // application JS.
@@ -61,6 +66,15 @@ module.exports = {
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"]
+      },
+      // Files
+      {
+        test: /\.(png|svg|jpg|gif)$/,
+        loader: "file-loader",
+        options: {
+          name: "[name].[ext]",
+          outputPath: "static/img"
+        }
       }
     ]
   },

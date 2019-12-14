@@ -3,7 +3,6 @@
     background-color: black;
     margin: 0;
 }
-
 .side {
     display: inline-block;
     width: 50%;
@@ -35,14 +34,70 @@
 }
 
 .nav-a:hover,
-.nav-input:hover {
+.nav-input:hover,
+.menu-a:hover,
+.menu-option-a:hover {
     background-color: lightgray;
     color: black;
 }
 
-/* fake class active to manual set the anchors, only need it for onclick for the logout input */
 .nav-a.active,
-.nav-input:active {
+.nav-input:active,
+.menu-a.active,
+.menu-option-a.active {
     background-color: #6699ff;
     color: white;
+}
+
+.nav-mobile {
+    display: none;
+    position: relative;
+    height: 3em;
+}
+
+.menu-dropdown {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    top: 3em;
+    left: 0;
+    background-color: black;
+    z-index: 10; /* react-select appears over it for some reason without this */
+}
+
+/*options in the menu dropdown*/
+.menu-option-a {
+    display: block;
+    color: white;
+    padding: 1em;
+    text-align: center;
+    text-decoration: none;
+}
+
+/*menu button*/
+.menu-a {
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    height: 3em;
+    width: 4em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/*.menu-img {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}*/
+
+@media only screen and (min-width: 320px) and (max-width: 768px) {
+    .nav-browser {
+        display: none;
+    }
+
+    .nav-mobile {
+        display: block;
+    }
 }
