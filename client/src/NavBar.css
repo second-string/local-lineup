@@ -1,0 +1,48 @@
+.NavBar {
+    font-family: "Trebuchet MS", Helvetica, sans-serif;
+    background-color: black;
+    margin: 0;
+}
+
+.side {
+    display: inline-block;
+    width: 50%;
+}
+
+.right-align {
+    text-align: right;
+}
+
+.nav-a,
+.nav-input {
+    display: inline-block;
+    color: white;
+    padding: 1em 2em;
+    text-align: center;
+    text-decoration: none;
+}
+
+.nav-input {
+    cursor: pointer;
+    background-color: black;
+    border: none;
+    font-size: 1em;
+    margin: 0;
+}
+
+.nav-form {
+    display: inline-block;
+}
+
+.nav-a:hover,
+.nav-input:hover {
+    background-color: lightgray;
+    color: black;
+}
+
+/* fake class active to manual set the anchors, only need it for onclick for the logout input */
+.nav-a.active,
+.nav-input:active {
+    background-color: #6699ff;
+    color: white;
+}
