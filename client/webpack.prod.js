@@ -78,11 +78,6 @@ module.exports = {
 			chunks: ['spotify'],
 			inject: true
 		}),
-		new HtmlWebpackPlugin({
-			template: 'public/show-finder.html',
-			filename: 'show-finder.html',
-			chunks: [],
-		}),
     new HtmlWebpackPlugin({
       template: paths.venueHtml,
       filename: 'venue-search.html',
