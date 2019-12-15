@@ -54,7 +54,7 @@ function parseSongkickArtistsResponse(responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in Songkick artist ID requests:`);
-			console.log(responseObject);
+			console.log(responseObject.response);
 			continue;
 		}
 
@@ -109,7 +109,7 @@ function parseSeatGeekArtistsResponse(responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in SeatGeek artist ID requests`);
-			console.log(responseObject);
+			console.log(responseObject.response);
 			continue;
 		}
 

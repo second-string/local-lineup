@@ -24,6 +24,8 @@ async function instrumentCall(url, options, logCurl) {
 	// Default value of true
 	logCurl = logCurl === undefined ? true : logCurl;
 
+	const requestTimeout = sleep(8000, { ok: false, message: "Request timed out" });
+
 	try {
 		if (options.body) {
 			switch (options.headers["Content-type"]) {
@@ -40,7 +42,8 @@ async function instrumentCall(url, options, logCurl) {
 			options.body = encodedBody;
 		}
 
-		unparsedRes = await fetch(url, options);
+		const requestPromise = fetch(url, options);
+		unparsedRes = await Promise.race([requestPromise, requestTimeout]);
 
 		if (unparsedRes && !unparsedRes.ok) {
 			error = unparsedRes;
@@ -137,9 +140,14 @@ function dedupeShows(showsByArtistId) {
 	}
 }
 
+async function sleep(ms, timeoutValue) {
+	return await new Promise(async (resolve, reject) => await setTimeout(() => resolve(timeoutValue || null), ms));
+}
+
 module.exports = {
 	instrumentCall,
 	datesEqual,
 	dedupeShows,
-	getUTCDate
+	getUTCDate,
+	sleep
 };

@@ -116,7 +116,7 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in BandsInTown requests:`);
-			console.log(responseObject);
+			console.log(responseObject.response);
 			continue;
 		}
 
@@ -155,7 +155,7 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in Songkick artist show requests:`);
-			console.log(responseObject);
+			console.log(responseObject.response);
 			continue;
 		}
 
@@ -192,7 +192,7 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in SeatGeek artist show requests:`);
-			console.log(responseObject);
+			console.log(responseObject.response);
 			continue;
 		}
 
@@ -383,7 +383,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
 
 			if (!response.success) {
 				console.log("Failed paginated call to get seatgeek artist");
-				console.log(response);
+				console.log(response.response);
 				continue;
 			}
 			responseBody = response.response;
