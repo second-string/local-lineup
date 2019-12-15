@@ -1,5 +1,5 @@
 function parseBandsInTownResponse(responseBody, location) {
-	if (typeof(responseBody) === 'string' && responseBody.includes('{warn=Not found}')) {
+	if (typeof responseBody === "string" && responseBody.includes("{warn=Not found}")) {
 		return null;
 	}
 
@@ -11,15 +11,21 @@ function parseBandsInTownResponse(responseBody, location) {
 	// We do weird shit with the datetime to strip off the timezone so we can create a datetime with just the date.
 	// If you don't the datetime automatically converts it to UTC for its string repres., which for all late-night, west-coast
 	// shows rolls it to the next day. This is the only way to get rid of it _before_ creating the Date object
-	let shows = responseBody.filter(x => x.venue.city.toLowerCase().includes(location))
-		.map(x =>  {
+	let shows = responseBody
+		.filter(x => x.venue.city.toLowerCase().includes(location))
+		.map(x => {
 			let showObj = {
 				show: x.venue.name,
-				date: new Date(x.datetime.substring(0, x.datetime.indexOf('T'))),
+				date: new Date(x.datetime.substring(0, x.datetime.indexOf("T"))),
 				url: x.url
 			};
 
-			return { date: showObj.date, show: `${showObj.show} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}` };
+			return {
+				date: showObj.date,
+				show: `${showObj.show} on ${showObj.date.toLocaleString("en-us", {
+					month: "long"
+				})} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}`
+			};
 		});
 
 	return shows.length === 0 ? null : shows;
@@ -28,7 +34,8 @@ function parseBandsInTownResponse(responseBody, location) {
 function parseSongkickResponse(responseBody, location) {
 	if (responseBody.resultsPage.totalEntries !== 0) {
 		let eventList = responseBody.resultsPage.results.event;
-		let shows = eventList.filter(x => x.location.city.toLowerCase().includes(location))
+		let shows = eventList
+			.filter(x => x.location.city.toLowerCase().includes(location))
 			.map(x => ({
 				date: new Date(x.start.date),
 				show: x.displayName
@@ -47,7 +54,7 @@ function parseSongkickArtistsResponse(responseList) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in Songkick artist ID requests:`);
-			console.log(responseObject.response);
+			console.log(responseObject);
 			continue;
 		}
 
@@ -80,12 +87,17 @@ function parseSeatGeekResponse(responseBody, location) {
 		.filter(x => x.venue.city.toLowerCase().includes(location))
 		.map(x => {
 			let showObj = {
-				date: new Date(x.datetime_local.substring(0, x.datetime_local.indexOf('T'))),
+				date: new Date(x.datetime_local.substring(0, x.datetime_local.indexOf("T"))),
 				show: x.short_title,
 				url: x.url
 			};
 
-			return { date: showObj.date, show: `${showObj.show} on ${showObj.date.toLocaleString('en-us', { month: 'long' })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}` };
+			return {
+				date: showObj.date,
+				show: `${showObj.show} on ${showObj.date.toLocaleString("en-us", {
+					month: "long"
+				})} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}`
+			};
 		});
 
 	return shows.length === 0 ? null : shows;

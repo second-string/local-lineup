@@ -18,7 +18,6 @@ function setRoutes(routerDependencies) {
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
     router.post("/show-finder/playlists", async (req, res) => {
-        console.log(req.userUid);
         let userObj = await db.getAsync(`SELECT SpotifyUsername FROM Users WHERE Uid=?`, [req.userUid]);
 
         // If we have a token cached, give it a shot to see if it's still valid

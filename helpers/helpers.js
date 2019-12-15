@@ -1,8 +1,8 @@
-var fetch = require('node-fetch');
-var formUrlEncode = require('form-urlencoded').default;
+var fetch = require("node-fetch");
+var formUrlEncode = require("form-urlencoded").default;
 
 function requestError(response, exception = null) {
-	console.log('REQUEST ERROR');
+	console.log("REQUEST ERROR");
 	if (response) {
 		console.log(`RESPONSE STATUS CODE: ${response.statusCode}`);
 		console.log(response.body);
@@ -18,7 +18,7 @@ function requestError(response, exception = null) {
 async function instrumentCall(url, options, logCurl) {
 	let res;
 	let error = null;
-	let encodedBody = '';
+	let encodedBody = "";
 	let unparsedRes = null;
 
 	// Default value of true
@@ -26,11 +26,11 @@ async function instrumentCall(url, options, logCurl) {
 
 	try {
 		if (options.body) {
-			switch (options.headers['Content-type']) {
-				case 'application/json':
+			switch (options.headers["Content-type"]) {
+				case "application/json":
 					encodedBody = JSON.stringify(options.body);
 					break;
-				case 'application/x-www-form-urlencoded':
+				case "application/x-www-form-urlencoded":
 					encodedBody = formUrlEncode(options.body);
 					break;
 				default:
@@ -48,16 +48,21 @@ async function instrumentCall(url, options, logCurl) {
 			res = await unparsedRes.json();
 		}
 	} catch (e) {
-		error = unparsedRes === null ? {} : unparsedRes;
+		const errorObject = {
+			message: "Threw but didn't assign anything to unparsedRes yet",
+			exception: e
+		};
+
+		error = unparsedRes === null ? errorObject : unparsedRes;
 	} finally {
 		// Log out a curl for every call we instrument.
-		if (logCurl && process.env.DEPLOY_STAGE !== 'PROD') {
-			let curl = ['curl'];
+		if (logCurl && process.env.DEPLOY_STAGE !== "PROD") {
+			let curl = ["curl"];
 
 			// -s: don't show progress ascii
 			// -D -: output headers to file, '-' uses stdout as file
 			// You can also use -v for a full dump
-			curl.push('-sD -');
+			curl.push("-sD -");
 			curl.push(`\'${url}\'`);
 			curl.push(`-X ${options.method}`);
 			for (let header of Object.keys(options.headers)) {
@@ -68,8 +73,8 @@ async function instrumentCall(url, options, logCurl) {
 				curl.push(`-d \'${encodedBody}\'`);
 			}
 
-			curl.push('--compressed');
-			console.log(curl.join(' '));
+			curl.push("--compressed");
+			console.log(curl.join(" "));
 		}
 	}
 
@@ -83,9 +88,7 @@ function datesEqual(dateString1, dateString2) {
 	// The date will come as ms since epoch from foopee scrape but a datetime string from the other two
 	let date1 = new Date(dateString1);
 	let date2 = new Date(dateString2);
-	return date1.getUTCFullYear() === date2.getUTCFullYear()
-		&& date1.getUTCMonth() === date2.getUTCMonth()
-		&& date1.getUTCDate() === date2.getUTCDate();
+	return date1.getUTCFullYear() === date2.getUTCFullYear() && date1.getUTCMonth() === date2.getUTCMonth() && date1.getUTCDate() === date2.getUTCDate();
 }
 
 function getUTCDate(inputDate) {
@@ -93,8 +96,7 @@ function getUTCDate(inputDate) {
 	return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0);
 }
 
-function addDedupedShows(previouslyAddedShows, newArtistShowList)
-{
+function addDedupedShows(previouslyAddedShows, newArtistShowList) {
 	// If you set this to previouslyAddedShows directly does js do a shallow copy or are we dealing with pointers?
 	let dedupedShows = [].concat(previouslyAddedShows);
 	for (i in newArtistShowList) {
@@ -118,7 +120,7 @@ function addDedupedShows(previouslyAddedShows, newArtistShowList)
 // Does not remove shows in-place from list but reassigns new list after deduping
 function dedupeShows(showsByArtistId) {
 	for (let key of Object.keys(showsByArtistId)) {
-		let showList =  showsByArtistId[key];
+		let showList = showsByArtistId[key];
 		let dedupedShowList = [];
 
 		// 'set' used for hash lookups on dates to dedupe

@@ -38,7 +38,6 @@ async function getPlaylists(spotifyToken, userId) {
 	console.log("Getting playlists...");
 	let { success, response } = await helpers.instrumentCall(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions, false);
 
-	console.log(response);
 	if (!success) {
 		return response;
 	}
@@ -117,7 +116,7 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in BandsInTown requests:`);
-			console.log(responseObject.response);
+			console.log(responseObject);
 			continue;
 		}
 
@@ -156,7 +155,7 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in Songkick artist show requests:`);
-			console.log(responseObject.response);
+			console.log(responseObject);
 			continue;
 		}
 
@@ -193,7 +192,7 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 		let responseObject = promiseObject.queryResponse;
 		if (!responseObject.success) {
 			console.log(`Failed query in SeatGeek artist show requests:`);
-			console.log(responseObject.response);
+			console.log(responseObject);
 			continue;
 		}
 
@@ -382,6 +381,11 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
 				false
 			);
 
+			if (!response.success) {
+				console.log("Failed paginated call to get seatgeek artist");
+				console.log(response);
+				continue;
+			}
 			responseBody = response.response;
 			fullEventsList = fullEventsList.concat(responseBody.events);
 			total = responseBody.meta.total;
