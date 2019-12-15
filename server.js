@@ -37,7 +37,6 @@ app.use(
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// No static file routing for dev env because the react webpack server will handle it for us
 let baseStaticDir = "";
 if (process.env.DEPLOY_STAGE === "PROD") {
 	baseStaticDir = path.join(__dirname, "client/build");
