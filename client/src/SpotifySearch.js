@@ -26,6 +26,7 @@ class SpotifySearch extends Component {
     { value: "los angeles", displayName: "Los Angeles" },
     { value: "washington", displayName: "Washington DC" },
     { value: "new york", displayName: "New York" },
+    { value: "denver", displayName: "Denver" },
     { value: "chicago", displayName: "Chicago" },
     { value: "boston", displayName: "Boston" },
     { value: "austin", displayName: "Austin" },

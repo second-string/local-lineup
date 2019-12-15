@@ -45,7 +45,7 @@ button {
 }
 
 .textbox {
-  min-width: 200px;
+  min-width: 60%;
   font-size: 30px;
   padding: 10px;
   border-radius: 10px;
@@ -65,7 +65,7 @@ button {
 .react-list-select {
   text-align: center;
   display: inline-block;
-  min-width: 600px;
+  min-width: 60%;
   border-radius: 5px;
   border-style: solid;
   border-color: #79b9ff;
