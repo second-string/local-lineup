@@ -77,6 +77,8 @@ class SpotifySearch extends Component {
       locations: this.locations,
       selectedLocation: this.state.selectedLocation
     });
+
+    this.showPlaylists(this.state.playlistNamesById);
   };
 
   getPlaylists = async e => {
@@ -104,18 +106,9 @@ class SpotifySearch extends Component {
     let res = await this.instrumentCall("/show-finder/playlists", postOptions);
 
     let playlistNamesById = await res.json();
-    this.setState({ playlistNamesById: playlistNamesById });
-    let names = [];
-    Object.keys(playlistNamesById).forEach(x => names.push(playlistNamesById[x]));
-    this.setState(
-      {
-        showingPlaylists: true,
-        showSpinner: false,
-        headerText: "Choose a playlist",
-        playlists: names
-      },
-      () => ReactDOM.findDOMNode(this.playlistListRef.current).focus()
-    );
+    this.setState({ playlistNamesById });
+
+    this.showPlaylists(playlistNamesById);
   };
 
   getArtists = async e => {
@@ -214,6 +207,21 @@ class SpotifySearch extends Component {
         </div>
       ))
     });
+  };
+
+  showPlaylists = playlistNamesById => {
+    let names = [];
+    Object.keys(playlistNamesById).forEach(x => names.push(playlistNamesById[x]));
+
+    this.setState(
+      {
+        showingPlaylists: true,
+        showSpinner: false,
+        headerText: "Choose a playlist",
+        playlists: names
+      },
+      () => ReactDOM.findDOMNode(this.playlistListRef.current).focus()
+    );
   };
 
   render() {

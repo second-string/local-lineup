@@ -1,65 +1,65 @@
-var fs = require('fs');
+var fs = require("fs");
 
-var inquirer = require('inquirer');
-var constants = require('./helpers/constants');
-var helpers = require('./helpers/helpers');
-var parsers = require('./helpers/response-parsers');
-var foopee = require('./scripts/foopee-scrape');
+var inquirer = require("inquirer");
+var constants = require("./helpers/constants");
+var helpers = require("./helpers/helpers");
+var parsers = require("./helpers/response-parsers");
+var foopee = require("./scripts/foopee-scrape");
 
-
-var spotifyAuth = () => 'Basic ' + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString('base64');
-var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
+var spotifyAuth = () => "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
+var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
 async function getSpotifyToken() {
 	let postOptions = {
-		method: 'POST',
+		method: "POST",
 		body: {
-			'grant_type': 'client_credentials'
+			grant_type: "client_credentials"
 		},
 		headers: {
-			'Content-type': 'application/x-www-form-urlencoded',
-			'Authorization': spotifyAuth()
+			"Content-type": "application/x-www-form-urlencoded",
+			Authorization: spotifyAuth()
 		}
 	};
 
-	console.log('Getting spotify API token...');
-	let {success, response} = await helpers.instrumentCall('https://accounts.spotify.com/api/token', postOptions, false);
+	console.log("Getting spotify API token...");
+	let { success, response } = await helpers.instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
 	return success ? `Bearer ${response.access_token}` : response;
 }
 
 async function getPlaylists(spotifyToken, userId) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json',
-			'Authorization': spotifyToken
+			"Content-type": "application/json",
+			Authorization: spotifyToken
 		}
 	};
 
-	console.log('Getting playlists...');
+	console.log("Getting playlists...");
 	let { success, response } = await helpers.instrumentCall(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions, false);
 
+	console.log(response);
 	if (!success) {
 		return response;
 	}
 
 	let playlistNamesById = {};
-	response.items.forEach(x => playlistNamesById[x.id] = x.name);
+	response.items.forEach(x => (playlistNamesById[x.id] = x.name));
 	return playlistNamesById;
 }
 
 async function getArtists(spotifyToken, playlistId) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json',
-			'Authorization': spotifyToken
+			"Content-type": "application/json",
+			Authorization: spotifyToken
 		}
 	};
 
 	let page = {};
 	let artists = [];
-	console.log('Getting artists...');
+	console.log("Getting artists...");
 	do {
 		let { success, response } = await helpers.instrumentCall(page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions, false);
 		if (!success) {
@@ -69,19 +69,18 @@ async function getArtists(spotifyToken, playlistId) {
 		page = response;
 
 		// Amalgamates a list of lists, where each top-level list is one endpoint page
-		artists.push(page.items
-			.map(x => x.track)
-			.map(x => x.artists)
-				.map(x => x[0])							// each artist is a list of a single object (ew)
-				.map(x => encodeURIComponent(x.name)));	// encode to URL-safe characters
-
-		} while (page.next != null);
+		artists.push(
+			page.items
+				.map(x => x.track)
+				.map(x => x.artists)
+				.map(x => x[0]) // each artist is a list of a single object (ew)
+				.map(x => encodeURIComponent(x.name))
+		); // encode to URL-safe characters
+	} while (page.next != null);
 
 	// Filter out duplicates
 	hasSeen = {};
-	return artists
-		.reduce((x, y) => x.concat(y))
-		.filter(x => hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true));
+	return artists.reduce((x, y) => x.concat(y)).filter(x => (hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true)));
 }
 
 // artists param is list of { id, name }, location is lowercased basic city string
@@ -93,8 +92,7 @@ async function getAllShows(artists, location) {
 	showServiceRequests.push(getSongkickShows(artists, location, showsByArtistId));
 	showServiceRequests.push(getSeatGeekShows(artists, location, showsByArtistId));
 
-	if (location === 'san francisco')
-	{
+	if (location === "san francisco") {
 		showServiceRequests.push(getFoopeeShows(artists, location, showsByArtistId));
 	}
 
@@ -102,7 +100,7 @@ async function getAllShows(artists, location) {
 	helpers.dedupeShows(showsByArtistId);
 
 	// Set each value of the artist ID key to just the list of shows from the previous list of show/date objects
-	Object.keys(showsByArtistId).forEach(x => showsByArtistId[x] = showsByArtistId[x].map(y => y.show));
+	Object.keys(showsByArtistId).forEach(x => (showsByArtistId[x] = showsByArtistId[x].map(y => y.show)));
 
 	return showsByArtistId;
 }
@@ -111,7 +109,7 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 	// List of { artistId, query } objects
 	let bandsInTownQueries = [];
 	artists.forEach(x => bandsInTownQueries.push(buildBandsInTownArtistQuery(x.id, x.name)));
-	console.log('Getting BandsInTown artist shows...');
+	console.log("Getting BandsInTown artist shows...");
 
 	let bandsInTownResponseObjects = await Promise.all(bandsInTownQueries);
 	let bandsInTownShowsFound = 0;
@@ -126,7 +124,7 @@ async function getBandsInTownShows(artists, location, showsByArtistId) {
 		let cleanedShowObjects = parsers.parseBandsInTownResponse(responseObject.response, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			bandsInTownShowsFound++;
-			if (showsByArtistId[promiseObject.artistId]){
+			if (showsByArtistId[promiseObject.artistId]) {
 				showsByArtistId[promiseObject.artistId] = showsByArtistId[promiseObject.artistId].concat(cleanedShowObjects);
 			} else {
 				showsByArtistId[promiseObject.artistId] = cleanedShowObjects;
@@ -144,13 +142,13 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 
 	// First get artist IDs from within songkick to be able to query artist directly
 	artists.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x.id, x.name)));
-	console.log('Getting Songkick artist IDs...');
+	console.log("Getting Songkick artist IDs...");
 	let songkickArtistIdResponseObjects = await Promise.all(songkickArtistIdQueries);
 	let songkickArtistObjects = parsers.parseSongkickArtistsResponse(songkickArtistIdResponseObjects);
 
 	// Build and send queries for actual shows for each artist
 	songkickArtistObjects.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x.artistId, x.songkickId)));
-	console.log('Getting Songkick artist shows...');
+	console.log("Getting Songkick artist shows...");
 	let songkickResponseObjects = await Promise.all(songkickArtistQueries);
 
 	let songkickShowsFound = 0;
@@ -165,7 +163,7 @@ async function getSongkickShows(artists, location, showsByArtistId) {
 		let cleanedShowObjects = parsers.parseSongkickResponse(responseObject.response, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			songkickShowsFound++;
-			if (showsByArtistId[promiseObject.artistId]){
+			if (showsByArtistId[promiseObject.artistId]) {
 				showsByArtistId[promiseObject.artistId] = showsByArtistId[promiseObject.artistId].concat(cleanedShowObjects);
 			} else {
 				showsByArtistId[promiseObject.artistId] = cleanedShowObjects;
@@ -181,11 +179,11 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 	let seatGeekArtistQueries = [];
 
 	artists.forEach(x => seatGeekArtistIdQueries.push(buildSeatGeekArtistIdQuery(x.id, x.name)));
-	console.log('Getting SeatGeek artist IDs...')
+	console.log("Getting SeatGeek artist IDs...");
 	let seatGeekArtistIdResponseObjects = await Promise.all(seatGeekArtistIdQueries);
 	let seatGeekArtistObjects = parsers.parseSeatGeekArtistsResponse(seatGeekArtistIdResponseObjects);
 
-	console.log('Getting SeatGeek artist shows...');
+	console.log("Getting SeatGeek artist shows...");
 	// TODO :: BT paginate
 	seatGeekArtistObjects.forEach(x => seatGeekArtistQueries.push(buildSeatGeekArtistQuery(x.artistId, x.seatGeekId)));
 	let seatGeekResponseObjects = await Promise.all(seatGeekArtistQueries);
@@ -202,7 +200,7 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 		let cleanedShowObjects = parsers.parseSeatGeekResponse(responseObject.response, location);
 		if (cleanedShowObjects !== null && cleanedShowObjects !== undefined) {
 			seatGeekShowsFound++;
-			if (showsByArtistId[promiseObject.artistId]){
+			if (showsByArtistId[promiseObject.artistId]) {
 				showsByArtistId[promiseObject.artistId] = showsByArtistId[promiseObject.artistId].concat(cleanedShowObjects);
 			} else {
 				showsByArtistId[promiseObject.artistId] = cleanedShowObjects;
@@ -215,13 +213,13 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 
 // Assuming location-checking for location of SF is done beforehand
 async function getFoopeeShows(artists, location, showsByArtistId) {
-	console.log('Getting foopee artist shows...');
+	console.log("Getting foopee artist shows...");
 	let foopeeShows = await foopee.getFoopeeShows(artists);
 	for (foopeeObject of foopeeShows) {
 		if (showsByArtistId[foopeeObject.id]) {
 			showsByArtistId[foopeeObject.id] = showsByArtistId[foopeeObject.id].concat(foopeeObject.showObjects);
 		} else {
-			showsByArtistId[foopeeObject.id]= foopeeObject.showObjects;
+			showsByArtistId[foopeeObject.id] = foopeeObject.showObjects;
 		}
 	}
 	console.log(`Added or appended shows for ${Object.keys(foopeeShows).length} artists from Foopee`);
@@ -291,76 +289,79 @@ async function getBandsInTownShows(artistList) {
 
 function buildBandsInTownArtistQuery(artistId, artist) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json'
+			"Content-type": "application/json"
 		}
 	};
 
 	return new Promise(async (resolve, reject) => {
-		let response = await helpers.instrumentCall(`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`,
+		let response = await helpers.instrumentCall(
+			`https://rest.bandsintown.com/artists/${artist}/events?app_id=${constants.bandsInTownSecret}`,
 			getOptions,
-			false);
+			false
+		);
 		resolve({ artistId: artistId, queryResponse: response });
-	})
+	});
 }
 
 function buildSongkickArtistIdQuery(artistId, artist) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json'
+			"Content-type": "application/json"
 		}
 	};
 
 	return new Promise(async (resolve, reject) => {
-		let response = await helpers.instrumentCall(`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`,
+		let response = await helpers.instrumentCall(
+			`https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`,
 			getOptions,
-			false);
-		resolve({ artistId: artistId, queryResponse: response })
+			false
+		);
+		resolve({ artistId: artistId, queryResponse: response });
 	});
 }
 
 function buildSongkickArtistQuery(artistId, songkickArtistId) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json'
+			"Content-type": "application/json"
 		}
 	};
 
 	return new Promise(async (resolve, reject) => {
-		let response = await helpers.instrumentCall(`https://api.songkick.com/api/3.0/artists/${songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`,
+		let response = await helpers.instrumentCall(
+			`https://api.songkick.com/api/3.0/artists/${songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`,
 			getOptions,
-			false);
+			false
+		);
 		resolve({ artistId: artistId, queryResponse: response });
 	});
 }
 
 function buildSeatGeekArtistIdQuery(artistId, artist) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json',
-			'Authorization': seatGeekAuth()
+			"Content-type": "application/json",
+			Authorization: seatGeekAuth()
 		}
 	};
 
 	return new Promise(async (resolve, reject) => {
-		let response = await helpers.instrumentCall(`https://api.seatgeek.com/2/performers?q=${artist}`,
-			getOptions,
-			false);
+		let response = await helpers.instrumentCall(`https://api.seatgeek.com/2/performers?q=${artist}`, getOptions, false);
 		resolve({ artistId: artistId, queryResponse: response });
 	});
 }
 
-function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
-{
+function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
 	let getOptions = {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-type': 'application/json',
-			'Authorization': seatGeekAuth()
+			"Content-type": "application/json",
+			Authorization: seatGeekAuth()
 		}
 	};
 
@@ -375,9 +376,11 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId)
 
 		// Normal pagination logic while building the fullEventsList list
 		do {
-			response = await helpers.instrumentCall(`https://api.seatgeek.com/2/events?performers.id=${seatGeekArtistId}&per_page=${perPage}&page=${page++}`,
+			response = await helpers.instrumentCall(
+				`https://api.seatgeek.com/2/events?performers.id=${seatGeekArtistId}&per_page=${perPage}&page=${page++}`,
 				getOptions,
-				false);
+				false
+			);
 
 			responseBody = response.response;
 			fullEventsList = fullEventsList.concat(responseBody.events);
