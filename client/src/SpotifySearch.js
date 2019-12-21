@@ -246,7 +246,8 @@ class SpotifySearch extends Component {
         </button>
         <h3>{this.state.headerText}</h3>
         <p style={{ display: this.state.firstPageLoad ? "" : "none" }}>
-          Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.
+          Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows. Results from 3
+          different music services are combined to ensure a complete set of shows.
         </p>
         <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
         <div style={{ display: this.state.showingLocation ? "" : "none" }}>
