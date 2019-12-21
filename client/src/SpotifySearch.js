@@ -11,7 +11,8 @@ class SpotifySearch extends Component {
     allArtists: [],
     shows: [],
     firstPageLoad: true,
-    showingForm: true,
+    showingLocation: true,
+    showingNewSearch: false,
     showingArtists: false,
     showingPlaylists: false,
     showingShows: false,
@@ -80,7 +81,10 @@ class SpotifySearch extends Component {
   newSearch = () => {
     this.resetState({
       locations: this.locations,
-      selectedLocation: this.state.selectedLocation
+      selectedLocation: this.state.selectedLocation,
+      playlistNamesById: this.state.playlistNamesById,
+      firstPageLoad: false,
+      showingNewSearch: false
     });
 
     this.showPlaylists(this.state.playlistNamesById);
@@ -105,7 +109,8 @@ class SpotifySearch extends Component {
       selectedLocation: e.target.value,
       firstPageLoad: false,
       showSpinner: true,
-      showingForm: false,
+      showingLocation: false,
+      showingNewSearch: true,
       headerText: "Fetching playlists..."
     });
 
@@ -132,8 +137,11 @@ class SpotifySearch extends Component {
     this.setState({
       showingPlaylists: false,
       showSpinner: true,
+      showingLocation: false,
+      showingNewSearch: true,
       headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`
     });
+
     let res = await this.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
     let artistJson = await res.json();
     let decodedArtists = [];
@@ -233,7 +241,7 @@ class SpotifySearch extends Component {
   render() {
     return (
       <div className="SpotifySearch">
-        <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingForm ? "none" : "" }}>
+        <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
           New Search
         </button>
         <h3>{this.state.headerText}</h3>
@@ -241,7 +249,7 @@ class SpotifySearch extends Component {
           Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.
         </p>
         <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
-        <div style={{ display: this.state.showingForm ? "" : "none" }}>
+        <div style={{ display: this.state.showingLocation ? "" : "none" }}>
           <div>
             <select id="location-select" onChange={this.getPlaylists}>
               <option id="" disabled defaultValue>
