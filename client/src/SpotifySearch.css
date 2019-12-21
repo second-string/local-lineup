@@ -19,6 +19,10 @@ button {
   outline: none;
 }
 
+select {
+  font-size: 16px;
+}
+
 #location-select {
   display: block;
   margin: auto;
@@ -44,16 +48,6 @@ button {
   overflow: auto;
 }
 
-.textbox {
-  min-width: 60%;
-  font-size: 30px;
-  padding: 10px;
-  border-radius: 10px;
-  border-style: solid;
-  border-color: #afafaf;
-  outline: none;
-}
-
 .block {
   display: block;
 }
@@ -65,11 +59,11 @@ button {
 .react-list-select {
   text-align: center;
   display: inline-block;
-  min-width: 60%;
   border-radius: 5px;
   border-style: solid;
   border-color: #79b9ff;
   border-width: 2px;
+  min-width: 60vw;
   outline: none;
 }
 
@@ -158,4 +152,10 @@ ul {
 }
 .context-menu .react-list-select--item {
   font-size: 0.8125em;
+}
+
+@media only screen and (min-width: 320px) and (max-width: 768px) {
+  .react-list-select {
+    width: 80vw;
+  }
 }
