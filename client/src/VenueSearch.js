@@ -248,8 +248,8 @@ class VenueSearch extends Component {
                 <h3>Shows by Venue</h3>
                 <p style={{ display: "inline-block", margin: "auto" }}>
                     Choose your location and pick a list of venues in that city. After saving, you'll receive a weekly email on Sundays listing the upcoming
-                    shows for those venues in the week after next. A 'Show Finder' playlist will also be created in your Spotify account that also updates each
-                    week with songs from the artists listed in the email.
+                    shows for those venues in the week after next. A 'Show Finder' playlist will also be created in your Spotify account that updates each week
+                    with songs from the artists listed in the email.
                 </p>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
                 <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} style={{ margin: "2em auto 1em" }}>
