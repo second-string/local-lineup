@@ -27,8 +27,12 @@ class VenueSearch extends Component {
         { value: "los angeles", displayName: "Los Angeles" },
         { value: "washington", displayName: "Washington DC" },
         { value: "new york", displayName: "New York" },
+        { value: "denver", displayName: "Denver" },
         { value: "chicago", displayName: "Chicago" },
+        { value: "boston", displayName: "Boston" },
+        { value: "austin", displayName: "Austin" },
         { value: "houston", displayName: "Houston" },
+        { value: "charlotte", displayName: "Charlotte" },
         { value: "philadelphia", displayName: "Philadelphia" }
     ];
 
@@ -241,9 +245,14 @@ class VenueSearch extends Component {
     render() {
         return (
             <div className="VenueSearch">
-                <h3>Venue search</h3>
+                <h3>Shows by Venue</h3>
+                <p style={{ display: "inline-block", margin: "auto" }}>
+                    Choose your location and pick a list of venues in that city. After saving, you'll receive a weekly email on Sundays listing the upcoming
+                    shows for those venues in the week after next. A 'Show Finder' playlist will also be created in your Spotify account that also updates each
+                    week with songs from the artists listed in the email.
+                </p>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
-                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} style={{ margin: "3em auto 1em" }}>
+                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} style={{ margin: "2em auto 1em" }}>
                     <option key="defaultLocation" value="defaultLocation" disabled defaultValue>
                         {this.defaultLocationLabel}
                     </option>
@@ -296,10 +305,6 @@ class VenueSearch extends Component {
                                 <label style={{ marginRight: "1em", fontSize: ".8em" }}>Do you want show openers to be included in your playlist?</label>
                                 <input type="checkbox" checked={this.state.includeOpeners} onChange={this.includeOpenersChanged} />
                             </div>
-                            <label htmlFor="saveShowsButton" style={{ display: "inline-block", margin: "2em auto 1em" }}>
-                                By saving these venues, you'll get both a Sunday evening email listing all of the upcoming shows for the week after next and
-                                also a customized spotify playlist of all the artists playing
-                            </label>
                             <button
                                 id="saveShowsButton"
                                 disabled={this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0}
@@ -311,7 +316,7 @@ class VenueSearch extends Component {
                                 href="./#"
                                 onClick={this.selectVenues}
                                 style={{
-                                    display: this.state.saveSuccess ? "none" : "block",
+                                    display: this.state.saveSuccess ? "none" : "inline-block",
                                     margin: "auto",
                                     marginTop: ".5em",
                                     fontSize: ".7em",

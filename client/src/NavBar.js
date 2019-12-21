@@ -79,13 +79,13 @@ class NavBar extends Component {
                             className={this.props.venueSearchSelected ? "active nav-a" : "nav-a"}
                             style={{ display: this.state.isLoggedIn ? "" : "none" }}
                             href="/show-finder/venue-search">
-                            Venue search
+                            Shows by Venue
                         </a>
                         <a
                             className={this.props.spotifySearchSelected ? "active nav-a" : "nav-a"}
                             style={{ display: this.state.isLoggedIn ? "" : "none" }}
                             href="/show-finder/spotify-search">
-                            Spoot search
+                            Shows by Artist
                         </a>
                     </div>
                     <div className="side right-align" style={{ display: this.state.isLoggedIn ? "" : "none" }}>
@@ -106,13 +106,13 @@ class NavBar extends Component {
                             className={this.props.venueSearchSelected ? "active menu-option-a" : "menu-option-a"}
                             style={{ display: this.state.isLoggedIn ? "" : "none" }}
                             href="/show-finder/venue-search">
-                            Venue search
+                            Shows by Venue
                         </a>
                         <a
                             className={this.props.spotifySearchSelected ? "active menu-option-a" : "menu-option-a"}
                             style={{ display: this.state.isLoggedIn ? "" : "none" }}
                             href="/show-finder/spotify-search">
-                            Spoot search
+                            Shows by Artist
                         </a>
                     </div>
                 </div>

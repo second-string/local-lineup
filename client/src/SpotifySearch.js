@@ -5,11 +5,12 @@ import "./SpotifySearch.css";
 
 class SpotifySearch extends Component {
   baseState = {
-    headerText: "Show Finder",
+    headerText: "Shows by Artist",
     playlists: [],
     playlistNamesById: {},
     allArtists: [],
     shows: [],
+    firstPageLoad: true,
     showingForm: true,
     showingArtists: false,
     showingPlaylists: false,
@@ -93,8 +94,6 @@ class SpotifySearch extends Component {
       return;
     }
 
-    this.setState({ selectedLocation: e.target.value });
-
     let postOptions = {
       method: "POST",
       headers: {
@@ -103,13 +102,16 @@ class SpotifySearch extends Component {
     };
 
     this.setState({
+      selectedLocation: e.target.value,
+      firstPageLoad: false,
       showSpinner: true,
       showingForm: false,
       headerText: "Fetching playlists..."
     });
-    let res = await this.instrumentCall("/show-finder/playlists", postOptions);
 
+    let res = await this.instrumentCall("/show-finder/playlists", postOptions);
     let playlistNamesById = await res.json();
+
     this.setState({ playlistNamesById });
 
     this.showPlaylists(playlistNamesById);
@@ -235,6 +237,9 @@ class SpotifySearch extends Component {
           New Search
         </button>
         <h3>{this.state.headerText}</h3>
+        <p style={{ display: this.state.firstPageLoad ? "" : "none" }}>
+          Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.
+        </p>
         <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
         <div style={{ display: this.state.showingForm ? "" : "none" }}>
           <div>

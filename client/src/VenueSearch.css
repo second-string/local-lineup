@@ -16,13 +16,3 @@ button {
   margin: 10px;
   outline: none;
 }
-
-.textbox {
-  min-width: 150;
-  font-size: 20px;
-  padding: 5px;
-  border-radius: 5px;
-  border-style: solid;
-  border-color: #afafaf;
-  outline: none;
-}
