@@ -63,7 +63,8 @@ async function getSeatGeekShows(venuesById) {
 			return response;
 		}
 
-		showList = showList.concat(response.events);
+        // Filter out all sports events and whatnot
+		showList = showList.concat(response.events.filter(x => x.type.toLowerCase() === "concert" || x.type.toLowerCase() === "festival"));
 		total = response.meta.total;
 		totalMillis += response.meta.took
 	} while (page * perPage <= total);
