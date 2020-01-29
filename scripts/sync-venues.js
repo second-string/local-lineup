@@ -40,7 +40,19 @@ Sample venue object
 },
 */
 
-const locations = ["san francisco", "los angeles", "washington", "new york", "chicago", "houston", "philadelphia"];
+const locations = [
+    "san francisco",
+    "los angeles",
+    "washington",
+    "new york",
+    "denver",
+    "chicago",
+    "boston",
+    "austin",
+    "houston",
+    "charlotte",
+    "philadelphia"
+    ];
 
 const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
