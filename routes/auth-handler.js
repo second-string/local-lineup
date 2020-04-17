@@ -114,7 +114,7 @@ async function spotifyLoginCallback(db, req, res) {
         throw new Error(`State is borked. Looking for '${"test_state_token"}' got '${state}'`);
     }
 
-    const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "brianteam.dev" : "localhost";
+    const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     let postOptions = {
         method: "POST",
         body: {
