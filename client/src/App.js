@@ -66,8 +66,9 @@ class App extends Component {
         <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "" : "none" }}>
           <h2>music n shit</h2>
         </div>
-        <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "none" : "" }}>
-          <a href="./login">Login</a>
+        <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "none" : "", marginTop: "2rem" }}>
+          <a href="./login">Login to your Spotify account to enable Show Finder</a>
+          <p >This login is used to retrieve a list of your public playlists and to create the weekly Show Finder playlist ONLY if you explicitly choose to do so.</p>
         </div>
       </div>
     );
