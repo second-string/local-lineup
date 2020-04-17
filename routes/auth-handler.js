@@ -47,7 +47,7 @@ async function authenticate(userDb, req, res, next) {
 }
 
 async function login(req, res) {
-    const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "brianteam.dev" : "localhost";
+    const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
     const scopes = "user-read-email playlist-read-private playlist-modify-private";
 
