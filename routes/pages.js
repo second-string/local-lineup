@@ -14,7 +14,6 @@ function setRoutes(routerDependencies) {
 
     router.get("/show-finder/spotify-search", (req, res) => res.sendFile("spotify-search.html", { root: baseStaticDir }));
     router.get("/show-finder/venue-search", (req, res) => res.sendFile("venue-search.html", { root: baseStaticDir }));
-    router.get("*", (req, res) => res.sendFile("index.html", { root: baseStaticDir }));
 
     return router;
 }
