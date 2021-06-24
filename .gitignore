@@ -82,3 +82,5 @@ nodemon.json
 *.db*
 
 email_cron_*.txt
+
+*.swp
