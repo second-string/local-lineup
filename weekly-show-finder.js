@@ -1,43 +1,49 @@
 const sqlite = require("sqlite3");
 
-const showEmailer = require("./helpers/show-emailer");
+const showEmailer     = require("./helpers/show-emailer");
 const venueShowSearch = require("./venue-show-finder");
-const dbHelpers = require("./helpers/db-helpers");
+const dbHelpers       = require("./helpers/db-helpers");
 const playlistBuilder = require("./helpers/playlist-builder");
 
 async function main() {
-    const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db" : "user_venues.db");
+    const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
+                                                                    : "user_venues.db");
 
     let venueListObjs;
     if (process.env.DEPLOY_STAGE === "PROD") {
         venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
     } else {
-        venueListObjs = await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`, ["show.finder.bot@gmail.com"]);
+        venueListObjs =
+            await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`,
+                              [ "show.finder.bot@gmail.com" ]);
         if (venueListObjs.length !== 1) {
-            console.log(`Warning, got ${venueListObjs.length} users from db when only expecting the single show.finder.bot one`);
+            console.log(`Warning, got ${
+                venueListObjs.length} users from db when only expecting the single show.finder.bot one`);
         }
     }
 
-    let emailPromises = [];
+    let emailPromises    = [];
     let playlistPromises = [];
     for (let venueListObj of venueListObjs) {
-        const userUid = venueListObj.UserUid;
-        const venueIds = venueListObj.VenueIds.split(",");
+        const userUid        = venueListObj.UserUid;
+        const venueIds       = venueListObj.VenueIds.split(",");
         const songsPerArtist = venueListObj.SongsPerArtist;
         const includeOpeners = venueListObj.IncludeOpeners;
 
         // TODO :: get rid of this query and have the initial SELECT above join the two tables
-        let userObj = await db.getAsync("SELECT * FROM Users WHERE Uid=?", [userUid]);
+        let userObj = await db.getAsync("SELECT * FROM Users WHERE Uid=?", [ userUid ]);
 
         let venues = {
-            seatgeek: venueIds.reduce((obj, item) => {
-                obj[parseInt(item)] = null;
-                return obj;
-            }, {})
+            seatgeek : venueIds.reduce(
+                (obj, item) => {
+                    obj[parseInt(item)] = null;
+                    return obj;
+                },
+                {})
         };
 
         let startDate = getStartDate();
-        let endDate = new Date(startDate);
+        let endDate   = new Date(startDate);
         endDate.setDate(endDate.getDate() + 7);
 
         let services = await venueShowSearch.getShowsForVenues(venues);
@@ -48,27 +54,25 @@ async function main() {
         // We get back every upcoming show by date string for each venue,
         // parse them as real dates and rebuild objects with user-facing date strings
         let showsByDate = Object.keys(services.seatgeek)
-            .filter(x => Date.parse(x) >= startDate && Date.parse(x) <= endDate)
-            .reduce((obj, dateString) => {
-                let dateStringOptions = {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric"
-                };
+                              .filter(x => Date.parse(x) >= startDate && Date.parse(x) <= endDate)
+                              .reduce((obj, dateString) => {
+                                  let dateStringOptions = {weekday : "long", month : "long", day : "numeric"};
 
-                obj[new Date(dateString).toLocaleDateString("en-US", dateStringOptions)] = services.seatgeek[dateString];
-                return obj;
-            }, {});
+                                  obj[new Date(dateString).toLocaleDateString("en-US", dateStringOptions)] =
+                                      services.seatgeek[dateString];
+                                  return obj;
+                              }, {});
 
         // if showsByDate empty that's fine, email will just be blank but no error
         let emailPromise = new Promise(async (resolve, reject) => {
-            let exitCode = await showEmailer.sendShowsEmail(userObj, showsByDate, startDate, endDate);
-            if (exitCode < 0) {
-                return reject(Error(userObj.Email));
-            }
+                               let       exitCode =
+                                   await showEmailer.sendShowsEmail(userObj, showsByDate, startDate, endDate);
+                               if (exitCode < 0) {
+                                   return reject(Error(userObj.Email));
+                               }
 
-            resolve(userObj.Email);
-        }).catch(e => e);
+                               resolve(userObj.Email);
+                           }).catch(e => e);
 
         let playlistPromise = new Promise(async (resolve, reject) => {
             // Flatten showsByDate into one list of shows for the playlist builder
@@ -102,7 +106,7 @@ async function main() {
         return -1;
     }
 
-    let validEmails = [];
+    let validEmails   = [];
     let erroredEmails = [];
     emailResults.forEach(x => {
         if (x instanceof Error) {
@@ -125,7 +129,7 @@ async function main() {
         return -1;
     }
 
-    let validPlaylists = [];
+    let validPlaylists   = [];
     let erroredPlaylists = [];
     playlistResults.forEach(x => {
         if (x instanceof Error) {
@@ -158,12 +162,8 @@ function getStartDate() {
     return d;
 }
 
-main()
-    .then(exitCode => {
-        process.exit(exitCode);
-    })
-    .catch(e => {
-        console.log("Uncaught exception when sending show emails:");
-        console.log(e);
-        process.exit(1);
-    });
+main().then(exitCode => { process.exit(exitCode); }).catch(e => {
+    console.log("Uncaught exception when sending show emails:");
+    console.log(e);
+    process.exit(1);
+});

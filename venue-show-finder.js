@@ -1,89 +1,84 @@
-const helpers = require('./helpers/helpers');
+const helpers   = require('./helpers/helpers');
 const constants = require('./helpers/constants')
 
 var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
 
 async function getVenues(location, db) {
-    const venueObjs = await db.allAsync('SELECT * FROM Venues WHERE Location=?', [location]);
+    const venueObjs = await db.allAsync('SELECT * FROM Venues WHERE Location=?', [ location ]);
     if (!venueObjs) {
         return {};
     }
 
     // Map to api lowercase values. Should probably refactor the react code to use DB column names at some point
-    return venueObjs.map(x => ({
-        id: x.Id,
-        name: x.Name,
-        ticketUrl: x.TicketUrl
-    }));
+    return venueObjs.map(x => ({id : x.Id, name : x.Name, ticketUrl : x.TicketUrl}));
 }
 
 /*
   param is object with service name keys mapped to object holding venue names by ID
   {
-	"seatgeek": {
-		"12": "Fox Theater",
-		"354": "The Independent"
-	},
-	"songkick": {
-		...
-	}
+    "seatgeek": {
+        "12": "Fox Theater",
+        "354": "The Independent"
+    },
+    "songkick": {
+        ...
+    }
   }
 */
 async function getShowsForVenues(venues) {
-	let showsByVenueId = {};
-	if (venues.seatgeek) {
-		showsByVenueId['seatgeek'] = await getSeatGeekShows(venues.seatgeek);
-	}
+    let showsByVenueId = {};
+    if (venues.seatgeek) {
+        showsByVenueId['seatgeek'] = await getSeatGeekShows(venues.seatgeek);
+    }
 
-	return showsByVenueId;
+    return showsByVenueId;
 }
 
 async function getSeatGeekShows(venuesById) {
-	let getOptions = {
-		method: 'GET',
-		headers: {
-			'Content-type': 'application/json',
-			'Authorization': seatGeekAuth()
-		}
-	}
+    let getOptions = {
+        method : 'GET',
+        headers : {'Content-type' : 'application/json', 'Authorization' : seatGeekAuth()}
+    }
 
-	let showList = [];
-	let venueString = Object.keys(venuesById).join(',');
-	let page = 1;
-	let perPage = 50;
-	let total = 0;
-	let totalMillis = 0;
-	console.log(`Getting shows for venues...`);
-	do {
-		let { success, response } = await helpers.instrumentCall(`https://api.seatgeek.com/2/events?venue.id=${venueString}&per_page=${perPage}&page=${page++}`,
-			getOptions,
-			false);
+    let showList    = [];
+    let venueString = Object.keys(venuesById).join(',');
+    let page        = 1;
+    let perPage     = 50;
+    let total       = 0;
+    let totalMillis = 0;
+    console.log(`Getting shows for venues...`);
+    do {
+        let {success, response} = await helpers.instrumentCall(
+            `https://api.seatgeek.com/2/events?venue.id=${venueString}&per_page=${perPage}&page=${page++}`,
+            getOptions,
+            false);
 
-		if (!success) {
-			return response;
-		}
+        if (!success) {
+            return response;
+        }
 
         // Filter out all sports events and whatnot
-		showList = showList.concat(response.events.filter(x => x.type.toLowerCase() === "concert" || x.type.toLowerCase() === "festival"));
-		total = response.meta.total;
-		totalMillis += response.meta.took
-	} while (page * perPage <= total);
-	console.log(`Took ${totalMillis} milliseconds to get ${total} shows from ${Object.keys(venuesById).length} venues`);
+        showList = showList.concat(
+            response.events.filter(x => x.type.toLowerCase() === "concert" || x.type.toLowerCase() === "festival"));
+        total = response.meta.total;
+        totalMillis += response.meta.took
+    } while (page * perPage <= total);
+    console.log(`Took ${totalMillis} milliseconds to get ${total} shows from ${Object.keys(venuesById).length} venues`);
 
-	let showsByDate = {};
-	for (let show of showList) {
-		let showDate = new Date(show.datetime_local);
-		showDate.setHours(0);
-		showDate.setMinutes(0);
-		showDate.setSeconds(0);
-		if (showsByDate[showDate]) {
-			showsByDate[showDate] = showsByDate[showDate].concat(show);
-		} else {
-			showsByDate[showDate] = [show];
-		}
-	}
+    let showsByDate = {};
+    for (let show of showList) {
+        let showDate = new Date(show.datetime_local);
+        showDate.setHours(0);
+        showDate.setMinutes(0);
+        showDate.setSeconds(0);
+        if (showsByDate[showDate]) {
+            showsByDate[showDate] = showsByDate[showDate].concat(show);
+        } else {
+            showsByDate[showDate] = [ show ];
+        }
+    }
 
-	return showsByDate;
+    return showsByDate;
 }
 
 /*
@@ -120,8 +115,7 @@ events: [
        datetime_tbd: false },
        */
 
-
 module.exports = {
-	getVenues,
-	getShowsForVenues
+    getVenues,
+    getShowsForVenues
 }

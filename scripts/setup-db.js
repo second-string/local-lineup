@@ -1,13 +1,13 @@
-const sqlite = require('sqlite3');
-const path = require('path');
-const { promises: fs } = require('fs');
+const sqlite          = require('sqlite3');
+const path            = require('path');
+const {promises : fs} = require('fs');
 
 const dbHelpers = require('../helpers/db-helpers');
 
-const venueListDb = 'user_venues.db';
+const venueListDb     = 'user_venues.db';
 const venueListDbPath = path.join('..', venueListDb);
-const migrationsDir = '../migrations';
-const dbBacksupsDir = '../db_backups';
+const migrationsDir   = '../migrations';
+const dbBacksupsDir   = '../db_backups';
 
 const db = dbHelpers.openDb(venueListDbPath);
 
@@ -19,7 +19,7 @@ async function migrate() {
     }
 
     // Copy db file to backup. Eventually just overwrite single backup but might as well keep em for now
-    const now = new Date();
+    const now              = new Date();
     const dbBackupFilename = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${venueListDb}`;
     await fs.copyFile(venueListDbPath, path.join(dbBacksupsDir, dbBackupFilename));
 
@@ -28,15 +28,15 @@ async function migrate() {
 
     // migrationStatements is a list of { filename: string, statements: string[] } objects
     let migrationStatements = [];
-    const sqlRegex = /^.*\.(sql|SQL)$/;
+    const sqlRegex          = /^.*\.(sql|SQL)$/;
     for (const filename of migrationFilenames) {
         if (sqlRegex.test(filename)) {
             const file = await fs.readFile(path.join(migrationsDir, filename), 'utf-8');
 
             // Split statements by semicolon and strip newlines from the ends.
             // Filter out the final empty string from splitting on the last semicolon
-            const statements = file.split(';').map(x => x.trim()).filter(x => x !== '');
-            migrationStatements = migrationStatements.concat(({ filename: filename, statements: statements }));
+            const statements    = file.split(';').map(x => x.trim()).filter(x => x !== '');
+            migrationStatements = migrationStatements.concat(({filename : filename, statements : statements}));
         }
     }
 
@@ -49,8 +49,7 @@ async function migrate() {
     }
 
     let startIndex = 0;
-    if (lastRunMigrationObj && lastRunMigrationObj.MigrationFile)
-    {
+    if (lastRunMigrationObj && lastRunMigrationObj.MigrationFile) {
         startIndex = migrationStatements.map(x => x.filename).indexOf(lastRunMigrationObj.MigrationFile);
 
         // If we don't find it for some weird reason, start over. Otherwise, add 1 to start with the next one
@@ -77,14 +76,11 @@ async function migrate() {
 
         const lastAppliedMigrationObject = migrationStatements[migrationStatements.length - 1];
         console.log(`Saving ${lastAppliedMigrationObject.filename} as most recent applied migration file`);
-        db.run('INSERT OR REPLACE INTO Migrations (MigrationFile, DateRun) VALUES (?, ?)', [lastAppliedMigrationObject.filename, now.toISOString()]);
+        db.run('INSERT OR REPLACE INTO Migrations (MigrationFile, DateRun) VALUES (?, ?)',
+               [ lastAppliedMigrationObject.filename, now.toISOString() ]);
 
         db.close();
     });
 }
 
-
-migrate()
-.catch(e => {
-    throw e
-});
+migrate().catch(e => {throw e});

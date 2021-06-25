@@ -1,4 +1,4 @@
-var fetch = require("node-fetch");
+var fetch   = require("node-fetch");
 var cheerio = require("cheerio");
 
 // Will return the { id, name } object for the artist we're looking for, null if this
@@ -20,7 +20,7 @@ function getMatchingArtist(domArtist, userSelectedArtists) {
 
 // artists param is a list of { id, name }
 async function getFoopeeShows(artists) {
-    let unparsedResponse = await fetch("http://www.foopee.com/punk/the-list/", { method: "GET" });
+    let unparsedResponse = await fetch("http://www.foopee.com/punk/the-list/", {method : "GET"});
     if (!unparsedResponse.ok) {
         console.log(`Status of ${unparsedResponse.statusText}, exiting`);
         console.log(unparsedResponse);
@@ -29,8 +29,8 @@ async function getFoopeeShows(artists) {
     let response = await unparsedResponse.text();
 
     // Pulling in all bands available on page
-    let root = cheerio.load(response);
-    let headings = root("dt > b");
+    let root       = cheerio.load(response);
+    let headings   = root("dt > b");
     let bandsTable = null;
     for (let i = 0; i < headings.length; i++) {
         let text = headings[i].children[0].data;
@@ -46,7 +46,7 @@ async function getFoopeeShows(artists) {
     // { [href]: { id, name } }. Again, can incur a pretty bad runtime if we're looking
     // for a long list of user-supplied artists as described in the comment below.
     let artistObjectsByHref = {};
-    let domArtists = bandsTable.children.filter(x => x.name === "a");
+    let domArtists          = bandsTable.children.filter(x => x.name === "a");
     for (let index in domArtists) {
         let domArtist = domArtists[index];
         if (domArtist === undefined) {
@@ -58,20 +58,20 @@ async function getFoopeeShows(artists) {
         }
 
         let poundIndex = domArtist.attribs.href.indexOf("#");
-        let page = domArtist.attribs.href.substring(0, poundIndex);
-        let band = domArtist.attribs.href.substring(poundIndex + 1);
+        let page       = domArtist.attribs.href.substring(0, poundIndex);
+        let band       = domArtist.attribs.href.substring(poundIndex + 1);
         if (artistObjectsByHref[page]) {
-            artistObjectsByHref[page].push({ id: matchingArtistObject.id, name: band });
+            artistObjectsByHref[page].push({id : matchingArtistObject.id, name : band});
         } else {
-            artistObjectsByHref[page] = [{ id: matchingArtistObject.id, name: band }];
+            artistObjectsByHref[page] = [ {id : matchingArtistObject.id, name : band} ];
         }
     }
 
     let shows = [];
     for (index in Object.keys(artistObjectsByHref)) {
-        //request page href
-        let href = Object.keys(artistObjectsByHref)[index];
-        let unparsedShowPage = await fetch(`http://www.foopee.com/punk/the-list/${href}`, { method: "GET" });
+        // request page href
+        let href             = Object.keys(artistObjectsByHref)[index];
+        let unparsedShowPage = await fetch(`http://www.foopee.com/punk/the-list/${href}`, {method : "GET"});
         if (!unparsedShowPage.ok) {
             console.log(`Status of ${unparsedShowPage.statusText}, exiting`);
             console.log(unparsedShowPage);
@@ -85,8 +85,8 @@ async function getFoopeeShows(artists) {
         // (because I'm assuming that the number of artists we're searching for is decently < number on page),
         // versus O(n^2) for if we looped through the artists we're looking for and then scan down the
         // page for each of them, but I dunno if cheerio does some shit better than that.
-        root = cheerio.load(showPage);
-        let domArtists = root("li > a");
+        root                    = cheerio.load(showPage);
+        let domArtists          = root("li > a");
         let artistObjectsOnPage = artistObjectsByHref[href];
         for (let key of Object.keys(domArtists)) {
             // If we've found every artist no need to iterate through more
@@ -95,20 +95,22 @@ async function getFoopeeShows(artists) {
             }
 
             let pageArtist = domArtists[key];
-            if (pageArtist.attribs && (artistObjectIndex = artistObjectsOnPage.map(x => x.name).indexOf(pageArtist.attribs.name)) > -1) {
+            if (pageArtist.attribs &&
+                (artistObjectIndex = artistObjectsOnPage.map(x => x.name).indexOf(pageArtist.attribs.name)) > -1) {
                 let showListObject = pageArtist.next.children;
-                let domShows = showListObject.filter(x => x.name === "li");
+                let domShows       = showListObject.filter(x => x.name === "li");
                 let listOfShowObjs = [];
                 for (showIndex in domShows) {
                     let info = domShows[showIndex].children;
-                    let date = info.filter(x => x.name === "b")[0].children.filter(x => x.name === "a")[0].children[0].data;
-                    let venue = info.filter(x => x.name === "a")[0].children[0].data;
-                    let cleanedStr = venue + " on " + date; // TODO :: format date correctly
+                    let date =
+                        info.filter(x => x.name === "b")[0].children.filter(x => x.name === "a")[0].children[0].data;
+                    let venue      = info.filter(x => x.name === "a")[0].children[0].data;
+                    let cleanedStr = venue + " on " + date;  // TODO :: format date correctly
 
-                    listOfShowObjs.push({ date: new Date(date).setYear(new Date().getFullYear()), show: cleanedStr });
+                    listOfShowObjs.push({date : new Date(date).setYear(new Date().getFullYear()), show : cleanedStr});
                 }
 
-                shows.push({ id: artistObjectsOnPage[artistObjectIndex].id, showObjects: listOfShowObjs });
+                shows.push({id : artistObjectsOnPage[artistObjectIndex].id, showObjects : listOfShowObjs});
 
                 // Remove just-found artist
                 artistObjectsOnPage.splice(artistObjectIndex, 1);
@@ -120,5 +122,5 @@ async function getFoopeeShows(artists) {
 }
 
 module.exports = {
-    getFoopeeShows: getFoopeeShows
+    getFoopeeShows : getFoopeeShows
 };

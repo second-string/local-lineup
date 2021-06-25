@@ -1,21 +1,21 @@
-const express = require("express");
-const http = require("http");
-const https = require("https");
-const morgan = require("morgan");
-const path = require("path");
-const fs = require("fs");
-const bodyParser = require("body-parser");
-const sqlite = require("sqlite3");
-const uuid = require("uuid/v4");
+const express      = require("express");
+const http         = require("http");
+const https        = require("https");
+const morgan       = require("morgan");
+const path         = require("path");
+const fs           = require("fs");
+const bodyParser   = require("body-parser");
+const sqlite       = require("sqlite3");
+const uuid         = require("uuid/v4");
 const cookieParser = require("cookie-parser");
 
 const authHandler = require("./routes/auth-handler");
-const constants = require("./helpers/constants");
-const dbHelpers = require("./helpers/db-helpers");
-const pageRouter = require("./routes/pages");
-const apiRouter = require("./routes/api");
+const constants   = require("./helpers/constants");
+const dbHelpers   = require("./helpers/db-helpers");
+const pageRouter  = require("./routes/pages");
+const apiRouter   = require("./routes/api");
 
-const app = express();
+const app  = express();
 const port = process.env.DEPLOY_STAGE === "PROD" ? 8443 : 443;
 
 let db = dbHelpers.openDb("user_venues.db");
@@ -26,13 +26,10 @@ fs.mkdir("logs", err => {
         throw err;
     }
 });
-let requestLogStream = fs.createWriteStream(path.join(__dirname, "logs", "requests.log"), { flags: "a" });
-app.use(
-    morgan(
-        '[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent',
-        { stream: requestLogStream }
-    )
-);
+let requestLogStream = fs.createWriteStream(path.join(__dirname, "logs", "requests.log"), {flags : "a"});
+app.use(morgan(
+    '[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent',
+    {stream : requestLogStream}));
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -41,14 +38,14 @@ let baseStaticDir = "";
 if (process.env.DEPLOY_STAGE === "PROD") {
     baseStaticDir = path.join(__dirname, "client/build");
 } else {
-    //webpack dev server
+    // webpack dev server
     baseStaticDir = path.join(__dirname, "client/devBuild");
 }
 
 const static = path.join(baseStaticDir, "static");
-const img = path.join(static, "img");
+const img    = path.join(static, "img");
 
-let static_app_dirs = [baseStaticDir, static, img];
+let static_app_dirs = [ baseStaticDir, static, img ];
 console.log(`Routing to static files in ${static_app_dirs}...`);
 
 for (const dir of static_app_dirs) {
@@ -58,7 +55,10 @@ for (const dir of static_app_dirs) {
 // Route everything through the auth function
 app.use((req, res, next) => authHandler.authenticate(db, req, res, next));
 
-const routerDependencies = { db, baseStaticDir };
+const routerDependencies = {
+    db,
+    baseStaticDir
+};
 app.use(apiRouter(routerDependencies));
 app.use(pageRouter(routerDependencies));
 
@@ -66,7 +66,8 @@ app.use(pageRouter(routerDependencies));
 app.use((req, res, next) => {
     // https://expressjs.com/en/api.html#req.secure
     if (req.headers["x-forwarded-proto"] === "http" || !req.secure) {
-        let path = req.route === undefined ? "" : req.route.path; // https redirection working, but not the rebuild of the url
+        let path =
+            req.route === undefined ? "" : req.route.path;  // https redirection working, but not the rebuild of the url
         return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
     }
 
@@ -81,25 +82,18 @@ if (process.env.DEPLOY_STAGE === "PROD") {
         process.exit(1);
     }
 
-    var key = fs.readFileSync(process.env.PROD_SSL_KEY_PATH);
+    var key  = fs.readFileSync(process.env.PROD_SSL_KEY_PATH);
     var cert = fs.readFileSync(process.env.PROD_SSL_CERT_PATH);
-    var ca = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH);
-    creds = {
-        key: key,
-        cert: cert,
-        ca: ca
-    };
+    var ca   = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH);
+    creds    = {key : key, cert : cert, ca : ca};
 } else {
     console.log("Running server locally using local self-signed cert");
-    var key = fs.readFileSync(__dirname + "/showfinder-selfsigned-key.pem", "utf-8");
+    var key  = fs.readFileSync(__dirname + "/showfinder-selfsigned-key.pem", "utf-8");
     var cert = fs.readFileSync(__dirname + "/showfinder-selfsigned-cert.pem", "utf-8");
-    creds = {
-        key: key,
-        cert: cert
-    };
+    creds    = {key : key, cert : cert};
 }
 
-var httpServer = http.createServer(app);
+var httpServer  = http.createServer(app);
 var httpsServer = https.createServer(creds, app);
 
 httpServer.on("error", e => console.log(e));

@@ -1,4 +1,4 @@
-const helpers = require("../helpers/helpers");
+const helpers   = require("../helpers/helpers");
 const dbHelpers = require("../helpers/db-helpers");
 const constants = require("../helpers/constants");
 
@@ -52,38 +52,31 @@ const locations = [
     "houston",
     "charlotte",
     "philadelphia"
-    ];
+];
 
 const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
 async function getVenues(city) {
-    let getOptions = {
-        method: "GET",
-        headers: {
-            "Content-type": "application/json",
-            Authorization: seatGeekAuth()
-        }
-    };
+    let getOptions = {method : "GET", headers : {"Content-type" : "application/json", Authorization : seatGeekAuth()}};
 
     let encodedCity = encodeURIComponent(city);
-    let venueList = [];
-    let page = 1;
-    let perPage = 100;
-    let total = 0;
+    let venueList   = [];
+    let page        = 1;
+    let perPage     = 100;
+    let total       = 0;
     let totalMillis = 0;
     do {
-        let { success, response } = await helpers.instrumentCall(
+        let {success, response} = await helpers.instrumentCall(
             `https://api.seatgeek.com/2/venues?city=${encodedCity}&per_page=${perPage}&page=${page++}`,
             getOptions,
-            false
-        );
+            false);
 
         if (!success) {
             return response;
         }
 
         venueList = venueList.concat(response.venues);
-        total = response.meta.total;
+        total     = response.meta.total;
         totalMillis += response.meta.took;
     } while (page * perPage <= total);
 
@@ -97,9 +90,10 @@ async function getVenues(city) {
 async function saveVenues(location, venues, db) {
     await db.runAsync("BEGIN TRANSACTION");
     for (const venue of venues) {
-        const venueParams = [venue.id, location, venue.name, venue.url];
+        const venueParams = [ venue.id, location, venue.name, venue.url ];
 
-        await db.runAsync("INSERT OR REPLACE INTO Venues (Id, Location, Name, TicketUrl) VALUES (?, ?, ?, ?);", venueParams);
+        await db.runAsync("INSERT OR REPLACE INTO Venues (Id, Location, Name, TicketUrl) VALUES (?, ?, ?, ?);",
+                          venueParams);
     }
 
     await db.runAsync("COMMIT");
@@ -116,11 +110,9 @@ async function run() {
     for (const location of locations) {
         console.log(`Syncing venues for ${location}`);
         const venues = await getVenues(location);
-        await saveVenues(location, venues, db);
+        await                saveVenues(location, venues, db);
         console.log(`Successfully saved ${location} venues`);
     }
 }
 
-run().catch(e => {
-    throw e;
-});
+run().catch(e => { throw e; });

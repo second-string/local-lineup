@@ -32,7 +32,7 @@ function errOrResolveList(resolve, reject, err, objs) {
     resolve(objs);
 }
 
-sqlite.Database.prototype.getAsync = function(sql, params){
+sqlite.Database.prototype.getAsync = function(sql, params) {
     return new Promise((resolve, reject) => {
         if (params) {
             this.get(sql, params, (err, row) => errOrResolveObject(resolve, reject, err, row));
@@ -42,7 +42,7 @@ sqlite.Database.prototype.getAsync = function(sql, params){
     });
 };
 
-sqlite.Database.prototype.runAsync = function(sql, params){
+sqlite.Database.prototype.runAsync = function(sql, params) {
     return new Promise((resolve, reject) => {
         if (params) {
             this.run(sql, params, (err) => errOrResolveObject(resolve, reject, err, null));

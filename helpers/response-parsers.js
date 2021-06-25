@@ -9,24 +9,22 @@ function parseBandsInTownResponse(responseBody, location) {
     }
 
     // We do weird shit with the datetime to strip off the timezone so we can create a datetime with just the date.
-    // If you don't the datetime automatically converts it to UTC for its string repres., which for all late-night, west-coast
-    // shows rolls it to the next day. This is the only way to get rid of it _before_ creating the Date object
-    let shows = responseBody
-        .filter(x => x.venue.city.toLowerCase().includes(location))
-        .map(x => {
-            let showObj = {
-                show: x.venue.name,
-                date: new Date(x.datetime.substring(0, x.datetime.indexOf("T"))),
-                url: x.url
-            };
+    // If you don't the datetime automatically converts it to UTC for its string repres., which for all late-night,
+    // west-coast shows rolls it to the next day. This is the only way to get rid of it _before_ creating the Date
+    // object
+    let shows = responseBody.filter(x => x.venue.city.toLowerCase().includes(location)).map(x => {
+        let showObj = {
+            show : x.venue.name,
+            date : new Date(x.datetime.substring(0, x.datetime.indexOf("T"))),
+            url : x.url
+        };
 
-            return {
-                date: showObj.date,
-                show: `${showObj.show} on ${showObj.date.toLocaleString("en-us", {
-                    month: "long"
-                })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}`
-            };
-        });
+        return {
+            date : showObj.date,
+            show : `${showObj.show} on ${showObj.date.toLocaleString("en-us", {month : "long"})} ${
+                showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}`
+        };
+    });
 
     return shows.length === 0 ? null : shows;
 }
@@ -34,12 +32,8 @@ function parseBandsInTownResponse(responseBody, location) {
 function parseSongkickResponse(responseBody, location) {
     if (responseBody.resultsPage.totalEntries !== 0) {
         let eventList = responseBody.resultsPage.results.event;
-        let shows = eventList
-            .filter(x => x.location.city.toLowerCase().includes(location))
-            .map(x => ({
-                date: new Date(x.start.date),
-                show: x.displayName
-            }));
+        let shows     = eventList.filter(x => x.location.city.toLowerCase().includes(location))
+                        .map(x => ({date : new Date(x.start.date), show : x.displayName}));
 
         return shows.length === 0 ? null : shows;
     } else {
@@ -58,7 +52,7 @@ function parseSongkickArtistsResponse(responseList) {
             continue;
         }
 
-        responseBody = responseObject.response || responseObject.response.query;
+        responseBody         = responseObject.response || responseObject.response.query;
         let singleArtistList = responseBody.resultsPage.results.artist;
         if (singleArtistList === undefined) {
             continue;
@@ -72,7 +66,7 @@ function parseSongkickArtistsResponse(responseList) {
          the artist ID as the index, since that's how the initial artist list is built in the express
          Server. I don't see this working out well in the future
         */
-        artistObjects.push({ artistId: promiseObject.artistId, songkickId: singleArtistList[0].id });
+        artistObjects.push({artistId : promiseObject.artistId, songkickId : singleArtistList[0].id});
     }
 
     return artistObjects;
@@ -83,22 +77,19 @@ function parseSeatGeekResponse(responseBody, location) {
         return null;
     }
 
-    let shows = responseBody.events
-        .filter(x => x.venue.city.toLowerCase().includes(location))
-        .map(x => {
-            let showObj = {
-                date: new Date(x.datetime_local.substring(0, x.datetime_local.indexOf("T"))),
-                show: x.short_title,
-                url: x.url
-            };
+    let shows = responseBody.events.filter(x => x.venue.city.toLowerCase().includes(location)).map(x => {
+        let showObj = {
+            date : new Date(x.datetime_local.substring(0, x.datetime_local.indexOf("T"))),
+            show : x.short_title,
+            url : x.url
+        };
 
-            return {
-                date: showObj.date,
-                show: `${showObj.show} on ${showObj.date.toLocaleString("en-us", {
-                    month: "long"
-                })} ${showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}`
-            };
-        });
+        return {
+            date : showObj.date,
+            show : `${showObj.show} on ${showObj.date.toLocaleString("en-us", {month : "long"})} ${
+                showObj.date.getUTCDate()}, ${showObj.date.getUTCFullYear()}`
+        };
+    });
 
     return shows.length === 0 ? null : shows;
 }
@@ -120,7 +111,7 @@ function parseSeatGeekArtistsResponse(responseList) {
         }
 
         // Same situation as songkick with a list of fuzzy-matched artists that we're just taking the first result of
-        artistObjects.push({ artistId: promiseObject.artistId, seatGeekId: responseBody.performers[0].id });
+        artistObjects.push({artistId : promiseObject.artistId, seatGeekId : responseBody.performers[0].id});
     }
 
     return artistObjects;

@@ -1,12 +1,12 @@
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 
-const authHandler = require("./auth-handler");
-const showFinder = require("../show-finder");
+const authHandler     = require("./auth-handler");
+const showFinder      = require("../show-finder");
 const venueShowSearch = require("../venue-show-finder");
-const dbHelpers = require("../helpers/db-helpers");
-const constants = require("../helpers/constants");
-const helpers = require("../helpers/helpers");
+const dbHelpers       = require("../helpers/db-helpers");
+const constants       = require("../helpers/constants");
+const helpers         = require("../helpers/helpers");
 
 function setRoutes(routerDependencies) {
     const db = routerDependencies.db;
@@ -16,7 +16,7 @@ function setRoutes(routerDependencies) {
 
     router.post("/show-finder/playlists", async (req, res) => {
         const spotifyToken = req.userObj.SpotifyAccessToken;
-        let playlists = await showFinder.getPlaylists(spotifyToken, req.userObj.SpotifyUsername, req.userObj.Uid);
+        let playlists      = await showFinder.getPlaylists(spotifyToken, req.userObj.SpotifyUsername, req.userObj.Uid);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -68,20 +68,27 @@ function setRoutes(routerDependencies) {
             return res.status(400);
         }
 
-        let venueIds = req.body.venueIds;
-        let tableName = "VenueLists";
-        let userUidColumn = "UserUid";
+        let venueIds       = req.body.venueIds;
+        let tableName      = "VenueLists";
+        let userUidColumn  = "UserUid";
         let venueIdsColumn = "VenueIds";
         let locationColumn = "Location";
 
-        let upsertSql = `
+        let upsertSql =
+            `
         INSERT INTO VenueLists (UserUid, VenueIds, Location, SongsPerArtist, IncludeOpeners)
         VALUES (?, ?, ?, ?, ?);
         `;
 
         let upsert;
         try {
-            upsert = await db.runAsync(upsertSql, [req.userUid, venueIds.join(","), req.body.location, req.body.songsPerArtist, req.body.includeOpeners]);
+            upsert = await db.runAsync(upsertSql, [
+                req.userUid,
+                venueIds.join(","),
+                req.body.location,
+                req.body.songsPerArtist,
+                req.body.includeOpeners
+            ]);
         } catch (e) {
             console.log(e);
             return res.status(500);
@@ -97,13 +104,14 @@ function setRoutes(routerDependencies) {
             return res.status(400);
         }
 
-        // Can't pull userObj from req object here like we normally do since this is an unauthed endpoint to allow unsub from email
+        // Can't pull userObj from req object here like we normally do since this is an unauthed endpoint to allow unsub
+        // from email
         let userObj = await db.getAsync(`SELECT * FROM Users WHERE Uid=?`, req.query.uid);
         if (userObj === undefined) {
             return res.status(404).send("User not found");
         }
 
-        let tableName = "VenueLists";
+        let tableName     = "VenueLists";
         let userUidColumn = "UserUid";
 
         let deleteSql = `
@@ -119,7 +127,7 @@ function setRoutes(routerDependencies) {
             return res.status(500).send("Error unsubscribing user");
         }
 
-        return res.sendFile("email-delete-success.html", { root: static_app_dir });
+        return res.sendFile("email-delete-success.html", {root : static_app_dir});
     });
 
     router.post("/show-finder/shows", async (req, res) => {
@@ -140,9 +148,8 @@ function setRoutes(routerDependencies) {
 
             let response = await request;
             if (response.statusCode) {
-                console.log(`Call to get shows from service ${req.query.service} failed with status ${spotifyToken.statusCode}`);
-                return res.status(response.statusCode)
-                    .json(response);
+                console.log(`Call to get shows from service ${req.query.service} failed with status
+        ${spotifyToken.statusCode}`); return res.status(response.statusCode) .json(response);
             }
 
             return res.json(response);
@@ -160,22 +167,24 @@ function setRoutes(routerDependencies) {
 
         // No query param, need to group artist by id to be
         // able to bundle and serve consolidated response
-        let i = 0;
-        let artists = req.body.selectedArtists.map(x => ({ id: i++, name: x }));
+        let i                   = 0;
+        let artists             = req.body.selectedArtists.map(x => ({id : i++, name : x}));
         let allServicesResponse = await showFinder.getAllShows(artists, req.body.location);
         if (allServicesResponse.statusCode) {
             console.log(`Call to get shows for all artists failed with status ${allServicesResponse.statusCode}`);
             return res.status(allServicesResponse.statusCode).json(allServicesResponse);
         }
 
-        let mappedArtistsToShows = Object.keys(allServicesResponse)
-            .filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
-            .map(x => ({
-                artistName: decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
-                shows: allServicesResponse[x]
-            }));
+        let mappedArtistsToShows =
+            Object.keys(allServicesResponse)
+                .filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
+                .map(x => ({
+                         artistName : decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
+                         shows : allServicesResponse[x]
+                     }));
 
-        console.log(`Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
+        console.log(
+            `Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
         res.json(mappedArtistsToShows);
     });
 
@@ -184,12 +193,13 @@ function setRoutes(routerDependencies) {
         // Allows us to keep populating their different venue lists as they switch locations
         let venueListObj = null;
         if (req.query.location) {
-            venueListObj = await db.getAsync(`SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=? AND Location=?`, [
-                req.userUid,
-                req.query.location
-            ]);
+            venueListObj = await db.getAsync(
+                `SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=? AND Location=?`,
+                [ req.userUid, req.query.location ]);
         } else {
-            venueListObj = await db.getAsync(`SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=?`, [req.userUid]);
+            venueListObj = await db.getAsync(
+                `SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=?`,
+                [ req.userUid ]);
         }
 
         if (venueListObj === undefined) {

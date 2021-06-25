@@ -1,6 +1,6 @@
-var fetch = require("node-fetch");
+var fetch         = require("node-fetch");
 var formUrlEncode = require("form-urlencoded").default;
-const constants = require("../helpers/constants");
+const constants   = require("../helpers/constants");
 
 var spotifyAuth = () => "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
 var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
@@ -26,14 +26,12 @@ async function refreshSpotifyToken() {
         headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : spotifyAuth()}
     };
 
-    // TODO we need to save this new access code for the specific user we're running requests for 
+    // TODO we need to save this new access code for the specific user we're running requests for
     //
     console.log("Getting spotify API token...");
-    const {success, response} =
-        await instrumentCall("https://accounts.spotify.com/api/token", postOptions, true);
+    const {success, response} = await instrumentCall("https://accounts.spotify.com/api/token", postOptions, true);
     return success ? response.access_token : response;
 }
-
 
 function baseSpotifyHeaders(method, spotifyToken) {
     return {
@@ -58,11 +56,9 @@ async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, logCurl)
 
         ({success, response} = await instrumentCall(url, options, logCurl));
         //
-        // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't block on the DB insert
-        db.runAsync(
-            "UPDATE Users set SpotifyAccessToken='?' where Uid='?';",
-            [spotifyToken, userUid]
-        );
+        // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't
+        // block on the DB insert
+        db.runAsync("UPDATE Users set SpotifyAccessToken='?' where Uid='?';", [ spotifyToken, userUid ]);
     }
 
     return {success, response};
@@ -70,14 +66,14 @@ async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, logCurl)
 
 async function instrumentCall(url, options, logCurl) {
     let res;
-    let error = null;
+    let error       = null;
     let encodedBody = "";
     let unparsedRes = null;
 
     // Default value of true
     logCurl = logCurl === undefined ? true : logCurl;
 
-    const requestTimeout = sleep(8000, { ok: false, message: "Request timed out" });
+    const requestTimeout = sleep(8000, {ok : false, message : "Request timed out"});
 
     try {
         if (options.body) {
@@ -96,7 +92,7 @@ async function instrumentCall(url, options, logCurl) {
         }
 
         const requestPromise = fetch(url, options);
-        unparsedRes = await Promise.race([requestPromise, requestTimeout]);
+        unparsedRes          = await Promise.race([ requestPromise, requestTimeout ]);
 
         if (unparsedRes && !unparsedRes.ok) {
             error = unparsedRes;
@@ -104,16 +100,13 @@ async function instrumentCall(url, options, logCurl) {
             res = await unparsedRes.json();
         }
     } catch (e) {
-        const errorObject = {
-            message: "Threw but didn't assign anything to unparsedRes yet",
-            exception: e
-        };
+        const errorObject = {message : "Threw but didn't assign anything to unparsedRes yet", exception : e};
 
         error = unparsedRes === null ? errorObject : unparsedRes;
     } finally {
         // Log out a curl for every call we instrument.
         if (logCurl && process.env.DEPLOY_STAGE !== "PROD") {
-            let curl = ["curl"];
+            let curl = [ "curl" ];
 
             // -s: don't show progress ascii
             // -D -: output headers to file, '-' uses stdout as file
@@ -134,9 +127,9 @@ async function instrumentCall(url, options, logCurl) {
         }
     }
 
-    let success = error === null;
+    let success  = error === null;
     let response = error || res;
-    return { success, response };
+    return {success, response};
 }
 
 // Compare dates agnostic of times
@@ -144,7 +137,8 @@ function datesEqual(dateString1, dateString2) {
     // The date will come as ms since epoch from foopee scrape but a datetime string from the other two
     let date1 = new Date(dateString1);
     let date2 = new Date(dateString2);
-    return date1.getUTCFullYear() === date2.getUTCFullYear() && date1.getUTCMonth() === date2.getUTCMonth() && date1.getUTCDate() === date2.getUTCDate();
+    return date1.getUTCFullYear() === date2.getUTCFullYear() && date1.getUTCMonth() === date2.getUTCMonth() &&
+           date1.getUTCDate() === date2.getUTCDate();
 }
 
 function getUTCDate(inputDate) {
@@ -176,7 +170,7 @@ function addDedupedShows(previouslyAddedShows, newArtistShowList) {
 // Does not remove shows in-place from list but reassigns new list after deduping
 function dedupeShows(showsByArtistId) {
     for (let key of Object.keys(showsByArtistId)) {
-        let showList = showsByArtistId[key];
+        let showList        = showsByArtistId[key];
         let dedupedShowList = [];
 
         // 'set' used for hash lookups on dates to dedupe
