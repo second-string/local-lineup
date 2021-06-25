@@ -1,3 +1,4 @@
+const nodemailer = require("nodemailer");
 const Email = require('email-templates');
 
 const venueShowSearch = require('../venue-show-finder');
@@ -23,21 +24,26 @@ async function sendShowsEmail(userObj, shows, startDate, endDate) {
     let unsubscribeUrl = `https://${baseUrl}/show-finder/delete-venues?uid=${userObj.Uid}`;
 
     // oauth auth object fields: https://nodemailer.com/smtp/oauth2/
+    const transport = nodemailer.createTransport({
+         host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'show.finder.bot@gmail.com',
+            type: 'OAuth2',
+            clientId: process.env.OAUTH2_CLIENT_ID,
+            clientSecret: process.env.OAUTH2_CLIENT_SECRET,
+            refreshToken: process.env.OAUTH2_REFRESH_TOKEN,
+            accessToken: process.env.OAUTH2_ACCESS_TOKEN,
+            expiresIn: 3200,
+        }
+    });
+
     const emailObj = new Email({
         message: {
             from: 'show.finder.bot@gmail.com'
         },
-        transport: {
-            service: 'gmail',
-            auth: {
-                user: 'show.finder.bot@gmail.com',
-                type: 'OAuth2',
-                clientId: process.env.OAUTH2_CLIENT_ID,
-                clientSecret: process.env.OAUTH2_CLIENT_SECRET,
-                refreshToken: process.env.OAUTH2_REFRESH_TOKEN,
-                accessToken: process.env.OAUTH2_ACCESS_TOKEN
-            }
-        },
+        transport: transport,
         send: true
     });
 
