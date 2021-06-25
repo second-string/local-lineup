@@ -125,7 +125,7 @@ async function spotifyLoginCallback(db, req, res) {
         },
         headers: {
             "Content-type": "application/x-www-form-urlencoded",
-            Authorization: showFinder.spotifyAuth()
+            Authorization: helpers.spotifyAuth()
         }
     };
 

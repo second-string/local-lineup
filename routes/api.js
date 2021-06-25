@@ -15,34 +15,8 @@ function setRoutes(routerDependencies) {
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
     router.post("/show-finder/playlists", async (req, res) => {
-        /*
-        // If we have a token cached, give it a shot to see if it's still valid
-        if (spotifyToken) {
-            let cachedAttempt = await showFinder.getPlaylists(spotifyToken, userObj.SpotifyUsername);
-
-            // If we have no status, that means we got our playlist json object back (success). If we have a code,
-            // instrumentCall returned our full failed response to us, so refresh the token and continue.
-            if (cachedAttempt.ok === undefined) {
-                console.log("Using cached spotify token...");
-                return res.send(cachedAttempt);
-            }
-
-            console.log("Attempt to use cached spotify token failed, refreshing");
-        }
-
-        spotifyToken = await showFinder.getSpotifyToken(userObj.Uid);
-
-        if (spotifyToken.ok !== undefined && !spotifyToken.ok) {
-            console.log(`Call to get spotify token failed with status ${spotifyToken.status}`);
-            return res.status(spotifyToken.status).json(spotifyToken);
-        }
-        */
-        
-        // This token stuff is all borked right now. Ideally here we want to call our wrapper function that uses the user access token and refreshes and tries again if it fails.
-        // Right now we assume it won't fail
-        const spotifyToken = "Bearer " + req.userObj.SpotifyAccessToken;
-
-        let playlists = await showFinder.getPlaylists(spotifyToken, req.userObj.SpotifyUsername);
+        const spotifyToken = req.userObj.SpotifyAccessToken;
+        let playlists = await showFinder.getPlaylists(spotifyToken, req.userObj.SpotifyUsername, req.userObj.Uid);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -56,19 +30,14 @@ function setRoutes(routerDependencies) {
             return res.status(400).send("Did not include playlistId query param in request to '/show-finder/artists/");
         }
 
-        const spotifyToken = "Bearer " + req.userObj.SpotifyAccessToken;
-
-        // if (spotifyToken.ok !== undefined && !spotifyToken.ok) {
-        //     console.log(`Call to get spotify token failed with status ${spotifyToken.status}`);
-        //     return res.status(spotifyToken.status).json(spotifyToken);
-        // }
+        const spotifyToken = req.userObj.SpotifyAccessToken;
 
         // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
         let artists = [];
         if (parseInt(req.query.playlistId, 10) === constants.user_library_playlist_id) {
-            artists = await showFinder.getLikedSongsArtists(spotifyToken);
+            artists = await showFinder.getLikedSongsArtists(spotifyToken, req.userObj.Uid);
         } else {
-            artists = await showFinder.getArtists(spotifyToken, req.query.playlistId);
+            artists = await showFinder.getArtists(spotifyToken, req.query.playlistId, req.userObj.Uid);
         }
 
         if (artists.ok !== undefined && !artists.ok) {

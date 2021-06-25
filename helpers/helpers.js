@@ -1,5 +1,9 @@
 var fetch = require("node-fetch");
 var formUrlEncode = require("form-urlencoded").default;
+const constants = require("../helpers/constants");
+
+var spotifyAuth = () => "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
+var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
 function requestError(response, exception = null) {
     console.log("REQUEST ERROR");
@@ -13,6 +17,55 @@ function requestError(response, exception = null) {
     }
 
     return response;
+}
+
+async function refreshSpotifyToken() {
+    const postOptions = {
+        method : "POST",
+        body : {grant_type : "client_credentials"},
+        headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : spotifyAuth()}
+    };
+
+    // TODO we need to save this new access code for the specific user we're running requests for 
+    //
+    console.log("Getting spotify API token...");
+    const {success, response} =
+        await instrumentCall("https://accounts.spotify.com/api/token", postOptions, true);
+    return success ? response.access_token : response;
+}
+
+
+function baseSpotifyHeaders(method, spotifyToken) {
+    return {
+        method,
+        headers : {
+            "Content-type" : "application/json",
+            Authorization : "Bearer " + spotifyToken,
+        },
+        family : 4
+    };
+}
+
+// Enables other logic to get spotify information without having to store and handle refreshing the token themselves
+async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, logCurl) {
+    let options = baseSpotifyHeaders(method, spotifyToken);
+
+    let {success, response} = await instrumentCall(url, options, logCurl);
+    if (!success) {
+        // This could probably be refined with error codes, but give it a refresh and retry for any failure for now
+        console.log(`Failed a spotify request to ${url} with status ${response.status}, refreshing token and retrying`);
+        spotifyToken = await refreshSpotifyToken();
+
+        ({success, response} = await instrumentCall(url, options, logCurl));
+        //
+        // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't block on the DB insert
+        db.runAsync(
+            "UPDATE Users set SpotifyAccessToken='?' where Uid='?';",
+            [spotifyToken, userUid]
+        );
+    }
+
+    return {success, response};
 }
 
 async function instrumentCall(url, options, logCurl) {
@@ -145,6 +198,10 @@ async function sleep(ms, timeoutValue) {
 }
 
 module.exports = {
+    spotifyAuth,
+    seatGeekAuth,
+    baseSpotifyHeaders,
+    autoRetrySpotifyCall,
     instrumentCall,
     datesEqual,
     dedupeShows,

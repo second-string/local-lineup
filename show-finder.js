@@ -6,39 +6,9 @@ var helpers = require("./helpers/helpers");
 var parsers = require("./helpers/response-parsers");
 var foopee = require("./scripts/foopee-scrape");
 
-var spotifyAuth = () => "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
-var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
-
-async function getSpotifyToken(userUid) {
-    // let postOptions = {
-    //     method: "POST",
-    //     body: {
-    //         grant_type: "client_credentials"
-    //     },
-    //     headers: {
-    //         "Content-type": "application/x-www-form-urlencoded",
-    //         Authorization: spotifyAuth()
-    //     }
-
-    // console.log("Getting spotify API token...");
-    // let { success, response } = await helpers.instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
-    // return success ? `Bearer ${response.access_token}` : response;
-
-    throw new Error("Stop calling getSpotifyToken");
-}
-
-async function getPlaylists(spotifyToken, userId) {
-    let getOptions = {
-        method: "GET",
-        headers: {
-            "Content-type": "application/json",
-            Authorization: spotifyToken
-        }
-    };
-
+async function getPlaylists(spotifyToken, userUid) {
     console.log("Getting playlists...");
-    let { success, response } = await helpers.instrumentCall(`https://api.spotify.com/v1/users/${userId}/playlists`, getOptions, false);
-
+    let { success, response } = await helpers.autoRetrySpotifyCall(spotifyToken, `https://api.spotify.com/v1/users/${userUid}/playlists`, "GET", userUid, true);
     if (!success) {
         return response;
     }
@@ -52,20 +22,12 @@ async function getPlaylists(spotifyToken, userId) {
     return playlistNamesById;
 }
 
-async function getArtists(spotifyToken, playlistId) {
-    let getOptions = {
-        method: "GET",
-        headers: {
-            "Content-type": "application/json",
-            Authorization: spotifyToken
-        }
-    };
-
+async function getArtists(spotifyToken, playlistId, userUid) {
     let page = {};
     let artists = [];
     console.log("Getting artists...");
     do {
-        let { success, response } = await helpers.instrumentCall(page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, getOptions, false);
+        let { success, response } = await helpers.autoRetrySpotifyCall(spotifyToken, page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`, "GET", userUid, true);
         if (!success) {
             return response;
         }
@@ -87,20 +49,12 @@ async function getArtists(spotifyToken, playlistId) {
     return artists.reduce((x, y) => x.concat(y)).filter(x => (hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true)));
 }
 
-async function getLikedSongsArtists(spotifyToken) {
-    let getOptions = {
-        method: "GET",
-        headers: {
-            "Content-type": "application/json",
-            Authorization: spotifyToken
-        }
-    };
-
+async function getLikedSongsArtists(spotifyToken, userUid) {
     let page = {};
     let songs = [];
     console.log("Getting all liked tracks to parse out artists from...");
     do {
-        let { success, response } = await helpers.instrumentCall(page.next || `https://api.spotify.com/v1/me/tracks`, getOptions, true);
+        let { success, response } = await helpers.autoRetrySpotifyCall(spotifyToken, page.next || `https://api.spotify.com/v1/me/tracks`, "GET", userUid, true);
         if (!success) {
             return response;
         }
@@ -385,7 +339,7 @@ function buildSeatGeekArtistIdQuery(artistId, artist) {
         method: "GET",
         headers: {
             "Content-type": "application/json",
-            Authorization: seatGeekAuth()
+            Authorization: helpers.seatGeekAuth()
         }
     };
 
@@ -400,7 +354,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
         method: "GET",
         headers: {
             "Content-type": "application/json",
-            Authorization: seatGeekAuth()
+            Authorization: helpers.seatGeekAuth()
         }
     };
 
@@ -441,12 +395,10 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
 }
 
 module.exports = {
-    getSpotifyToken: getSpotifyToken,
     getPlaylists: getPlaylists,
     getArtists: getArtists,
     getLikedSongsArtists: getLikedSongsArtists,
     // getSongkickShows: getSongkickShows,
     // getBandsInTownShows: getBandsInTownShows,
     getAllShows: getAllShows,
-    spotifyAuth,
 };
