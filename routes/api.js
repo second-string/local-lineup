@@ -8,9 +8,6 @@ const dbHelpers = require("../helpers/db-helpers");
 const constants = require("../helpers/constants");
 const helpers = require("../helpers/helpers");
 
-// Poor man's in-mem cache
-var spotifyToken;
-
 function setRoutes(routerDependencies) {
     const db = routerDependencies.db;
 
@@ -18,8 +15,7 @@ function setRoutes(routerDependencies) {
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
     router.post("/show-finder/playlists", async (req, res) => {
-        let userObj = await db.getAsync(`SELECT SpotifyUsername FROM Users WHERE Uid=?`, [req.userUid]);
-
+        /*
         // If we have a token cached, give it a shot to see if it's still valid
         if (spotifyToken) {
             let cachedAttempt = await showFinder.getPlaylists(spotifyToken, userObj.SpotifyUsername);
@@ -34,14 +30,19 @@ function setRoutes(routerDependencies) {
             console.log("Attempt to use cached spotify token failed, refreshing");
         }
 
-        spotifyToken = await showFinder.getSpotifyToken();
+        spotifyToken = await showFinder.getSpotifyToken(userObj.Uid);
 
         if (spotifyToken.ok !== undefined && !spotifyToken.ok) {
             console.log(`Call to get spotify token failed with status ${spotifyToken.status}`);
             return res.status(spotifyToken.status).json(spotifyToken);
         }
+        */
+        
+        // This token stuff is all borked right now. Ideally here we want to call our wrapper function that uses the user access token and refreshes and tries again if it fails.
+        // Right now we assume it won't fail
+        const spotifyToken = "Bearer " + req.userObj.SpotifyAccessToken;
 
-        let playlists = await showFinder.getPlaylists(spotifyToken, userObj.SpotifyUsername);
+        let playlists = await showFinder.getPlaylists(spotifyToken, req.userObj.SpotifyUsername);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -51,7 +52,25 @@ function setRoutes(routerDependencies) {
     });
 
     router.get("/show-finder/artists", async (req, res) => {
-        let artists = await showFinder.getArtists(spotifyToken, req.query.playlistId);
+        if (!req.query.playlistId) {
+            return res.status(400).send("Did not include playlistId query param in request to '/show-finder/artists/");
+        }
+
+        const spotifyToken = "Bearer " + req.userObj.SpotifyAccessToken;
+
+        // if (spotifyToken.ok !== undefined && !spotifyToken.ok) {
+        //     console.log(`Call to get spotify token failed with status ${spotifyToken.status}`);
+        //     return res.status(spotifyToken.status).json(spotifyToken);
+        // }
+
+        // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
+        let artists = [];
+        if (parseInt(req.query.playlistId, 10) === constants.user_library_playlist_id) {
+            artists = await showFinder.getLikedSongsArtists(spotifyToken);
+        } else {
+            artists = await showFinder.getArtists(spotifyToken, req.query.playlistId);
+        }
+
         if (artists.ok !== undefined && !artists.ok) {
             console.log(`Call to get artists for playlist failed with status ${artists.status}`);
             return res.status(artists.status).json(artists);
@@ -109,6 +128,7 @@ function setRoutes(routerDependencies) {
             return res.status(400);
         }
 
+        // Can't pull userObj from req object here like we normally do since this is an unauthed endpoint to allow unsub from email
         let userObj = await db.getAsync(`SELECT * FROM Users WHERE Uid=?`, req.query.uid);
         if (userObj === undefined) {
             return res.status(404).send("User not found");

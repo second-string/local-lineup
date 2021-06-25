@@ -9,22 +9,24 @@ var foopee = require("./scripts/foopee-scrape");
 var spotifyAuth = () => "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
 var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
-async function getSpotifyToken(userUid) {
-    // let postOptions = {
-    //     method: "POST",
-    //     body: {
-    //         grant_type: "client_credentials"
-    //     },
-    //     headers: {
-    //         "Content-type": "application/x-www-form-urlencoded",
-    //         Authorization: spotifyAuth()
-    //     }
+// Fake ID so we can show an entry for the user's library when they're searching by shows from their playlists
+const user_library_playlist_id = 0;
 
-    // console.log("Getting spotify API token...");
-    // let { success, response } = await helpers.instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
-    // return success ? `Bearer ${response.access_token}` : response;
+async function getSpotifyToken() {
+    let postOptions = {
+        method: "POST",
+        body: {
+            grant_type: "client_credentials"
+        },
+        headers: {
+            "Content-type": "application/x-www-form-urlencoded",
+            Authorization: spotifyAuth()
+        }
+    };
 
-    throw new Error("Stop calling getSpotifyToken");
+    console.log("Getting spotify API token...");
+    let { success, response } = await helpers.instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
+    return success ? `Bearer ${response.access_token}` : response;
 }
 
 async function getPlaylists(spotifyToken, userId) {
@@ -47,7 +49,7 @@ async function getPlaylists(spotifyToken, userId) {
     response.items.forEach(x => (playlistNamesById[x.id] = x.name));
 
     // Shove a fake playlist in there for the users liked songs
-    playlistNamesById[constants.user_library_playlist_id] = "All Liked Songs";
+    playlistNamesById[user_library_playlist_id] = "All Liked Songs";
 
     return playlistNamesById;
 }
@@ -449,4 +451,5 @@ module.exports = {
     // getBandsInTownShows: getBandsInTownShows,
     getAllShows: getAllShows,
     spotifyAuth,
+    user_library_playlist_id
 };

@@ -40,8 +40,9 @@ async function authenticate(userDb, req, res, next) {
         console.log(`Got no user obj from db from jwt decoded token ${token.userUid}, redirecting to /`);
         return res.redirect(403, "/");
     } else {
-        // Save user UID in req object for potential use in requests rather than doubling up on the users table lookup
-        req.userUid = userObj.Uid;
+        // Save user obj in req object for potential use in requests rather than doubling up on the users table lookup
+        // (most common use currently is grabbing user's spoot access token)
+        req.userObj = userObj;
         return next();
     }
 }
@@ -49,7 +50,7 @@ async function authenticate(userDb, req, res, next) {
 async function login(req, res) {
     const rootHost = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
-    const scopes = "user-read-email playlist-read-private playlist-modify-private";
+    const scopes = "user-read-email user-library-read playlist-read-private playlist-modify-private";
 
     res.redirect(
         "https://accounts.spotify.com/authorize?" +
