@@ -60,6 +60,7 @@ async function main() {
                 return obj;
             }, {});
 
+        // if showsByDate empty that's fine, email will just be blank but no error
         let emailPromise = new Promise(async (resolve, reject) => {
             let exitCode = await showEmailer.sendShowsEmail(userObj, showsByDate, startDate, endDate);
             if (exitCode < 0) {
@@ -71,7 +72,11 @@ async function main() {
 
         let playlistPromise = new Promise(async (resolve, reject) => {
             // Flatten showsByDate into one list of shows for the playlist builder
-            let shows = Object.keys(showsByDate).flatMap(x => showsByDate[x]);
+            let shows = [];
+            if (showsByDate && showsByDate.length > 0) {
+                shows = Object.keys(showsByDate).flatMap(x => showsByDate[x]);
+            }
+
             let exitCode = await playlistBuilder.buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners);
             if (exitCode < 0) {
                 return reject(Error(userObj.SpotifyUsername));

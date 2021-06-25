@@ -1,9 +1,9 @@
 h3 Upcoming shows for #{startDate} to #{endDate}
 ul
-	each showList, dateString in showsByDate
-		h4=dateString
-		ul
-			each showObj in showList
-				p #{showObj.title} --- #{showObj.venue.name}
+    each showList, dateString in showsByDate
+        h4=dateString
+        ul
+            each showObj in showList
+                p #{showObj.title} --- #{showObj.venue.name}
 
 <a href="#{unsubscribeUrl}">Unsubscribe<a>
