@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "npm run devBuild --prefix client && nodemon server.js",
+    "server": "nodemon server.js",
     "devOld": "nodemon server.js & npm run --prefix client/",
     "deploy": "npm run build --prefix client/ && nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"

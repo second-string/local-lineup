@@ -63,16 +63,53 @@ async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, logCurl)
     return {success, response};
 }
 
+// Not exported, for use in deconstructing logic in instrumentCall. Allows for retries within instrumentCall based on
+// certain error types. NOTE: does NOT handle exceptions thrown by node-fetch or failure status codes - that's the
+// caller's responsibility.
+//
+// params: url to fetch, options to fetch with, timeout in seconds to wait on request before aborting returns:
+// unparsedRes from node-fetch. Will either be Response object or timeout object of {ok,message} (matches Response keys)
+async function fetchWithBackoffAndTimeout(url, options, timeout) {
+    // Build X second timeout to chop our requests that are hanging. 'Real' responses from fetch, successful or
+    // otherwise, will include an `ok` field as well. Using the same key here allows us to combine a success check for
+    // an actual unsuccessful response vs. timeout into a single if-check
+    const requestTimeout = sleep(timeout * 1000, {ok : false, message : "Request timed out"});
+
+    let unparsedRes = null;
+    let backoff     = true;
+    while (backoff) {
+        const requestPromise = fetch(url, options, true);
+        unparsedRes          = await Promise.race([ requestPromise, requestTimeout ]);
+
+        // No need to error check 'real' response or timeout `ok` here since status won't be 429, so we'll break the
+        // while loop and fall to the below error checking block regardless
+        if (unparsedRes.status === 429) {
+            backoff         = true;
+            let backoffTime = Number(unparsedRes.headers.get('Retry-after'));
+            if (!backoffTime || backoffTime === 0) {
+                // We got a 429 but failed parsing the Retry-after (or it wasn't included)
+                // Default to 1 second
+                backoffTime = 1;
+            }
+
+            console.log(`Got a 429, backing off for ${backoffTime} seconds`);
+            await sleep(backoffTime * 1000);
+        } else {
+            backoff = false;
+        }
+    }
+
+    return unparsedRes;
+}
+
 async function instrumentCall(url, options, logCurl) {
-    let res;
+    let parsedRes;
     let error       = null;
     let encodedBody = "";
     let unparsedRes = null;
 
     // Default value of true
     logCurl = logCurl === undefined ? true : logCurl;
-
-    const requestTimeout = sleep(8000, {ok : false, message : "Request timed out"});
 
     try {
         if (options.body) {
@@ -90,36 +127,22 @@ async function instrumentCall(url, options, logCurl) {
             options.body = encodedBody;
         }
 
-        // const requestPromise = fetch(url, options);
-        // unparsedRes = await Promise.race([requestPromise, requestTimeout]);
-        let backoff = true;
-        while (backoff) {
-            unparsedRes = await fetch(url, options);
-
-            if (unparsedRes.status === 429) {
-                backoff         = true;
-                let backoffTime = Number(unparsedRes.headers.get('Retry-after'));
-                if (!backoffTime || backoffTime === 0) {
-                    // We got a 429 but failed parsing the Retry-after (or it wasn't included)
-                    // Default to 1 second
-                    backoffTime = 1;
-                }
-
-                console.log(`Got a 429, backing off for ${backoffTime} seconds`);
-                await sleep(backoffTime * 1000);
-            } else {
-                backoff = false;
-            }
-        }
-
+        unparsedRes = await fetchWithBackoffAndTimeout(url, options, 8);
         if (unparsedRes && !unparsedRes.ok) {
             error = unparsedRes;
         } else {
-            res = await unparsedRes.json();
+            parsedRes = await unparsedRes.json();
         }
     } catch (e) {
         const errorObject = {message : "Threw but didn't assign anything to unparsedRes yet", exception : e};
 
+        // TODO here is where we could add socket or sleep(short) and retry logic for ECONNRESET issues
+        console.error(
+            "Exception thrown in instrumentCall, logging out reponse fields to see how we can debug and retry ECONNRESET:");
+        console.error(e.errno);
+        console.error(e.code);
+        console.error(e.stack);
+        console.error(e.info);
         error = unparsedRes === null ? errorObject : unparsedRes;
     } finally {
         // Log out a curl for every call we instrument.
@@ -146,7 +169,7 @@ async function instrumentCall(url, options, logCurl) {
     }
 
     let success  = error === null;
-    let response = error || res;
+    let response = error || parsedRes;
     return {success, response};
 }
 
@@ -206,7 +229,7 @@ function dedupeShows(showsByArtistId) {
 }
 
 async function sleep(ms, timeoutValue) {
-    return await new Promise(async (resolve, reject) => await setTimeout(() => resolve(timeoutValue || null), ms));
+    return new Promise((resolve) => setTimeout(() => resolve(timeoutValue || null), ms));
 }
 
 module.exports = {
@@ -218,5 +241,5 @@ module.exports = {
     datesEqual,
     dedupeShows,
     getUTCDate,
-    sleep
+    // sleep
 };

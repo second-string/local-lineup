@@ -54,7 +54,7 @@ async function getSeatGeekShows(venuesById) {
             false);
 
         if (!success) {
-            return response;
+            return {success, response};
         }
 
         // Filter out all sports events and whatnot
@@ -78,7 +78,7 @@ async function getSeatGeekShows(venuesById) {
         }
     }
 
-    return showsByDate;
+    return {success : true, response : showsByDate};
 }
 
 /*
