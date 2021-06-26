@@ -13,7 +13,7 @@ async function getPlaylists(spotifyToken, userUid) {
                                            `https://api.spotify.com/v1/users/${userUid}/playlists`,
                                            "GET",
                                            userUid,
-                                           true);
+                                           false);
     if (!success) {
         return response;
     }
@@ -37,7 +37,7 @@ async function getArtists(spotifyToken, playlistId, userUid) {
                                                page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
                                                "GET",
                                                userUid,
-                                               true);
+                                               false);
         if (!success) {
             return response;
         }
@@ -66,7 +66,7 @@ async function getLikedSongsArtists(spotifyToken, userUid) {
                                                page.next || `https://api.spotify.com/v1/me/tracks`,
                                                "GET",
                                                userUid,
-                                               true);
+                                               false);
         if (!success) {
             return response;
         }
