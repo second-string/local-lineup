@@ -19,6 +19,7 @@ function requestError(response, exception = null) {
     return response;
 }
 
+// Not exported, only used within autoRetrySpotifyCall
 async function refreshSpotifyToken() {
     const postOptions = {
         method : "POST",
@@ -26,10 +27,8 @@ async function refreshSpotifyToken() {
         headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : spotifyAuth()}
     };
 
-    // TODO we need to save this new access code for the specific user we're running requests for
-    //
     console.log("Getting spotify API token...");
-    const {success, response} = await instrumentCall("https://accounts.spotify.com/api/token", postOptions, true);
+    const {success, response} = await instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
     return success ? response.access_token : response;
 }
 
@@ -91,8 +90,27 @@ async function instrumentCall(url, options, logCurl) {
             options.body = encodedBody;
         }
 
-        const requestPromise = fetch(url, options);
-        unparsedRes          = await Promise.race([ requestPromise, requestTimeout ]);
+        // const requestPromise = fetch(url, options);
+        // unparsedRes = await Promise.race([requestPromise, requestTimeout]);
+        let backoff = true;
+        while (backoff) {
+            unparsedRes = await fetch(url, options);
+
+            if (unparsedRes.status === 429) {
+                backoff         = true;
+                let backoffTime = Number(unparsedRes.headers.get('Retry-after'));
+                if (!backoffTime || backoffTime === 0) {
+                    // We got a 429 but failed parsing the Retry-after (or it wasn't included)
+                    // Default to 1 second
+                    backoffTime = 1;
+                }
+
+                console.log(`Got a 429, backing off for ${backoffTime} seconds`);
+                await sleep(backoffTime * 1000);
+            } else {
+                backoff = false;
+            }
+        }
 
         if (unparsedRes && !unparsedRes.ok) {
             error = unparsedRes;
