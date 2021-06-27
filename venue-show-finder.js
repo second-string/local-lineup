@@ -33,7 +33,6 @@ async function getShowsForVenues(venues) {
             showsByVenueId['seatgeek'] = resObj.response;
         } else {
             console.error("Failure getting shows for seatgeek, returning empty list for showsByVenueId['seatgeek']. Error: ");
-            console.error(resObj.response);
             showsByVenueId['seatgeek'] = [];
         }
     }

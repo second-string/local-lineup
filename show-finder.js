@@ -86,7 +86,7 @@ async function getLikedSongsArtists(spotifyToken, userUid) {
 }
 
 // artists param is list of { id, name }, location is lowercased basic city string
-async function getAllShows(artists, location) {
+async function getShows(artists, location) {
     // Eventual return value (ish). Object with key of artist ID (int) and value of a list of { date: DateTime, show:
     // string }
     let showsByArtistId     = {};
@@ -390,5 +390,5 @@ module.exports = {
     getLikedSongsArtists : getLikedSongsArtists,
     // getSongkickShows: getSongkickShows,
     // getBandsInTownShows: getBandsInTownShows,
-    getAllShows : getAllShows,
+    getShows : getShows,
 };

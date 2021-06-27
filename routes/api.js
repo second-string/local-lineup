@@ -131,58 +131,35 @@ function setRoutes(routerDependencies) {
     });
 
     router.post("/show-finder/shows", async (req, res) => {
-        /*
-        refactor these back again when we support individual service querying for the api
-
-        if (req.query.service) {
-            console.log('Query param: ' + req.query.service);
-            let request;
-            switch (req.query.service.toLowerCase()) {
-                case 'bandsintown':
-                request = showFinder.getBandsInTownShows(req.body.selectedArtists);
-                break;
-                case 'songkick':
-                request = await showFinder.getSongkickShows(req.body.selectedArtists);
-                break;
-            }
-
-            let response = await request;
-            if (response.statusCode) {
-                console.log(`Call to get shows from service ${req.query.service} failed with status
-        ${spotifyToken.statusCode}`); return res.status(response.statusCode) .json(response);
-            }
-
-            return res.json(response);
-        }
-        */
         if (req.body.selectedVenues) {
             // Error handled internally, lists will just be empty if there was failure
             const showDatesByService = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
-            console.log(showDatesByService);
             return res.json(showDatesByService);
+        } else if (req.body.selectedArtists) {
+            // No venues specified, get all shows for all artists supplied in body
+            // Need to group artist by arbitrary id to be able to bundle and serve consolidated response
+            let i                   = 0;
+            let artists             = req.body.selectedArtists.map(x => ({id : i++, name : x}));
+            let allServicesResponse = await showFinder.getAllShows(artists, req.body.location);
+            if (allServicesResponse.statusCode) {
+                console.log(`Call to get shows for all artists failed with status ${allServicesResponse.statusCode}`);
+                return res.status(allServicesResponse.statusCode).json(allServicesResponse);
+            }
+
+            let mappedArtistsToShows =
+                Object.keys(allServicesResponse)
+                    .filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
+                    .map(x => ({
+                            artistName : decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
+                            shows : allServicesResponse[x]
+                        }));
+
+            console.log(
+                `Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
+            res.json(mappedArtistsToShows);
+        } else {
+            return res.status(400).json("Missing required body params");
         }
-
-        // No query param, need to group artist by id to be
-        // able to bundle and serve consolidated response
-        let i                   = 0;
-        let artists             = req.body.selectedArtists.map(x => ({id : i++, name : x}));
-        let allServicesResponse = await showFinder.getAllShows(artists, req.body.location);
-        if (allServicesResponse.statusCode) {
-            console.log(`Call to get shows for all artists failed with status ${allServicesResponse.statusCode}`);
-            return res.status(allServicesResponse.statusCode).json(allServicesResponse);
-        }
-
-        let mappedArtistsToShows =
-            Object.keys(allServicesResponse)
-                .filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
-                .map(x => ({
-                         artistName : decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
-                         shows : allServicesResponse[x]
-                     }));
-
-        console.log(
-            `Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
-        res.json(mappedArtistsToShows);
     });
 
     router.get("/show-finder/user-venues", async (req, res) => {
