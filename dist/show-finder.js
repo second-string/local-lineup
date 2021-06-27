@@ -13,6 +13,20 @@ var constants = require("./helpers/constants");
 var helpers = require("./helpers/helpers");
 var parsers = require("./helpers/response-parsers");
 var foopee = require("./scripts/foopee-scrape");
+function getPlaylists(spotifyToken, userUid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log("Getting playlists...");
+        let { success, response } = yield helpers.autoRetrySpotifyCall(spotifyToken, `https://api.spotify.com/v1/users/${userUid}/playlists`, "GET", userUid, false);
+        if (!success) {
+            return response;
+        }
+        let playlistNamesById = {};
+        response.items.forEach(x => (playlistNamesById[x.id] = x.name));
+        // Shove a fake playlist in there for the users liked songs
+        playlistNamesById[constants.user_library_playlist_id] = "All Liked Songs";
+        return playlistNamesById;
+    });
+}
 function getArtists(spotifyToken, playlistId, userUid) {
     return __awaiter(this, void 0, void 0, function* () {
         let page = {};
@@ -321,6 +335,7 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
     }));
 }
 module.exports = {
+    getPlaylists,
     getArtists: getArtists,
     getLikedSongsArtists: getLikedSongsArtists,
     // getSongkickShows: getSongkickShows,

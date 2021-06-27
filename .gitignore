@@ -84,3 +84,5 @@ nodemon.json
 email_cron_*.txt
 
 *.swp
+
+dist/
