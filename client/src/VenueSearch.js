@@ -1,3 +1,5 @@
+import * as helpers from "./Helpers.js";
+
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import Select from "react-select";
@@ -21,40 +23,6 @@ class VenueSearch extends Component {
     defaultLocationLabel = "Choose a location";
     defaultSongsPerArtistLabel = "# songs per artist";
     songsPerArtistChoices = [1, 2, 3, 4, 5];
-
-    locations = [
-        { value: "san francisco", displayName: "San Francisco" },
-        { value: "los angeles", displayName: "Los Angeles" },
-        { value: "washington", displayName: "Washington DC" },
-        { value: "new york", displayName: "New York" },
-        { value: "denver", displayName: "Denver" },
-        { value: "chicago", displayName: "Chicago" },
-        { value: "boston", displayName: "Boston" },
-        { value: "austin", displayName: "Austin" },
-        { value: "houston", displayName: "Houston" },
-        { value: "charlotte", displayName: "Charlotte" },
-        { value: "philadelphia", displayName: "Philadelphia" }
-    ];
-
-    async instrumentCall(url, options) {
-        let res;
-        try {
-            res = await fetch(url, options);
-        } catch (e) {
-            console.log(e);
-            throw new Error(e);
-        }
-
-        if (res.status >= 400) {
-            console.log(`ERROR contacting ${url} with options:`);
-            console.log(options);
-            console.log("Reponse: ");
-            console.log(res);
-            // throw new Error(res);
-        }
-
-        return res;
-    }
 
     async componentDidMount() {
         const userSavedVenuesObj = await this.getUserSavedVenues();
@@ -126,7 +94,7 @@ class VenueSearch extends Component {
             }
         };
 
-        let res = await this.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
+        let res  = await helpers.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
         let allVenuesForLocation = await res.json();
 
         this.setState({
@@ -145,7 +113,7 @@ class VenueSearch extends Component {
             }
         };
 
-        const res = await this.instrumentCall(`/show-finder/user-venues${location ? `?location=${location}` : ""}`, getOptions);
+        const res = await helpers.instrumentCall(`/show-finder/user-venues${location ? `?location=${location}` : ""}`, getOptions);
         const venueIdsObj = await res.json();
 
         return venueIdsObj;
@@ -187,7 +155,7 @@ class VenueSearch extends Component {
             body: JSON.stringify({ selectedVenues: postBody })
         };
 
-        let res = await this.instrumentCall(`/show-finder/shows`, postOptions);
+        let res = await helpers.instrumentCall(`/show-finder/shows`, postOptions);
         let showDatesByService = await res.json();
         let showsByDate = showDatesByService["seatgeek"];
 
@@ -216,7 +184,7 @@ class VenueSearch extends Component {
             body: JSON.stringify(postBody)
         };
 
-        let res = await this.instrumentCall("/show-finder/save-venues", postOptions);
+        let res = await helpers.instrumentCall("/show-finder/save-venues", postOptions);
         if (res.status === 204) {
             this.setState({
                 saveSuccess: true,
@@ -256,7 +224,7 @@ class VenueSearch extends Component {
                     <option key="defaultLocation" value="defaultLocation" disabled defaultValue>
                         {this.defaultLocationLabel}
                     </option>
-                    {this.locations.map(x => (
+                    {helpers.locations.map(x => (
                         <option key={x.value} value={x.value}>
                             {x.displayName}
                         </option>

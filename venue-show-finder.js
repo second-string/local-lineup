@@ -28,7 +28,14 @@ async function getVenues(location, db) {
 async function getShowsForVenues(venues) {
     let showsByVenueId = {};
     if (venues.seatgeek) {
-        showsByVenueId['seatgeek'] = await getSeatGeekShows(venues.seatgeek);
+        const resObj = await getSeatGeekShows(venues.seatgeek);
+        if (resObj.success) {
+            showsByVenueId['seatgeek'] = resObj.response;
+        } else {
+            console.error("Failure getting shows for seatgeek, returning empty list for showsByVenueId['seatgeek']. Error: ");
+            console.error(resObj.response);
+            showsByVenueId['seatgeek'] = [];
+        }
     }
 
     return showsByVenueId;

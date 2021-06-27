@@ -1,3 +1,5 @@
+import * as helpers from "./Helpers.js";
+
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import ReactList from "react-list-select";
@@ -23,40 +25,6 @@ class SpotifySearch extends Component {
 
   state = {};
 
-  locations = [
-    { value: "san francisco", displayName: "San Francisco" },
-    { value: "los angeles", displayName: "Los Angeles" },
-    { value: "washington", displayName: "Washington DC" },
-    { value: "new york", displayName: "New York" },
-    { value: "denver", displayName: "Denver" },
-    { value: "chicago", displayName: "Chicago" },
-    { value: "boston", displayName: "Boston" },
-    { value: "austin", displayName: "Austin" },
-    { value: "houston", displayName: "Houston" },
-    { value: "charlotte", displayName: "Charlotte" },
-    { value: "philadelphia", displayName: "Philadelphia" }
-  ];
-
-  async instrumentCall(url, options) {
-    let res;
-    try {
-      res = await fetch(url, options);
-    } catch (e) {
-      console.log(e);
-      throw new Error(e);
-    }
-
-    if (res.status >= 400) {
-      console.log(`ERROR contacting ${url} with options:`);
-      console.log(options);
-      console.log("Reponse: ");
-      console.log(res);
-      // throw new Error(res);
-    }
-
-    return res;
-  }
-
   constructor(props) {
     super(props);
 
@@ -70,7 +38,7 @@ class SpotifySearch extends Component {
   }
 
   componentDidMount() {
-    this.setState({ locations: this.locations });
+    this.setState({ locations: helpers.locations });
   }
 
   resetState(overrides) {
@@ -80,7 +48,7 @@ class SpotifySearch extends Component {
 
   newSearch = () => {
     this.resetState({
-      locations: this.locations,
+      locations: helpers.locations,
       selectedLocation: this.state.selectedLocation,
       playlistNamesById: this.state.playlistNamesById,
       firstPageLoad: false,
@@ -114,7 +82,7 @@ class SpotifySearch extends Component {
       headerText: "Fetching playlists..."
     });
 
-    let res = await this.instrumentCall("/show-finder/playlists", postOptions);
+    let res = await helpers.instrumentCall("/show-finder/playlists", postOptions);
     let playlistNamesById = await res.json();
 
     this.setState({ playlistNamesById });
@@ -142,7 +110,7 @@ class SpotifySearch extends Component {
       headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`
     });
 
-    let res = await this.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
+    let res = await helpers.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
     let artistJson = await res.json();
     let decodedArtists = [];
     for (let index in Object.keys(artistJson)) {
@@ -191,7 +159,7 @@ class SpotifySearch extends Component {
       headerText: "Searching for shows..."
     });
     // list of { artistName, shows[] } objects
-    let showsJson = await this.instrumentCall("/show-finder/shows", postOptions);
+    let showsJson = await helpers.instrumentCall("/show-finder/shows", postOptions);
     let shows = await showsJson.json();
 
     // shows.length is actually a count of number of artists returned

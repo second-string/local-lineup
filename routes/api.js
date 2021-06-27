@@ -156,13 +156,10 @@ function setRoutes(routerDependencies) {
         }
         */
         if (req.body.selectedVenues) {
-            let showsByDate = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
-            if (showsByDate.ok !== undefined && !showsByDate.ok) {
-                console.log(`Call to get shows for selected venues failed with status ${showsByDate.status}`);
-                return res.status(showsByDate.status).json(showsByDate);
-            }
-
-            return res.json(showsByDate);
+            // Error handled internally, lists will just be empty if there was failure
+            const showDatesByService = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
+            console.log(showDatesByService);
+            return res.json(showDatesByService);
         }
 
         // No query param, need to group artist by id to be
