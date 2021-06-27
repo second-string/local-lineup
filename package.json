@@ -24,7 +24,6 @@
     "cheerio": "^1.0.0-rc.2",
     "concurrently": "^6.2.0",
     "cookie-parser": "^1.4.4",
-    "dotenv": "^6.0.0",
     "email-templates": "^8.0.7",
     "express": "^4.16.4",
     "form-urlencoded": "^3.0.0",

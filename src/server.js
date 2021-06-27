@@ -35,10 +35,10 @@ app.use(cookieParser());
 
 let baseStaticDir = "";
 if (process.env.DEPLOY_STAGE === "PROD") {
-    baseStaticDir = path.join(__dirname, "client/build");
+    baseStaticDir = path.join(__dirname, "..", "client", "build");
 } else {
     // webpack dev server
-    baseStaticDir = path.join(__dirname, "client/devBuild");
+    baseStaticDir = path.join(__dirname, "..", "client", "devBuild");
 }
 
 const static = path.join(baseStaticDir, "static");
