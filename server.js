@@ -1,5 +1,4 @@
 const express      = require("express");
-const http         = require("http");
 const https        = require("https");
 const morgan       = require("morgan");
 const path         = require("path");
@@ -62,18 +61,6 @@ const routerDependencies = {
 app.use(apiRouter(routerDependencies));
 app.use(pageRouter(routerDependencies));
 
-// Forward any http to https (might be irrelevant with the nginx reverse proxy)
-app.use((req, res, next) => {
-    // https://expressjs.com/en/api.html#req.secure
-    if (req.headers["x-forwarded-proto"] === "http" || !req.secure) {
-        let path =
-            req.route === undefined ? "" : req.route.path;  // https redirection working, but not the rebuild of the url
-        return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
-    }
-
-    return next();
-});
-
 // HTTPS certs
 var creds = {};
 if (process.env.DEPLOY_STAGE === "PROD") {
@@ -93,16 +80,12 @@ if (process.env.DEPLOY_STAGE === "PROD") {
     creds    = {key : key, cert : cert};
 }
 
-var httpServer  = http.createServer(app);
 var httpsServer = https.createServer(creds, app);
 
-httpServer.on("error", e => console.log(e));
 httpsServer.on("error", e => console.log(e));
 
 if (process.env.DEPLOY_STAGE === "PROD") {
-    httpServer.listen(8080);
-    httpsServer.listen(port, () => console.log(`http redirecting from 8080 to 8443, https listening on ${port}...`));
+    httpsServer.listen(port, () => console.log(`https listening on ${port}...`));
 } else {
-    httpServer.listen(80);
-    httpsServer.listen(port, () => console.log(`http redirecting from 80 to 443, https listening on ${port}...`));
+    httpsServer.listen(port, () => console.log(`https listening on ${port}...`));
 }
