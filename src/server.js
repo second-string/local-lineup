@@ -25,7 +25,7 @@ fs.mkdir("logs", err => {
         throw err;
     }
 });
-let requestLogStream = fs.createWriteStream(path.join(__dirname, "logs", "requests.log"), {flags : "a"});
+let requestLogStream = fs.createWriteStream(path.join(__dirname,  "..", "logs", "requests.log"), {flags : "a"});
 app.use(morgan(
     '[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent',
     {stream : requestLogStream}));
@@ -75,14 +75,14 @@ if (process.env.DEPLOY_STAGE === "PROD") {
     creds    = {key : key, cert : cert, ca : ca};
 } else {
     console.log("Running server locally using local self-signed cert");
-    var key  = fs.readFileSync(__dirname + "/showfinder-selfsigned-key.pem", "utf-8");
-    var cert = fs.readFileSync(__dirname + "/showfinder-selfsigned-cert.pem", "utf-8");
+    var key  = fs.readFileSync(__dirname + "/../showfinder-selfsigned-key.pem", "utf-8");
+    var cert = fs.readFileSync(__dirname + "/../showfinder-selfsigned-cert.pem", "utf-8");
     creds    = {key : key, cert : cert};
 }
 
 var httpsServer = https.createServer(creds, app);
 
-httpsServer.on("error", e => console.log(e));
+httpsServer.on("error", e => console.error(e));
 
 if (process.env.DEPLOY_STAGE === "PROD") {
     httpsServer.listen(port, () => console.log(`https listening on ${port}...`));
