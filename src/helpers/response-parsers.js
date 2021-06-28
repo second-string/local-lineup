@@ -1,4 +1,4 @@
-function parseBandsInTownResponse(responseBody, location) {
+export function parseBandsInTownResponse(responseBody, location) {
     if (typeof responseBody === "string" && responseBody.includes("{warn=Not found}")) {
         return null;
     }
@@ -29,7 +29,7 @@ function parseBandsInTownResponse(responseBody, location) {
     return shows.length === 0 ? null : shows;
 }
 
-function parseSongkickResponse(responseBody, location) {
+export function parseSongkickResponse(responseBody, location) {
     if (responseBody.resultsPage.totalEntries !== 0) {
         let eventList = responseBody.resultsPage.results.event;
         let shows     = eventList.filter(x => x.location.city.toLowerCase().includes(location))
@@ -42,7 +42,7 @@ function parseSongkickResponse(responseBody, location) {
 }
 
 // param is a list of { artistId: int, queryResponse: http response object }
-function parseSongkickArtistsResponse(responseList) {
+export function parseSongkickArtistsResponse(responseList) {
     let artistObjects = [];
     for (let promiseObject of responseList) {
         let responseObject = promiseObject.queryResponse;
@@ -72,7 +72,7 @@ function parseSongkickArtistsResponse(responseList) {
     return artistObjects;
 }
 
-function parseSeatGeekResponse(responseBody, location) {
+export function parseSeatGeekResponse(responseBody, location) {
     if (responseBody.meta.total === 0) {
         return null;
     }
@@ -94,7 +94,7 @@ function parseSeatGeekResponse(responseBody, location) {
     return shows.length === 0 ? null : shows;
 }
 
-function parseSeatGeekArtistsResponse(responseList) {
+export function parseSeatGeekArtistsResponse(responseList) {
     let artistObjects = [];
     for (let promiseObject of responseList) {
         let responseObject = promiseObject.queryResponse;
@@ -116,11 +116,3 @@ function parseSeatGeekArtistsResponse(responseList) {
 
     return artistObjects;
 }
-
-module.exports = {
-    parseBandsInTownResponse,
-    parseSongkickResponse,
-    parseSongkickArtistsResponse,
-    parseSeatGeekResponse,
-    parseSeatGeekArtistsResponse
-};
