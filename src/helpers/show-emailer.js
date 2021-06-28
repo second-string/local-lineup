@@ -1,9 +1,9 @@
-const nodemailer = require("nodemailer");
-const Email      = require('email-templates');
+import nodemailer from "nodemailer";
+import Email from 'email-templates';
 
-const venueShowSearch = require('../venue-show-finder');
+import venueShowSearch from '../venue-show-finder';
 
-async function sendShowsEmail(userObj, shows, startDate, endDate) {
+export async function sendShowsEmail(userObj, shows, startDate, endDate) {
     if (userObj === null || userObj === undefined) {
         console.log('Must provide user object to retrieve selected venues and send upcoming shows');
         return -1;
@@ -51,5 +51,3 @@ async function sendShowsEmail(userObj, shows, startDate, endDate) {
             return -1
         });
 }
-
-module.exports = {sendShowsEmail};
