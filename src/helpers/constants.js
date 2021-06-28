@@ -1,5 +1,5 @@
+export const clientId: String = process.env.CLIENT_ID;
 module.exports = {
-    clientId : process.env.CLIENT_ID,
     clientSecret : process.env.CLIENT_SECRET,
     // spotifyUserId : process.env.SPOTIFY_USERNAME,
     bandsInTownSecret : process.env.BANDS_IN_TOWN_SECRET,

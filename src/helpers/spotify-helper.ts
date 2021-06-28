@@ -1,9 +1,9 @@
 // import * as constants from "./constants";
-// import * as helpers   from "./helpers";
+import * as helpers from "./helpers";
 // const constants = require("./constants");
 // const helpers = require("./helpers");
 
-// export const testvar: boolean = true;
+export const testvar: boolean = true;
 
 // export async function getPlaylists(spotifyToken, userUid) {
 //     console.log("Getting playlists...");
