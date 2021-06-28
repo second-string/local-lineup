@@ -1,6 +1,6 @@
-const helpers   = require("../helpers/helpers");
-const dbHelpers = require("../helpers/db-helpers");
-const constants = require("../helpers/constants");
+import * as helpers   from "../helpers/helpers";
+import * as dbHelpers from "../helpers/db-helpers";
+import * as constants from "../helpers/constants";
 
 /*
 Sample venue object

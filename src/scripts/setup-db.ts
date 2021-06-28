@@ -1,15 +1,15 @@
-const sqlite          = require('sqlite3');
-const path            = require('path');
+import * as path   from 'path';
+import * as sqlite from 'sqlite3';
+
 const {promises : fs} = require('fs');
 
-const dbHelpers = require('../helpers/db-helpers');
+import * as dbHelpers from '../helpers/db-helpers';
 
 const venueListDb     = 'user_venues.db';
-const venueListDbPath = path.join('..', venueListDb);
 const migrationsDir   = '../migrations';
 const dbBacksupsDir   = '../db_backups';
-
-const db = dbHelpers.openDb(venueListDbPath);
+const venueListDbPath = path.join('..', venueListDb);
+const db              = dbHelpers.openDb(venueListDbPath);
 
 async function migrate() {
     try {
@@ -70,7 +70,7 @@ async function migrate() {
             console.log(`Running migrations for ${migrationObj.filename}`);
             const statements = migrationObj.statements;
             for (const statement of statements) {
-                db.run(statement, dbHelpers.handleErr);
+                db.run(statement);
             }
         }
 
