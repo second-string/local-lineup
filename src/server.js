@@ -60,8 +60,7 @@ const routerDependencies = {
 };
 
 app.use(apiRouter.setRoutes(routerDependencies));
-app.use(pageRouter(routerDependencies));
-// app.use(pageRouter.setRoutes(routerDependencies));
+app.use(pageRouter.setRoutes(routerDependencies));
 
 // HTTPS certs
 var creds = {};

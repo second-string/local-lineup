@@ -1,17 +1,17 @@
-const crypto      = require("crypto");
-const express     = require("express");
-const sqlite      = require("sqlite3");
-const uuid        = require("uuid/v4");
-const jwt         = require("jsonwebtoken");
-const querystring = require("querystring");
+import * as crypto from "crypto";
+import express from "express";
+import jwt from "jsonwebtoken";
+import * as querystring from "querystring";
+import * as sqlite      from "sqlite3";
+import uuid from "uuid/v4";
 
-const constants  = require("../helpers/constants");
-const showFinder = require("../show-finder");
-const helpers    = require("../helpers/helpers");
+import * as constants  from "../helpers/constants";
+import * as helpers    from "../helpers/helpers";
+import * as showFinder from "../show-finder";
 
 const loggedOutPaths = [ "/", "/login", "/spotify-auth", "/token-auth", "/show-finder/delete-venues" ];
 
-async function authenticate(userDb, req, res, next) {
+export async function authenticate(userDb, req, res, next) {
     if (loggedOutPaths.filter(x => req.path === x).length > 0 || req.path.startsWith("/static")) {
         return next();
     }
@@ -47,7 +47,7 @@ async function authenticate(userDb, req, res, next) {
     }
 }
 
-async function login(req, res) {
+export async function login(req, res) {
     const rootHost    = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
     const scopes      = "user-read-email user-library-read playlist-read-private playlist-modify-private";
@@ -61,14 +61,14 @@ async function login(req, res) {
     }));
 }
 
-async function logout(req, res) {
+export async function logout(req, res) {
     res.cookie("show-finder-token", "", {maxAge : 0}).redirect("/");
 }
 
 // Function called from our react code to handle showing different page states for logged-in users. Only necessary
 // for pages shown to non-logged-in users that you want to display differently for logged-in (i.e. hiding a login
 // button)
-async function tokenAuth(db, req, res) {
+export async function tokenAuth(db, req, res) {
     // Just 'token' key because it's what we're manually sending from inside our react homepage
     let reqToken = req.body.token;
 
@@ -101,7 +101,7 @@ async function tokenAuth(db, req, res) {
 }
 
 // Redirect function passed to spotify.com's auth to handle getting the access/refresh tokens and storing them
-async function spotifyLoginCallback(db, req, res) {
+export async function spotifyLoginCallback(db, req, res) {
     let code  = req.query.code;
     let state = req.query.state;
     if (code === undefined && req.query.error) {
@@ -143,7 +143,7 @@ async function spotifyLoginCallback(db, req, res) {
         headers : {"Content-type" : "application/json", Authorization : "Bearer " + access}
     };
 
-    ({success, response} = await helpers.instrumentCall("https://api.spotify.com/v1/me", getOptions));
+    ({success, response} = await helpers.instrumentCall("https://api.spotify.com/v1/me", getOptions, false));
     if (!success) {
         console.error(response);
         throw new Error("Error getting user account using access token");
@@ -183,11 +183,3 @@ async function getHashInfo(password, salt, iterations) {
         });
     });
 }
-
-module.exports = {
-    authenticate,
-    login,
-    logout,
-    tokenAuth,
-    spotifyLoginCallback
-};
