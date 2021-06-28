@@ -1,12 +1,11 @@
-const sqlite = require("sqlite3");
-const fetch  = require("node-fetch");
+import fetch from "node-fetch";
 
-const venueShowSearch = require("../venue-show-finder");
-const showFinder      = require("../show-finder");
-const dbHelpers       = require("../helpers/db-helpers");
-const helpers         = require("../helpers/helpers");
+import venueShowSearch from "../venue-show-finder";
+import showFinder from "../show-finder";
+import dbHelpers from "../helpers/db-helpers";
+import helpers from "../helpers/helpers";
 
-async function buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners) {
+export async function buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners) {
     if (userObj === null || userObj === undefined || shows === null || shows === undefined) {
         console.log("Must provide userObj and shows list to build spotify playlist");
         return -1;
@@ -188,6 +187,8 @@ async function refreshSpotifyToken(db, userObj) {
         body : `grant_type=refresh_token&refresh_token=${encodeURIComponent(userObj.SpotifyRefreshToken)}`
     };
 
+    // TODO switch this fetch to instrumentcall?
+    //
     let responseJson = await fetch("https://accounts.spotify.com/api/token", postOptions);
     let response     = await responseJson.json();
 
@@ -198,5 +199,3 @@ async function refreshSpotifyToken(db, userObj) {
 function baseSpotifyHeaders(method, spotifyToken) {
     return {method : method, headers : {"Content-type" : "application/json", Authorization : "Bearer " + spotifyToken}};
 }
-
-module.exports = {buildPlaylist};
