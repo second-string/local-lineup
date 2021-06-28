@@ -1,26 +1,26 @@
-const express = require("express");
-const router  = express.Router();
+import * as express from "express";
+const router = express.Router();
 
-const authHandler     = require("./auth-handler");
-const showFinder      = require("../show-finder");
-const venueShowSearch = require("../venue-show-finder");
-const dbHelpers       = require("../helpers/db-helpers");
-const constants       = require("../helpers/constants");
-const helpers         = require("../helpers/helpers");
+import * as authHandler     from "./auth-handler";
+import * as showFinder      from "../show-finder";
+import * as venueShowSearch from "../venue-show-finder";
+import * as dbHelpers       from "../helpers/db-helpers";
+import * as constants       from "../helpers/constants";
+import * as helpers         from "../helpers/helpers";
+import * as spotifyHelper   from "../helpers/spotify-helper";
 
-const spotifyHelper = require("../helpers/spotify-helper");
-// import * as spotifyHelper from "../helpers/spotify-helper";
-
-function setRoutes(routerDependencies) {
-    const db = routerDependencies.db;
+export function setRoutes(routerDependencies) {
+    const db           = routerDependencies.db;
+    const staticAppDir = routerDependencies.baseStaticDir;
 
     router.post("/logout", (req, res) => authHandler.logout(req, res));
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
     router.post("/show-finder/playlists", async (req, res) => {
         const spotifyToken = req.userObj.SpotifyAccessToken;
-        let playlists      = await showFinder.getPlaylists(spotifyToken, req.userObj.SpotifyUsername, req.userObj.Uid);
-        // let playlists      = await spotifyHelper.getPlaylists(spotifyToken, req.userObj.SpotifyUsername, req.userObj.Uid);
+        let playlists      = await showFinder.getPlaylists(spotifyToken, req.userObj.Uid);
+        // let playlists      = await spotifyHelper.getPlaylists(spotifyToken, req.userObj.SpotifyUsername,
+        // req.userObj.Uid);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -44,10 +44,10 @@ function setRoutes(routerDependencies) {
             artists = await showFinder.getArtists(spotifyToken, req.query.playlistId, req.userObj.Uid);
         }
 
-        if (artists.ok !== undefined && !artists.ok) {
-            console.log(`Call to get artists for playlist failed with status ${artists.status}`);
-            return res.status(artists.status).json(artists);
-        }
+        // if (artists.ok !== undefined && !artists.ok) {
+        //     console.log(`Call to get artists for playlist failed with status ${artists.status}`);
+        //     return res.status(artists.status).json(artists);
+        // }
 
         res.json(artists);
     });
@@ -131,7 +131,7 @@ function setRoutes(routerDependencies) {
             return res.status(500).send("Error unsubscribing user");
         }
 
-        return res.sendFile("email-delete-success.html", {root : static_app_dir});
+        return res.sendFile("email-delete-success.html", {root : staticAppDir});
     });
 
     router.post("/show-finder/shows", async (req, res) => {
@@ -154,9 +154,9 @@ function setRoutes(routerDependencies) {
                 Object.keys(allServicesResponse)
                     .filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
                     .map(x => ({
-                            artistName : decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
-                            shows : allServicesResponse[x]
-                        }));
+                             artistName : decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
+                             shows : allServicesResponse[x]
+                         }));
 
             console.log(
                 `Successfully fetched and bundled shows for ${Object.keys(mappedArtistsToShows).length} total artists`);
@@ -189,5 +189,3 @@ function setRoutes(routerDependencies) {
 
     return router;
 }
-
-module.exports = setRoutes;

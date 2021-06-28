@@ -58,8 +58,10 @@ const routerDependencies = {
     db,
     baseStaticDir
 };
-app.use(apiRouter(routerDependencies));
+
+app.use(apiRouter.setRoutes(routerDependencies));
 app.use(pageRouter(routerDependencies));
+// app.use(pageRouter.setRoutes(routerDependencies));
 
 // HTTPS certs
 var creds = {};
