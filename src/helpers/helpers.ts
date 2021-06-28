@@ -1,9 +1,10 @@
-import  fetch         = require("node-fetch");
-var formUrlEncode = require("form-urlencoded").default;
-const constants   = require("../helpers/constants");
+import formurlencoded from "form-urlencoded";
+import fetch from "node-fetch";
+import * as constants from "./constants";
 
-var spotifyAuth = () => "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
-var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
+export var spotifyAuth = () =>
+    "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
+export var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
 function requestError(response, exception = null) {
     console.log("REQUEST ERROR");
@@ -32,7 +33,7 @@ async function refreshSpotifyToken() {
     return success ? response.access_token : response;
 }
 
-function baseSpotifyHeaders(method, spotifyToken) {
+export function baseSpotifyHeaders(method, spotifyToken) {
     return {
         method,
         headers : {
@@ -44,7 +45,7 @@ function baseSpotifyHeaders(method, spotifyToken) {
 }
 
 // Enables other logic to get spotify information without having to store and handle refreshing the token themselves
-async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, logCurl) {
+export async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, db, logCurl) {
     let options = baseSpotifyHeaders(method, spotifyToken);
 
     let {success, response} = await instrumentCall(url, options, logCurl);
@@ -102,7 +103,7 @@ async function fetchWithBackoffAndTimeout(url, options, timeout) {
     return unparsedRes;
 }
 
-async function instrumentCall(url, options, logCurl) {
+export async function instrumentCall(url, options, logCurl) {
     let parsedRes;
     let error       = null;
     let encodedBody = "";
@@ -118,7 +119,7 @@ async function instrumentCall(url, options, logCurl) {
                     encodedBody = JSON.stringify(options.body);
                     break;
                 case "application/x-www-form-urlencoded":
-                    encodedBody = formUrlEncode(options.body);
+                    encodedBody = formurlencoded(options.body);
                     break;
                 default:
                     throw new Error(`Need to supply a data encoded for ${JSON.stringify(options.body, null, 2)}`);
@@ -174,7 +175,7 @@ async function instrumentCall(url, options, logCurl) {
 }
 
 // Compare dates agnostic of times
-function datesEqual(dateString1, dateString2) {
+export function datesEqual(dateString1, dateString2) {
     // The date will come as ms since epoch from foopee scrape but a datetime string from the other two
     let date1 = new Date(dateString1);
     let date2 = new Date(dateString2);
@@ -182,7 +183,7 @@ function datesEqual(dateString1, dateString2) {
            date1.getUTCDate() === date2.getUTCDate();
 }
 
-function getUTCDate(inputDate) {
+export function getUTCDate(inputDate) {
     let date = new Date(inputDate);
     return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0);
 }
@@ -190,9 +191,9 @@ function getUTCDate(inputDate) {
 function addDedupedShows(previouslyAddedShows, newArtistShowList) {
     // If you set this to previouslyAddedShows directly does js do a shallow copy or are we dealing with pointers?
     let dedupedShows = [].concat(previouslyAddedShows);
-    for (i in newArtistShowList) {
+    for (const i in newArtistShowList) {
         let dupeDate = false;
-        for (j in previouslyAddedShows) {
+        for (const j in previouslyAddedShows) {
             if (datesEqual(newArtistShowList[i].date, previouslyAddedShows[j].date)) {
                 dupeDate = true;
                 break;
@@ -209,14 +210,14 @@ function addDedupedShows(previouslyAddedShows, newArtistShowList) {
 
 // adapted from perf solution of this answer https://stackoverflow.com/a/9229821.
 // Does not remove shows in-place from list but reassigns new list after deduping
-function dedupeShows(showsByArtistId) {
+export function dedupeShows(showsByArtistId) {
     for (let key of Object.keys(showsByArtistId)) {
         let showList        = showsByArtistId[key];
         let dedupedShowList = [];
 
         // 'set' used for hash lookups on dates to dedupe
         let dates = {};
-        for (showObj of showList) {
+        for (const showObj of showList) {
             let standardDate = getUTCDate(showObj.date);
             if (dates[standardDate] !== 1) {
                 dates[standardDate] = 1;
@@ -228,18 +229,6 @@ function dedupeShows(showsByArtistId) {
     }
 }
 
-async function sleep(ms, timeoutValue) {
+async function sleep(ms, timeoutValue?: any) {
     return new Promise((resolve) => setTimeout(() => resolve(timeoutValue || null), ms));
 }
-
-module.exports = {
-    spotifyAuth,
-    seatGeekAuth,
-    baseSpotifyHeaders,
-    autoRetrySpotifyCall,
-    instrumentCall,
-    datesEqual,
-    dedupeShows,
-    getUTCDate,
-    // sleep
-};
