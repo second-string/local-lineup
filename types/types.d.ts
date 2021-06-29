@@ -1,11 +1,23 @@
-import {Database} from "sqlite3";
+interface DbUser {
+    Uid: string;
+    Email: string;
+    SpotifyUsername: string;
+    FullName: string;
+    SpotifyAccessToken: string;
+    SpotifyRefreshToken: string;
+}
 
-declare module "sqlite3" {
-    export interface Database {
-        testnum: number;
-        getAsync(sql: string, params?: any): Promise<any>;
-        runAsync(sql: string, params?: any): Promise<any>;
-        allAsync(sql: string, params?: any): Promise<any>;
-        trace(): Promise<void>;
-    }
+interface DbVenueList {
+    UserUid: string;
+    Location: string;
+    VenueIds: string;
+    SongsPerArtist: number;
+    IncludeOpeners: boolean;
+}
+
+interface DbVenue {
+    Id: number;
+    Location: string;
+    Name: string;
+    TicketUrl: string;
 }

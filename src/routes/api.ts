@@ -38,7 +38,7 @@ export function setRoutes(routerDependencies) {
 
         // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
         let artists = [];
-        if (parseInt(req.query.playlistId, 10) === constants.user_library_playlist_id) {
+        if (parseInt(req.query.playlistId as string, 10) === constants.user_library_playlist_id) {
             artists = await showFinder.getLikedSongsArtists(spotifyToken, req.userObj.Uid);
         } else {
             artists = await showFinder.getArtists(spotifyToken, req.query.playlistId, req.userObj.Uid);
@@ -58,9 +58,9 @@ export function setRoutes(routerDependencies) {
         }
 
         let venues = await venueShowSearch.getVenues(req.query.city, db);
-        if (venues.ok !== undefined && !venues.ok) {
-            console.log(`Call to get venues for ${req.query.city} failed with status ${venues.status}`);
-            return res.status(venues.status).json(venues);
+        if (venues === undefined) {
+            console.log(`Call to get venues for ${req.query.city} failed`);
+            return res.status(500).json(venues);
         }
 
         res.json(venues);
@@ -84,14 +84,22 @@ export function setRoutes(routerDependencies) {
         VALUES (?, ?, ?, ?, ?);
         `;
 
+        const upsertVenueList: DbVenueList = {
+            UserUid : req.userObj.Uid,
+            VenueIds : venueIds.join(","),
+            Location : req.body.location,
+            SongsPerArtist : parseInt(req.body.songsPerArtist, 10),
+            IncludeOpeners : req.body.includeOpeners as boolean
+        };
+
         let upsert;
         try {
             upsert = await db.runAsync(upsertSql, [
-                req.userUid,
-                venueIds.join(","),
-                req.body.location,
-                req.body.songsPerArtist,
-                req.body.includeOpeners
+                upsertVenueList.UserUid,
+                upsertVenueList.VenueIds,
+                upsertVenueList.Location,
+                upsertVenueList.SongsPerArtist,
+                upsertVenueList.IncludeOpeners,
             ]);
         } catch (e) {
             console.log(e);
@@ -110,7 +118,7 @@ export function setRoutes(routerDependencies) {
 
         // Can't pull userObj from req object here like we normally do since this is an unauthed endpoint to allow unsub
         // from email
-        let userObj = await db.getAsync(`SELECT * FROM Users WHERE Uid=?`, req.query.uid);
+        let userObj: DbUser = await db.getAsync(`SELECT * FROM Users WHERE Uid=?`, req.query.uid);
         if (userObj === undefined) {
             return res.status(404).send("User not found");
         }
@@ -169,15 +177,15 @@ export function setRoutes(routerDependencies) {
     router.get("/show-finder/user-venues", async (req, res) => {
         // Support querying for a specific location for this user if they have multiple
         // Allows us to keep populating their different venue lists as they switch locations
-        let venueListObj = null;
+        let venueListObj: DbVenueList = null;
         if (req.query.location) {
             venueListObj = await db.getAsync(
                 `SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=? AND Location=?`,
-                [ req.userUid, req.query.location ]);
+                [ req.userObj.Uid, req.query.location ]);
         } else {
             venueListObj = await db.getAsync(
                 `SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=?`,
-                [ req.userUid ]);
+                [ req.userObj.Uid ]);
         }
 
         if (venueListObj === undefined) {

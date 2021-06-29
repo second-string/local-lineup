@@ -4,7 +4,7 @@ import * as helpers   from './helpers/helpers';
 var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
 
 export async function getVenues(location, db) {
-    const venueObjs = await db.allAsync('SELECT * FROM Venues WHERE Location=?', [ location ]);
+    const venueObjs: DbVenue[] = await db.allAsync('SELECT * FROM Venues WHERE Location=?', [ location ]);
     if (!venueObjs) {
         return {};
     }

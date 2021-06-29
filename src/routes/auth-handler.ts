@@ -33,7 +33,7 @@ export async function authenticate(userDb, req, res, next) {
         return res.redirect(401, "/");
     }
 
-    const userObj = await userDb.getAsync(`SELECT * FROM Users WHERE Uid=?`, [ token.userUid ]);
+    const userObj: DbUser = await userDb.getAsync(`SELECT * FROM Users WHERE Uid=?`, [ token.userUid ]);
 
     if (userObj === undefined) {
         console.log(`Got no user obj from db from jwt decoded token ${token.userUid}, redirecting to /`);
