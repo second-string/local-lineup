@@ -42,8 +42,8 @@ async function main() {
                 {})
         };
 
-        let startDate = getStartDate();
-        let endDate   = new Date(startDate);
+        let startDate: Date = getStartDate();
+        let endDate         = new Date(startDate);
         endDate.setDate(endDate.getDate() + 7);
 
         let services = await venueShowSearch.getShowsForVenues(venues);
@@ -54,9 +54,11 @@ async function main() {
         // We get back every upcoming show by date string for each venue,
         // parse them as real dates and rebuild objects with user-facing date strings
         let showsByDate = Object.keys(services.seatgeek)
-                              .filter(x => Date.parse(x) >= startDate && Date.parse(x) <= endDate)
+                              .filter(x => Date.parse(x) >= startDate.valueOf() && Date.parse(x) <= endDate.valueOf())
                               .reduce((obj, dateString) => {
-                                  let dateStringOptions = {weekday : "long", month : "long", day : "numeric"};
+                                  // 'as const' append hack for tsc:
+                                  // https://stackoverflow.com/questions/66590691/typescript-type-string-is-not-assignable-to-type-numeric-2-digit-in-d
+                                  let dateStringOptions = {weekday : "long", month : "long", day : "numeric"} as const;
 
                                   obj[new Date(dateString).toLocaleDateString("en-US", dateStringOptions)] =
                                       services.seatgeek[dateString];
@@ -77,7 +79,7 @@ async function main() {
         let playlistPromise = new Promise(async (resolve, reject) => {
             // Flatten showsByDate into one list of shows for the playlist builder
             let shows = [];
-            if (showsByDate && showsByDate.length > 0) {
+            if (showsByDate && Object.keys(showsByDate).length > 0) {
                 shows = Object.keys(showsByDate).flatMap(x => showsByDate[x]);
             }
 
@@ -152,7 +154,7 @@ async function main() {
 }
 
 // return a date 7 days from now with all time elements zeroed
-function getStartDate() {
+function getStartDate(): Date {
     let d = new Date();
     d.setDate(d.getDate() + 7);
     d.setHours(0);

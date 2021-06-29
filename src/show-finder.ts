@@ -1,18 +1,18 @@
-var fs = require("fs");
+import * as fs from "fs";
 
-var inquirer  = require("inquirer");
-var constants = require("./helpers/constants");
-var helpers   = require("./helpers/helpers");
-var parsers   = require("./helpers/response-parsers");
-var foopee    = require("./scripts/foopee-scrape");
+import * as constants from "./helpers/constants";
+import * as helpers   from "./helpers/helpers";
+import * as parsers   from "./helpers/response-parsers";
+import * as foopee    from "./scripts/foopee-scrape";
 
-async function getPlaylists(spotifyToken, userUid) {
+export async function getPlaylists(spotifyToken, userUid) {
     console.log("Getting playlists...");
     let {success, response} =
         await helpers.autoRetrySpotifyCall(spotifyToken,
                                            `https://api.spotify.com/v1/users/${userUid}/playlists`,
                                            "GET",
                                            userUid,
+                                           null,
                                            false);
     if (!success) {
         return response;
@@ -22,14 +22,14 @@ async function getPlaylists(spotifyToken, userUid) {
     response.items.forEach(x => (playlistNamesById[x.id] = x.name));
 
     // Shove a fake playlist in there for the users liked songs
-    playlistNamesById[constants.user_library_playlist_id] = "All Liked Songs";
+    playlistNamesById[constants.user_library_playlist_id.toString()] = "All Liked Songs";
 
     return playlistNamesById;
 }
 
-async function getArtists(spotifyToken, playlistId, userUid) {
-    let page    = {};
-    let artists = [];
+export async function getArtists(spotifyToken, playlistId, userUid) {
+    let page: any = {};
+    let artists   = [];
     console.log("Getting artists...");
     do {
         let {success, response} =
@@ -37,6 +37,7 @@ async function getArtists(spotifyToken, playlistId, userUid) {
                                                page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
                                                "GET",
                                                userUid,
+                                               null,
                                                false);
         if (!success) {
             return response;
@@ -52,13 +53,13 @@ async function getArtists(spotifyToken, playlistId, userUid) {
     } while (page.next != null);
 
     // Filter out duplicates
-    hasSeen = {};
+    let hasSeen = {};
     return artists.reduce((x, y) => x.concat(y)).filter(x => (hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true)));
 }
 
-async function getLikedSongsArtists(spotifyToken, userUid) {
-    let page  = {};
-    let songs = [];
+export async function getLikedSongsArtists(spotifyToken, userUid) {
+    let page: any = {};
+    let songs     = [];
     console.log("Getting all liked tracks to parse out artists from...");
     do {
         let {success, response} =
@@ -66,6 +67,7 @@ async function getLikedSongsArtists(spotifyToken, userUid) {
                                                page.next || `https://api.spotify.com/v1/me/tracks`,
                                                "GET",
                                                userUid,
+                                               null,
                                                false);
         if (!success) {
             return response;
@@ -81,12 +83,12 @@ async function getLikedSongsArtists(spotifyToken, userUid) {
     } while (page.next != null);
 
     // Filter out duplicates
-    hasSeen = {};
+    let hasSeen = {};
     return songs.reduce((x, y) => x.concat(y)).filter(x => (hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true)));
 }
 
 // artists param is list of { id, name }, location is lowercased basic city string
-async function getShows(artists, location) {
+export async function getAllShows(artists, location) {
     // Eventual return value (ish). Object with key of artist ID (int) and value of a list of { date: DateTime, show:
     // string }
     let showsByArtistId     = {};
@@ -221,7 +223,7 @@ async function getSeatGeekShows(artists, location, showsByArtistId) {
 async function getFoopeeShows(artists, location, showsByArtistId) {
     console.log("Getting foopee artist shows...");
     let foopeeShows = await foopee.getFoopeeShows(artists);
-    for (foopeeObject of foopeeShows) {
+    for (const foopeeObject of foopeeShows) {
         if (showsByArtistId[foopeeObject.id]) {
             showsByArtistId[foopeeObject.id] = showsByArtistId[foopeeObject.id].concat(foopeeObject.showObjects);
         } else {
@@ -230,68 +232,6 @@ async function getFoopeeShows(artists, location, showsByArtistId) {
     }
     console.log(`Added or appended shows for ${Object.keys(foopeeShows).length} artists from Foopee`);
 }
-
-/*
-refactor these back again when we support individual service querying for the api
-
-// Keeping to support legacy but all calls should be refactored to use the other
-function getSongkickArtistIdsFromJsonOLD(responseList) {
-    // Keep this returned object as a list of artist objects instead of just
-    // an object with { id : artist } KVPs to retain ordering so we can index
-    // into the initial 'artists' list when combining artists results across services
-    let artistsObjects = [];
-    for (responseIndex in responseList) {
-        let responseBody = JSON.parse(responseList[responseIndex].body || responseList[responseIndex].query.body);
-        let singleArtistList = responseBody.resultsPage.results.artist;
-        if (singleArtistList === undefined) {
-            continue;
-        }
-        // Each query for a single artist name will return a list of all artists fuzzy matched.
-        // We're only going to pull the first one for now, since more often than not the related
-        // artists don't apply (unfortunate in the case of The XX and getting Jamie xx back, etc. but eh)
-        artistsObjects.push({ songkickId: singleArtistList[0].id, name: singleArtistList[0].displayName });
-    }
-
-    return artistsObjects;
-}
-
-async function getSongkickShows(artistList) {
-    let songkickArtistIdQueries = [];
-    let songkickArtistQueries = [];
-
-    // First get artist IDs from within songkick to be able to query artist directly
-    artistList.forEach(x => songkickArtistIdQueries.push(buildSongkickArtistIdQuery(x)));
-    let songkickArtistIdResponseJson = await Promise.all(songkickArtistIdQueries);
-    let songkickArtistObjects = getSongkickArtistIdsFromJsonOLD(songkickArtistIdResponseJson);
-
-    // Build and send queries for actual shows for each artist
-    songkickArtistObjects.forEach(x => songkickArtistQueries.push(buildSongkickArtistQuery(x.songkickId)));
-    console.log('Getting Songkick artist shows...');
-    songkickResponse = await Promise.all(songkickArtistQueries);
-
-    let showsByArtistName = {};
-    for (index in songkickArtistObjects) {
-        showsByArtistName[songkickArtistObjects[index].name] = songkickResponse[index].body;
-    }
-
-    return prettifySongkickShows(showsByArtistName);
-}
-
-async function getBandsInTownShows(artistList) {
-    let bandsInTownArtistQueries = [];
-    artistList.forEach(x => bandsInTownArtistQueries.push(buildBandsInTownArtistQuery(x)));
-    let bandsInTownResponses = await Promise.all(bandsInTownArtistQueries);
-
-    let showsByArtistName = {};
-    for (index in bandsInTownResponses) {
-        // Can loop responses and index into artistList b/c we're guaranteed a response for each req,
-        // even if body is an empty list (no shows) or `{warn=Not found}` (artist not found)
-        showsByArtistName[decodeURI(artistList[index])] = bandsInTownResponses[index].body;
-    }
-
-    return prettifyBandsInTownShows(showsByArtistName);
-}
-*/
 
 function buildBandsInTownArtistQuery(artistId, artist) {
     let getOptions = {method : "GET", headers : {"Content-type" : "application/json"}};
@@ -350,13 +290,13 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
     };
 
     return new Promise(async (resolve, reject) => {
-        let resultCount    = 0;
-        let page           = 1;
-        let total          = 0;
-        let perPage        = 25;
-        let response       = {};
-        let responseBody   = {};
-        let fullEventsList = [];
+        let resultCount = 0;
+        let page        = 1;
+        let total       = 0;
+        let perPage     = 25;
+        let response: {success: boolean, response: any};
+        let responseBody: any = {};
+        let fullEventsList    = [];
 
         // Normal pagination logic while building the fullEventsList list
         do {
@@ -383,12 +323,3 @@ function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
         resolve({artistId : artistId, queryResponse : response});
     });
 }
-
-module.exports = {
-    getPlaylists,
-    getArtists : getArtists,
-    getLikedSongsArtists : getLikedSongsArtists,
-    // getSongkickShows: getSongkickShows,
-    // getBandsInTownShows: getBandsInTownShows,
-    getShows : getShows,
-};

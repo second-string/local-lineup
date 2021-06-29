@@ -183,7 +183,7 @@ async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken) {
 async function refreshSpotifyToken(db, userObj) {
     let postOptions = {
         method : "POST",
-        headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : showFinder.spotifyAuth()},
+        headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : helpers.spotifyAuth()},
         body : `grant_type=refresh_token&refresh_token=${encodeURIComponent(userObj.SpotifyRefreshToken)}`
     };
 

@@ -1,11 +1,12 @@
-const sqlite          = require('sqlite3');
-const fetch           = require('node-fetch');
-const venueShowSearch = require('./venue-show-finder');
-const showFinder      = require('./show-finder');
-const dbHelpers       = require('./db-helpers');
-const helpers         = require('./helpers');
+import fetch from 'node-fetch';
+import * as sqlite from 'sqlite3';
 
-async function buildPlaylist(db, userObj, shows) {
+import * as dbHelpers       from './helpers/db-helpers';
+import * as helpers         from './helpers/helpers';
+import * as showFinder      from './show-finder';
+import * as venueShowSearch from './venue-show-finder';
+
+export async function buildPlaylist(db, userObj, shows) {
     if (userObj === null || userObj === undefined || shows === null || shows === undefined) {
         console.log('Must provide userObj and shows list to build spotify playlist');
         return -1;
@@ -50,7 +51,7 @@ async function getArtistObjs(db, artists, userObj, spotifyToken) {
     let artistPromises = [];
     for (let artist of artists) {
         let artistPromise = new Promise(async (resolve, reject) => {
-            let getOptions     = baseSpotifyHeaders('GET', spotifyToken);
+            let getOptions     = helpers.baseSpotifyHeaders('GET', spotifyToken);
             let artistResponse = await helpers.instrumentCall(
                 `https://api.spotify.com/v1/search?q="${encodeURIComponent(artist)}"&type=artist`,
                 getOptions,
@@ -78,7 +79,7 @@ async function getArtistObjs(db, artists, userObj, spotifyToken) {
 async function getTrackUris(artistObjs, spotifyToken) {
     let trackPromises = [];
     for (let artistObj of artistObjs) {
-        let getOptions = baseSpotifyHeaders('GET', spotifyToken);
+        let getOptions = helpers.baseSpotifyHeaders('GET', spotifyToken);
 
         let trackPromise = new Promise(async (resolve, reject) => {
             let       tracksResponse =
@@ -108,7 +109,7 @@ async function getTrackUris(artistObjs, spotifyToken) {
 }
 
 async function getOrCreatePlaylist(userObj, spotifyToken) {
-    let getOptions = baseSpotifyHeaders('GET', spotifyToken);
+    let getOptions = helpers.baseSpotifyHeaders('GET', spotifyToken);
 
     // Page through getting playlists 50 at a time
     let playlists = [];
@@ -119,7 +120,7 @@ async function getOrCreatePlaylist(userObj, spotifyToken) {
         if (currentPlaylistsResponse.success === undefined || !currentPlaylistsResponse.success) {
             console.log(`Error getting playlist for current user`);
             console.log(currentPlaylistsResponse.response);
-            throw new Error(-1);
+            throw new Error();
         }
 
         playlists = playlists.concat(currentPlaylistsResponse.response.items);
@@ -130,7 +131,7 @@ async function getOrCreatePlaylist(userObj, spotifyToken) {
     let playlistObj = playlists.find(x => x.name === 'Show Finder' && x.owner.id === userObj.SpotifyUsername);
     if (playlistObj === undefined) {
         // They don't have their own showfinder playlist yet, create it
-        let postOptions  = baseSpotifyHeaders('POST', spotifyToken);
+        let postOptions  = helpers.baseSpotifyHeaders('POST', spotifyToken);
         postOptions.body = {name : 'Show Finder', public : false, description : 'helloaf'};
 
         console.log('Creating playlist since we didn\'t find it in their list of existing playlists');
@@ -141,7 +142,7 @@ async function getOrCreatePlaylist(userObj, spotifyToken) {
         if (createPlaylistResponse === undefined || !createPlaylistResponse.success) {
             console.log(`Error creating playlist`);
             console.log(createPlaylistResponse.response);
-            throw new Error(-1);
+            throw new Error();
         }
 
         playlistObj = createPlaylistResponse.response;
@@ -152,7 +153,7 @@ async function getOrCreatePlaylist(userObj, spotifyToken) {
 
 async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken) {
     // PUT overwrites all other tracks in the playlist
-    let putOptions = baseSpotifyHeaders('PUT', spotifyToken);
+    let putOptions = helpers.baseSpotifyHeaders('PUT', spotifyToken);
 
     for (let i = 0; i <= Math.floor(trackUris.length / 100); i++) {
         putOptions.body = {"uris" : trackUris.slice(i * 100, i * 100 + 99)};
@@ -165,7 +166,7 @@ async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken) {
         if (addTracksResponse.success === undefined || !addTracksResponse.success) {
             console.log('Error adding tracks to playlist');
             console.log(addTracksResponse.response);
-            throw new Error(-1);
+            throw new Error();
         }
 
         console.log(`Added a page of tracks to playlist: ${i * 100} to ${i * 100 + 99}`);
@@ -175,7 +176,7 @@ async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken) {
 async function refreshSpotifyToken(db, userObj) {
     let postOptions = {
         method : 'POST',
-        headers : {'Content-type' : 'application/x-www-form-urlencoded', 'Authorization' : showFinder.spotifyAuth()},
+        headers : {'Content-type' : 'application/x-www-form-urlencoded', 'Authorization' : helpers.spotifyAuth()},
         body : {'grant_type' : 'refresh_token', 'refresh_token' : encodeURIComponent(userObj.SpotifyRefreshToken)}
     };
 
@@ -190,11 +191,3 @@ async function refreshSpotifyToken(db, userObj) {
                       [ response.response.access_token, userObj.Email ]);
     return response.response.access_token;
 }
-
-function baseSpotifyHeaders(method, spotifyToken) {
-    return {
-        method: method, headers: {'Content-type': 'application/json', 'Authorization': 'Bearer ' + spotifyToken}
-    }
-}
-
-module.exports = {buildPlaylist};

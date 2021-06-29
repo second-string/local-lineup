@@ -1,18 +1,18 @@
-const express      = require("express");
-const https        = require("https");
-const morgan       = require("morgan");
-const path         = require("path");
-const fs           = require("fs");
-const bodyParser   = require("body-parser");
-const sqlite       = require("sqlite3");
-const uuid         = require("uuid/v4");
-const cookieParser = require("cookie-parser");
+import bodyParser from "body-parser";
+import express from "express";
+import fs from "fs";
+import https from "https";
+import morgan from "morgan";
+import path from "path";
+import sqlite = require("sqlite3");
+import uuid from "uuid/v4";
+import cookieParser from "cookie-parser";
 
-const authHandler = require("./routes/auth-handler");
-const constants   = require("./helpers/constants");
-const dbHelpers   = require("./helpers/db-helpers");
-const pageRouter  = require("./routes/pages");
-const apiRouter   = require("./routes/api");
+import * as authHandler from "./routes/auth-handler";
+import * as constants   from "./helpers/constants";
+import * as dbHelpers   from "./helpers/db-helpers";
+import * as pageRouter  from "./routes/pages";
+import * as apiRouter   from "./routes/api";
 
 const app  = express();
 const port = process.env.DEPLOY_STAGE === "PROD" ? 8443 : 443;
@@ -25,7 +25,7 @@ fs.mkdir("logs", err => {
         throw err;
     }
 });
-let requestLogStream = fs.createWriteStream(path.join(__dirname,  "..", "logs", "requests.log"), {flags : "a"});
+let requestLogStream = fs.createWriteStream(path.join(__dirname, "..", "logs", "requests.log"), {flags : "a"});
 app.use(morgan(
     '[:date[clf]] - ":method :url" | Remote addr - :remote-addr | Status - :status | Response length/time - :res[content-length] bytes/:response-time ms | User-Agent - :user-agent',
     {stream : requestLogStream}));
@@ -41,10 +41,10 @@ if (process.env.DEPLOY_STAGE === "PROD") {
     baseStaticDir = path.join(__dirname, "..", "client", "devBuild");
 }
 
-const static = path.join(baseStaticDir, "static");
-const img    = path.join(static, "img");
+const staticPath = path.join(baseStaticDir, "static");
+const img        = path.join(staticPath, "img");
 
-let static_app_dirs = [ baseStaticDir, static, img ];
+let static_app_dirs = [ baseStaticDir, staticPath, img ];
 console.log(`Routing to static files in ${static_app_dirs}...`);
 
 for (const dir of static_app_dirs) {
@@ -70,9 +70,9 @@ if (process.env.DEPLOY_STAGE === "PROD") {
         process.exit(1);
     }
 
-    var key  = fs.readFileSync(process.env.PROD_SSL_KEY_PATH);
-    var cert = fs.readFileSync(process.env.PROD_SSL_CERT_PATH);
-    var ca   = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH);
+    var key  = fs.readFileSync(process.env.PROD_SSL_KEY_PATH, "utf-8");
+    var cert = fs.readFileSync(process.env.PROD_SSL_CERT_PATH, "utf-8");
+    var ca   = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH, "utf-8");
     creds    = {key : key, cert : cert, ca : ca};
 } else {
     console.log("Running server locally using local self-signed cert");

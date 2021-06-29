@@ -1,9 +1,9 @@
-const helpers   = require('./helpers/helpers');
-const constants = require('./helpers/constants')
+import * as constants from './helpers/constants';
+import * as helpers   from './helpers/helpers';
 
 var seatGeekAuth = () => 'Basic ' + Buffer.from(`${constants.seatGeekClientId}:`).toString('base64');
 
-async function getVenues(location, db) {
+export async function getVenues(location, db) {
     const venueObjs = await db.allAsync('SELECT * FROM Venues WHERE Location=?', [ location ]);
     if (!venueObjs) {
         return {};
@@ -25,14 +25,15 @@ async function getVenues(location, db) {
     }
   }
 */
-async function getShowsForVenues(venues) {
+export async function getShowsForVenues(venues) {
     let showsByVenueId = {};
     if (venues.seatgeek) {
         const resObj = await getSeatGeekShows(venues.seatgeek);
         if (resObj.success) {
             showsByVenueId['seatgeek'] = resObj.response;
         } else {
-            console.error("Failure getting shows for seatgeek, returning empty list for showsByVenueId['seatgeek']. Error: ");
+            console.error(
+                "Failure getting shows for seatgeek, returning empty list for showsByVenueId['seatgeek']. Error: ");
             showsByVenueId['seatgeek'] = [];
         }
     }
@@ -73,14 +74,15 @@ async function getSeatGeekShows(venuesById) {
 
     let showsByDate = {};
     for (let show of showList) {
-        let showDate = new Date(show.datetime_local);
+        const showDate       = new Date(show.datetime_local);
+        const showDateString = showDate.toISOString();
         showDate.setHours(0);
         showDate.setMinutes(0);
         showDate.setSeconds(0);
-        if (showsByDate[showDate]) {
-            showsByDate[showDate] = showsByDate[showDate].concat(show);
+        if (showsByDate[showDateString]) {
+            showsByDate[showDateString] = showsByDate[showDateString].concat(show);
         } else {
-            showsByDate[showDate] = [ show ];
+            showsByDate[showDateString] = [ show ];
         }
     }
 
@@ -120,8 +122,3 @@ events: [
        datetime_utc: '2019-06-16T20:05:00',
        datetime_tbd: false },
        */
-
-module.exports = {
-    getVenues,
-    getShowsForVenues
-}

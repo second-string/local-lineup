@@ -33,7 +33,7 @@ async function refreshSpotifyToken() {
     return success ? response.access_token : response;
 }
 
-export function baseSpotifyHeaders(method, spotifyToken) {
+export function baseSpotifyHeaders(method, spotifyToken): {method: string, headers: any, family: number, body?: any} {
     return {
         method,
         headers : {
@@ -45,7 +45,8 @@ export function baseSpotifyHeaders(method, spotifyToken) {
 }
 
 // Enables other logic to get spotify information without having to store and handle refreshing the token themselves
-export async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, db, logCurl) {
+export async function
+autoRetrySpotifyCall(spotifyToken, url, method, userUid, db?: sqlite3.Database, logCurl?: boolean) {
     let options = baseSpotifyHeaders(method, spotifyToken);
 
     let {success, response} = await instrumentCall(url, options, logCurl);
@@ -58,7 +59,11 @@ export async function autoRetrySpotifyCall(spotifyToken, url, method, userUid, d
         //
         // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't
         // block on the DB insert
-        db.runAsync("UPDATE Users set SpotifyAccessToken='?' where Uid='?';", [ spotifyToken, userUid ]);
+        // TODO HACK check for null - this shouldn't be an optional param in the future but need it for reverse compat
+        // right now
+        if (db) {
+            db!.runAsync("UPDATE Users set SpotifyAccessToken='?' where Uid='?';", [ spotifyToken, userUid ]);
+        }
     }
 
     return {success, response};
@@ -103,7 +108,7 @@ async function fetchWithBackoffAndTimeout(url, options, timeout) {
     return unparsedRes;
 }
 
-export async function instrumentCall(url, options, logCurl) {
+export async function instrumentCall(url, options, logCurl): Promise<{success : boolean, response : any}> {
     let parsedRes;
     let error       = null;
     let encodedBody = "";

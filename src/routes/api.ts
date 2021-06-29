@@ -142,9 +142,9 @@ export function setRoutes(routerDependencies) {
         } else if (req.body.selectedArtists) {
             // No venues specified, get all shows for all artists supplied in body
             // Need to group artist by arbitrary id to be able to bundle and serve consolidated response
-            let i                   = 0;
-            let artists             = req.body.selectedArtists.map(x => ({id : i++, name : x}));
-            let allServicesResponse = await showFinder.getAllShows(artists, req.body.location);
+            let i                        = 0;
+            let artists                  = req.body.selectedArtists.map(x => ({id : i++, name : x}));
+            let allServicesResponse: any = await showFinder.getAllShows(artists, req.body.location);
             if (allServicesResponse.statusCode) {
                 console.log(`Call to get shows for all artists failed with status ${allServicesResponse.statusCode}`);
                 return res.status(allServicesResponse.statusCode).json(allServicesResponse);
