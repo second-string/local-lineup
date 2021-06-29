@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import * as sqlite from 'sqlite3';
 
 import * as dbHelpers       from './helpers/db-helpers';
 import * as helpers         from './helpers/helpers';

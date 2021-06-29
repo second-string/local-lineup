@@ -1,5 +1,7 @@
 import formurlencoded from "form-urlencoded";
 import fetch from "node-fetch";
+import sqlite3 from "sqlite3";
+
 import * as constants from "./constants";
 
 export var spotifyAuth = () =>

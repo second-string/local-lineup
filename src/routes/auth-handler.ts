@@ -1,8 +1,7 @@
-import * as crypto from "crypto";
+import crypto from "crypto";
 import express from "express";
 import jwt from "jsonwebtoken";
-import * as querystring from "querystring";
-import * as sqlite      from "sqlite3";
+import querystring from "querystring";
 import uuid from "uuid/v4";
 
 import * as constants  from "../helpers/constants";

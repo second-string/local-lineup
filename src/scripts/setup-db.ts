@@ -1,5 +1,4 @@
-import * as path   from 'path';
-import * as sqlite from 'sqlite3';
+import path from 'path';
 
 const {promises : fs} = require('fs');
 

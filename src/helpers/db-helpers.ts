@@ -1,6 +1,4 @@
-// const sqlite = require('sqlite3');
-const sqlite3 = require("sqlite3");
-// import sqlite3 = require("sqlite3");
+import sqlite3 from "sqlite3";
 
 // Open sqlite db and log for success or fail
 export function openDb(pathToDb) {
@@ -34,7 +32,7 @@ export function errOrResolveList(resolve, reject, err, objs) {
     resolve(objs);
 }
 
-sqlite3.Database.prototype.getAsync = function(sql, params) {
+sqlite3.Database.prototype.getAsync = function(sql, params?: any) {
     return new Promise((resolve, reject) => {
         if (params) {
             this.get(sql, params, (err, row) => errOrResolveObject(resolve, reject, err, row));
@@ -44,7 +42,7 @@ sqlite3.Database.prototype.getAsync = function(sql, params) {
     });
 };
 
-sqlite3.Database.prototype.runAsync = function(sql, params) {
+sqlite3.Database.prototype.runAsync = function(sql, params?: any) {
     return new Promise((resolve, reject) => {
         if (params) {
             this.run(sql, params, (err) => errOrResolveObject(resolve, reject, err, null));
@@ -54,7 +52,7 @@ sqlite3.Database.prototype.runAsync = function(sql, params) {
     });
 };
 
-sqlite3.Database.prototype.allAsync = function(sql, params) {
+sqlite3.Database.prototype.allAsync = function(sql, params?: any) {
     return new Promise((resolve, reject) => {
         if (params) {
             this.all(sql, params, (err, rows) => errOrResolveList(resolve, reject, err, rows));
