@@ -1,13 +1,12 @@
 import express from "express";
 const router = express.Router();
 
-import * as authHandler     from "./auth-handler";
-import * as showFinder      from "../show-finder";
-import * as venueShowSearch from "../venue-show-finder";
-import * as dbHelpers       from "../helpers/db-helpers";
-import * as constants       from "../helpers/constants";
-import * as helpers         from "../helpers/helpers";
-import * as spotifyHelper   from "../helpers/spotify-helper";
+import * as authHandler   from "./auth-handler";
+import * as showFinder    from "../show-finder";
+import * as dbHelpers     from "../helpers/db-helpers";
+import * as constants     from "../helpers/constants";
+import * as helpers       from "../helpers/helpers";
+import * as spotifyHelper from "../helpers/spotify-helper";
 
 export function setRoutes(routerDependencies) {
     const db           = routerDependencies.db;
@@ -20,7 +19,7 @@ export function setRoutes(routerDependencies) {
         const spotifyToken  = req.userObj.SpotifyAccessToken;
         const spotifyUserId = req.userObj.SpotifyUsername;
         const userUid       = req.userObj.Uid;
-        let playlists       = await showFinder.getPlaylists(spotifyToken, spotifyUserId, userUid);
+        let playlists       = await spotifyHelper.getPlaylists(spotifyToken, spotifyUserId, userUid);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -39,15 +38,10 @@ export function setRoutes(routerDependencies) {
         // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
         let artists = [];
         if (parseInt(req.query.playlistId as string, 10) === constants.user_library_playlist_id) {
-            artists = await showFinder.getLikedSongsArtists(spotifyToken, req.userObj.Uid);
+            artists = await spotifyHelper.getLikedSongsArtists(spotifyToken, req.userObj.Uid);
         } else {
-            artists = await showFinder.getArtists(spotifyToken, req.query.playlistId, req.userObj.Uid);
+            artists = await spotifyHelper.getArtistsFromPlaylist(spotifyToken, req.query.playlistId, req.userObj.Uid);
         }
-
-        // if (artists.ok !== undefined && !artists.ok) {
-        //     console.log(`Call to get artists for playlist failed with status ${artists.status}`);
-        //     return res.status(artists.status).json(artists);
-        // }
 
         res.json(artists);
     });
@@ -57,7 +51,7 @@ export function setRoutes(routerDependencies) {
             res.status(400).send();
         }
 
-        let venues = await venueShowSearch.getVenues(req.query.city, db);
+        let venues = await showFinder.getVenues(req.query.city, db);
         if (venues === undefined) {
             console.log(`Call to get venues for ${req.query.city} failed`);
             return res.status(500).json(venues);
@@ -145,7 +139,7 @@ export function setRoutes(routerDependencies) {
     router.post("/show-finder/shows", async (req, res) => {
         if (req.body.selectedVenues) {
             // Error handled internally, lists will just be empty if there was failure
-            const showDatesByService = await venueShowSearch.getShowsForVenues(req.body.selectedVenues);
+            const showDatesByService = await showFinder.getShowsForVenues(req.body.selectedVenues);
             return res.json(showDatesByService);
         } else if (req.body.selectedArtists) {
             // No venues specified, get all shows for all artists supplied in body

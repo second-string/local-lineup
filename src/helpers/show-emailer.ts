@@ -1,7 +1,7 @@
 import Email from 'email-templates';
 import nodemailer from "nodemailer";
 
-import * as venueShowSearch from '../venue-show-finder';
+import * as showFinder from '../show-finder';
 
 export async function sendShowsEmail(userObj, shows, startDate, endDate) {
     if (userObj === null || userObj === undefined) {

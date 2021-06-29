@@ -1,7 +1,7 @@
 import * as dbHelpers       from "./helpers/db-helpers";
 import * as playlistBuilder from "./helpers/playlist-builder";
 import * as showEmailer     from "./helpers/show-emailer";
-import * as venueShowSearch from "./venue-show-finder";
+import * as showFinder      from "./show-finder";
 
 async function main() {
     const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
@@ -44,7 +44,7 @@ async function main() {
         let endDate         = new Date(startDate);
         endDate.setDate(endDate.getDate() + 7);
 
-        let services: any = await venueShowSearch.getShowsForVenues(venues);
+        let services: any = await showFinder.getShowsForVenues(venues);
         if (services === undefined) {
             console.log(`Call to get shows for selected venues failed`);
             return;

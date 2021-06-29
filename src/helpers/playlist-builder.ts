@@ -1,9 +1,8 @@
 import fetch from "node-fetch";
 
-import * as dbHelpers       from "../helpers/db-helpers";
-import * as helpers         from "../helpers/helpers";
-import * as showFinder      from "../show-finder";
-import * as venueShowSearch from "../venue-show-finder";
+import * as dbHelpers  from "../helpers/db-helpers";
+import * as helpers    from "../helpers/helpers";
+import * as showFinder from "../show-finder";
 
 export async function buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners) {
     if (userObj === null || userObj === undefined || shows === null || shows === undefined) {
