@@ -5,11 +5,11 @@ import * as helpers   from "./helpers/helpers";
 import * as parsers   from "./helpers/response-parsers";
 import * as foopee    from "./scripts/foopee-scrape";
 
-export async function getPlaylists(spotifyToken, userUid) {
+export async function getPlaylists(spotifyToken, spotifyUserId, userUid) {
     console.log("Getting playlists...");
     let {success, response} =
         await helpers.autoRetrySpotifyCall(spotifyToken,
-                                           `https://api.spotify.com/v1/users/${userUid}/playlists`,
+                                           `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
                                            "GET",
                                            userUid,
                                            null,

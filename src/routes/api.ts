@@ -17,10 +17,10 @@ export function setRoutes(routerDependencies) {
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
     router.post("/show-finder/playlists", async (req, res) => {
-        const spotifyToken = req.userObj.SpotifyAccessToken;
-        let playlists      = await showFinder.getPlaylists(spotifyToken, req.userObj.Uid);
-        // let playlists      = await spotifyHelper.getPlaylists(spotifyToken, req.userObj.SpotifyUsername,
-        // req.userObj.Uid);
+        const spotifyToken  = req.userObj.SpotifyAccessToken;
+        const spotifyUserId = req.userObj.SpotifyUsername;
+        const userUid       = req.userObj.Uid;
+        let playlists       = await showFinder.getPlaylists(spotifyToken, spotifyUserId, userUid);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);

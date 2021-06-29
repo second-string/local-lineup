@@ -8,32 +8,19 @@ export var spotifyAuth = () =>
     "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
 export var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
-function requestError(response, exception = null) {
-    console.log("REQUEST ERROR");
-    if (response) {
-        console.log(`RESPONSE STATUS CODE: ${response.statusCode}`);
-        console.log(response.body);
-    }
+// function requestError(response, exception = null) {
+//     console.log("REQUEST ERROR");
+//     if (response) {
+//         console.log(`RESPONSE STATUS CODE: ${response.statusCode}`);
+//         console.log(response.body);
+//     }
 
-    if (exception) {
-        console.log(exception);
-    }
+//     if (exception) {
+//         console.log(exception);
+//     }
 
-    return response;
-}
-
-// Not exported, only used within autoRetrySpotifyCall
-async function refreshSpotifyToken() {
-    const postOptions = {
-        method : "POST",
-        body : {grant_type : "client_credentials"},
-        headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : spotifyAuth()}
-    };
-
-    console.log("Getting spotify API token...");
-    const {success, response} = await instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
-    return success ? response.access_token : response;
-}
+//     return response;
+// }
 
 export function baseSpotifyHeaders(method, spotifyToken): {method: string, headers: any, family: number, body?: any} {
     return {
@@ -46,18 +33,36 @@ export function baseSpotifyHeaders(method, spotifyToken): {method: string, heade
     };
 }
 
+// Not exported, only used within autoRetrySpotifyCall
+async function refreshSpotifyToken() {
+    const postOptions = {
+        method : "POST",
+        body : {grant_type : "client_credentials"},
+        headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : spotifyAuth()}
+    };
+
+    console.log("Getting spotify API token...");
+    const {success, response} = await instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
+    console.log(response);
+    return success ? response.access_token : response;
+}
+
 // Enables other logic to get spotify information without having to store and handle refreshing the token themselves
 export async function
 autoRetrySpotifyCall(spotifyToken, url, method, userUid, db?: sqlite3.Database, logCurl?: boolean) {
     let options = baseSpotifyHeaders(method, spotifyToken);
 
-    let {success, response} = await instrumentCall(url, options, logCurl);
+    let {success, response} = await instrumentCall(url, options, true);
     if (!success) {
         // This could probably be refined with error codes, but give it a refresh and retry for any failure for now
         console.log(`Failed a spotify request to ${url} with status ${response.status}, refreshing token and retrying`);
         spotifyToken = await refreshSpotifyToken();
 
-        ({success, response} = await instrumentCall(url, options, logCurl));
+        // Shove our new token into the existing headers. Don't rebuild fully with baseSpotifyHeaders in case they
+        // customized
+        options.headers.Authorization = "Bearer " + spotifyToken;
+
+        ({success, response} = await instrumentCall(url, options, true));
         //
         // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't
         // block on the DB insert
