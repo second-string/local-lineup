@@ -19,7 +19,7 @@ export function setRoutes(routerDependencies) {
         const spotifyToken  = req.userObj.SpotifyAccessToken;
         const spotifyUserId = req.userObj.SpotifyUsername;
         const userUid       = req.userObj.Uid;
-        let playlists       = await spotifyHelper.getPlaylists(spotifyToken, spotifyUserId, userUid);
+        let playlists       = await spotifyHelper.getPlaylists(spotifyToken, spotifyUserId, userUid, db);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -38,9 +38,10 @@ export function setRoutes(routerDependencies) {
         // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
         let artists = [];
         if (parseInt(req.query.playlistId as string, 10) === constants.user_library_playlist_id) {
-            artists = await spotifyHelper.getLikedSongsArtists(spotifyToken, req.userObj.Uid);
+            artists = await spotifyHelper.getLikedSongsArtists(spotifyToken, req.userObj.Uid, db);
         } else {
-            artists = await spotifyHelper.getArtistsFromPlaylist(spotifyToken, req.query.playlistId, req.userObj.Uid);
+            artists =
+                await spotifyHelper.getArtistsFromPlaylist(spotifyToken, req.query.playlistId, req.userObj.Uid, db);
         }
 
         res.json(artists);

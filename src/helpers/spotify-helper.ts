@@ -1,14 +1,16 @@
+import * as sqlite3 from "sqlite3";
+
 import * as constants from "./constants";
 import * as helpers   from "./helpers";
 
-export async function getPlaylists(spotifyToken, spotifyUserId, userUid) {
+export async function getPlaylists(spotifyToken, spotifyUserId, userUid, db: sqlite3.Database) {
     console.log("Getting playlists...");
     let {success, response} =
         await helpers.autoRetrySpotifyCall(spotifyToken,
                                            `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
                                            "GET",
                                            userUid,
-                                           null,
+                                           db,
                                            false);
     if (!success) {
         return response;
@@ -23,7 +25,7 @@ export async function getPlaylists(spotifyToken, spotifyUserId, userUid) {
     return playlistNamesById;
 }
 
-export async function getArtistsFromPlaylist(spotifyToken, playlistId, userUid) {
+export async function getArtistsFromPlaylist(spotifyToken, playlistId, userUid, db: sqlite3.Database) {
     let page: any = {};
     let artists   = [];
     console.log("Getting artists...");
@@ -33,7 +35,7 @@ export async function getArtistsFromPlaylist(spotifyToken, playlistId, userUid) 
                                                page.next || `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
                                                "GET",
                                                userUid,
-                                               null,
+                                               db,
                                                false);
         if (!success) {
             return response;
@@ -53,7 +55,7 @@ export async function getArtistsFromPlaylist(spotifyToken, playlistId, userUid) 
     return artists.reduce((x, y) => x.concat(y)).filter(x => (hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true)));
 }
 
-export async function getArtists(db, artists, userObj, spotifyToken, userUid) {
+export async function getArtists(artists, userObj, spotifyToken, userUid, db: sqlite3.Database) {
     let artistPromises = [];
     for (let artist of artists) {
         let artistPromise = new Promise(async (resolve, reject) => {
@@ -62,7 +64,7 @@ export async function getArtists(db, artists, userObj, spotifyToken, userUid) {
                 `https://api.spotify.com/v1/search?q="${encodeURIComponent(artist)}"&type=artist`,
                 "GET",
                 userUid,
-                null,
+                db,
                 false);
 
             if (artistResponse.response.artists && artistResponse.response.artists.items.length > 0) {
@@ -84,7 +86,7 @@ export async function getArtists(db, artists, userObj, spotifyToken, userUid) {
     return artistObjs;
 }
 
-export async function getLikedSongsArtists(spotifyToken, userUid) {
+export async function getLikedSongsArtists(spotifyToken, userUid, db: sqlite3.Database) {
     let page: any = {};
     let songs     = [];
     console.log("Getting all liked tracks to parse out artists from...");
@@ -94,7 +96,7 @@ export async function getLikedSongsArtists(spotifyToken, userUid) {
                                                page.next || `https://api.spotify.com/v1/me/tracks`,
                                                "GET",
                                                userUid,
-                                               null,
+                                               db,
                                                false);
         if (!success) {
             return response;
@@ -114,7 +116,7 @@ export async function getLikedSongsArtists(spotifyToken, userUid) {
     return songs.reduce((x, y) => x.concat(y)).filter(x => (hasSeen.hasOwnProperty(x) ? false : (hasSeen[x] = true)));
 }
 
-export async function getTrackUris(songsPerArtist, artistObjs, spotifyToken, userUid) {
+export async function getTrackUris(songsPerArtist, artistObjs, spotifyToken, userUid, db: sqlite3.Database) {
     let trackPromises = [];
     for (let artistObj of artistObjs) {
         let trackPromise = new Promise(async (resolve, reject) => {
@@ -123,7 +125,7 @@ export async function getTrackUris(songsPerArtist, artistObjs, spotifyToken, use
                 `https://api.spotify.com/v1/artists/${artistObj.id}/top-tracks?country=US`,
                 "GET",
                 userUid,
-                null,
+                db,
                 false);
 
             if (tracksResponse.success === undefined || !tracksResponse.success) {
@@ -147,7 +149,7 @@ export async function getTrackUris(songsPerArtist, artistObjs, spotifyToken, use
     return trackUris;
 }
 
-export async function getOrCreatePlaylist(userObj, spotifyToken, userUid) {
+export async function getOrCreatePlaylist(userObj, spotifyToken, userUid, db: sqlite3.Database) {
     let getOptions = helpers.baseSpotifyHeaders("GET", spotifyToken);
 
     // Page through getting playlists 50 at a time
@@ -155,8 +157,7 @@ export async function getOrCreatePlaylist(userObj, spotifyToken, userUid) {
     let url       = "https://api.spotify.com/v1/me/playlists?limit=50";
     let hasNext   = false;
     do {
-        let       currentPlaylistsResponse =
-            await helpers.autoRetrySpotifyCall(spotifyToken, url, "GET", userUid, null, false);
+        let currentPlaylistsResponse = await helpers.autoRetrySpotifyCall(spotifyToken, url, "GET", userUid, db, false);
         if (currentPlaylistsResponse.success === undefined || !currentPlaylistsResponse.success) {
             console.log(`Error getting playlist for current user`);
             console.log(currentPlaylistsResponse.response);
@@ -191,7 +192,7 @@ export async function getOrCreatePlaylist(userObj, spotifyToken, userUid) {
     return playlistObj;
 }
 
-export async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken, userUid) {
+export async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken, userUid, db: sqlite3.Database) {
     // PUT overwrites all other tracks in the playlist
     let putOptions = helpers.baseSpotifyHeaders("PUT", spotifyToken);
 
@@ -207,7 +208,7 @@ export async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken, 
         //                                    `https://api.spotify.com/v1/playlists/${playlistObj.id}/tracks`,
         //                                    "PUT",
         //                                    userUid,
-        //                                    null,
+        //                                    db,
         //                                    false);
         if (addTracksResponse.success === undefined || !addTracksResponse.success) {
             console.log("Error adding tracks to playlist");

@@ -1,7 +1,6 @@
-import * as dbHelpers       from "./helpers/db-helpers";
-import * as playlistBuilder from "./helpers/playlist-builder";
-import * as showEmailer     from "./helpers/show-emailer";
-import * as showFinder      from "./show-finder";
+import * as dbHelpers   from "./helpers/db-helpers";
+import * as showEmailer from "./helpers/show-emailer";
+import * as showFinder  from "./show-finder";
 
 async function main() {
     const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
@@ -82,7 +81,7 @@ async function main() {
                 shows = Object.keys(showsByDate).flatMap(x => showsByDate[x]);
             }
 
-            let exitCode = await playlistBuilder.buildPlaylist(db, userObj, shows, songsPerArtist, includeOpeners);
+            let exitCode = await showFinder.buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, db);
             if (exitCode < 0) {
                 return reject(Error(userObj.SpotifyUsername));
             }
