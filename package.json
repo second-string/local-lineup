@@ -5,6 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "npm run devBuild --prefix client && nodemon dist/server.js",
+    "build": "tsc",
     "server": "concurrently \"tsc --watch\" \"nodemon .\"",
     "deploy": "npm run build --prefix client/ && nodemon dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
