@@ -6,7 +6,7 @@ async function main() {
     const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
                                                                     : "user_venues.db");
 
-    let venueListObjs;
+    let venueListObjs: DbVenueList[];
     if (process.env.DEPLOY_STAGE === "PROD") {
         venueListObjs = await db.allAsync(`SELECT * from VenueLists;`, []);
     } else {
@@ -62,6 +62,12 @@ async function main() {
                                       services.seatgeek[dateString];
                                   return obj;
                               }, {});
+
+        if (Object.keys(showsByDate).length === 0) {
+            console.log(`Got zero shows for venuelist user ${venueListObj.UserUid} in ${
+                venueListObj.Location}, no email or playlist changes`);
+            continue;
+        }
 
         // if showsByDate empty that's fine, email will just be blank but no error
         let emailPromise = new Promise(async (resolve, reject) => {

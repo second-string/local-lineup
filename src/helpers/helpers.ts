@@ -8,20 +8,6 @@ export var spotifyAuth = () =>
     "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
 export var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
-// function requestError(response, exception = null) {
-//     console.log("REQUEST ERROR");
-//     if (response) {
-//         console.log(`RESPONSE STATUS CODE: ${response.statusCode}`);
-//         console.log(response.body);
-//     }
-
-//     if (exception) {
-//         console.log(exception);
-//     }
-
-//     return response;
-// }
-
 export function baseSpotifyHeaders(method, spotifyToken): {method: string, headers: any, family: number, body?: any} {
     return {
         method,
@@ -49,10 +35,13 @@ async function refreshSpotifyToken() {
 
 // Enables other logic to get spotify information without having to store and handle refreshing the token themselves
 export async function
-autoRetrySpotifyCall(spotifyToken, url, method, userUid, db?: sqlite3.Database, logCurl?: boolean) {
+autoRetrySpotifyCall(spotifyToken, url, method, userUid, db?: sqlite3.Database, logCurl?: boolean, body: any = null) {
     let options = baseSpotifyHeaders(method, spotifyToken);
+    if (body) {
+        options.body = body;
+    }
 
-    let {success, response} = await instrumentCall(url, options, true);
+    let {success, response} = await instrumentCall(url, options, false);
     if (!success) {
         // This could probably be refined with error codes, but give it a refresh and retry for any failure for now
         console.log(`Failed a spotify request to ${url} with status ${response.status}, refreshing token and retrying`);
@@ -62,7 +51,7 @@ autoRetrySpotifyCall(spotifyToken, url, method, userUid, db?: sqlite3.Database, 
         // customized
         options.headers.Authorization = "Bearer " + spotifyToken;
 
-        ({success, response} = await instrumentCall(url, options, true));
+        ({success, response} = await instrumentCall(url, options, false));
         //
         // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't
         // block on the DB insert

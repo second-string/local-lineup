@@ -172,14 +172,16 @@ export async function getOrCreatePlaylist(userObj, spotifyToken, userUid, db: sq
     let playlistObj = playlists.find(x => x.name === "Show Finder" && x.owner.id === userObj.SpotifyUsername);
     if (playlistObj === undefined) {
         // They don't have their own showfinder playlist yet, create it
-        let postOptions  = helpers.baseSpotifyHeaders("POST", spotifyToken);
-        postOptions.body = {name : "Show Finder", public : false, description : "helloaf"};
-
         console.log("Creating playlist since we didn't find it in their list of existing playlists");
+        const body = {name : "Show Finder", public : false, description : "helloaf"};
         let       createPlaylistResponse =
-            await helpers.instrumentCall(`https://api.spotify.com/v1/users/${userObj.SpotifyUsername}/playlists`,
-                                         postOptions,
-                                         false);
+            await helpers.autoRetrySpotifyCall(spotifyToken,
+                                               `https://api.spotify.com/v1/users/${userObj.SpotifyUsername}/playlists`,
+                                               "POST",
+                                               userUid,
+                                               db,
+                                               false,
+                                               body);
         if (createPlaylistResponse === undefined || !createPlaylistResponse.success) {
             console.log(`Error creating playlist`);
             console.log(createPlaylistResponse.response);
@@ -193,23 +195,19 @@ export async function getOrCreatePlaylist(userObj, spotifyToken, userUid, db: sq
 }
 
 export async function addTracksToPlaylist(playlistObj, trackUris, spotifyToken, userUid, db: sqlite3.Database) {
-    // PUT overwrites all other tracks in the playlist
-    let putOptions = helpers.baseSpotifyHeaders("PUT", spotifyToken);
-
     for (let i = 0; i <= Math.floor(trackUris.length / 100); i++) {
-        putOptions.body = {uris : trackUris.slice(i * 100, i * 100 + 99)};
+        const body = {uris : trackUris.slice(i * 100, i * 100 + 99)};
 
+        // PUT overwrites all other tracks in the playlist
         // This response gives us an object with a single 'snapshot_id' element, who cares
         let       addTracksResponse =
-            await helpers.instrumentCall(`https://api.spotify.com/v1/playlists/${playlistObj.id}/tracks`,
-                                         putOptions,
-                                         false);
-        // await helpers.autoRetrySpotifyCall(spotifyToken,
-        //                                    `https://api.spotify.com/v1/playlists/${playlistObj.id}/tracks`,
-        //                                    "PUT",
-        //                                    userUid,
-        //                                    db,
-        //                                    false);
+            await helpers.autoRetrySpotifyCall(spotifyToken,
+                                               `https://api.spotify.com/v1/playlists/${playlistObj.id}/tracks`,
+                                               "PUT",
+                                               userUid,
+                                               db,
+                                               false,
+                                               body);
         if (addTracksResponse.success === undefined || !addTracksResponse.success) {
             console.log("Error adding tracks to playlist");
             console.log(addTracksResponse.response);

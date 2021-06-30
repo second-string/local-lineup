@@ -69,10 +69,16 @@ export async function getShowsForVenues(venues) {
     return showsByVenueId;
 }
 
-export async function buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, db: sqlite3.Database) {
+export async function buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, db: sqlite3.Database):
+    Promise<number> {
     if (userObj === null || userObj === undefined || shows === null || shows === undefined) {
         console.log("Must provide userObj and shows list to build spotify playlist");
         return -1;
+    }
+
+    if (shows.length === 0) {
+        console.log("Called buildPlaylist with zero shows, returning immediately");
+        return 0;
     }
 
     let spotifyToken = userObj.SpotifyAccessToken;
@@ -103,15 +109,12 @@ export async function buildPlaylist(userObj, shows, songsPerArtist, includeOpene
         }
     }
 
-    // console.log(`Refreshing token. Value before: ${spotifyToken.slice(0, 10)}...`);
-    // spotifyToken = await refreshSpotifyToken(db, userObj);
-    // console.log(`Value after: ${spotifyToken.slice(0, 10)}...`);
-
     try {
         let artistObjs  = await spotifyHelpers.getArtists(db, artists, userObj, spotifyToken, userObj.Uid);
         let trackUris   = await spotifyHelpers.getTrackUris(songsPerArtist, artistObjs, spotifyToken, userObj.Uid, db);
         let playlistObj = await spotifyHelpers.getOrCreatePlaylist(userObj, spotifyToken, userObj.Uid, db);
         await spotifyHelpers.addTracksToPlaylist(playlistObj, trackUris, spotifyToken, userObj.Uid, db);
+        return 0;
     } catch (e) {
         console.log(e.message);
         return -1;
