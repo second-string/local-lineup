@@ -49,7 +49,8 @@ export async function authenticate(userDb, req, res, next) {
 export async function login(req, res) {
     const rootHost    = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
-    const scopes      = "user-read-email user-library-read playlist-read-private playlist-modify-private";
+    const scopes =
+        "user-read-email user-library-read playlist-read-private playlist-modify-private playlist-modify-public";
 
     res.redirect("https://accounts.spotify.com/authorize?" + querystring.stringify({
         response_type : "code",

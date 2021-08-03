@@ -16,10 +16,8 @@ export function setRoutes(routerDependencies) {
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
     router.post("/show-finder/playlists", async (req, res) => {
-        const spotifyToken  = req.userObj.SpotifyAccessToken;
-        const spotifyUserId = req.userObj.SpotifyUsername;
-        const userUid       = req.userObj.Uid;
-        let playlists       = await spotifyHelper.getPlaylists(spotifyToken, spotifyUserId, userUid, db);
+        const spotifyToken = req.userObj.SpotifyAccessToken;
+        let playlists      = await spotifyHelper.getPlaylists(spotifyToken, req.userObj, db);
         if (playlists.ok !== undefined && !playlists.ok) {
             console.log(`Call to get users playlists failed with status ${playlists.status}`);
             return res.status(playlists.status).json(playlists);
@@ -38,10 +36,9 @@ export function setRoutes(routerDependencies) {
         // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
         let artists = [];
         if (parseInt(req.query.playlistId as string, 10) === constants.user_library_playlist_id) {
-            artists = await spotifyHelper.getLikedSongsArtists(spotifyToken, req.userObj.Uid, db);
+            artists = await spotifyHelper.getLikedSongsArtists(spotifyToken, req.userObj, db);
         } else {
-            artists =
-                await spotifyHelper.getArtistsFromPlaylist(spotifyToken, req.query.playlistId, req.userObj.Uid, db);
+            artists = await spotifyHelper.getArtistsFromPlaylist(spotifyToken, req.query.playlistId, req.userObj, db);
         }
 
         res.json(artists);
@@ -67,12 +64,7 @@ export function setRoutes(routerDependencies) {
             return res.status(400);
         }
 
-        let venueIds       = req.body.venueIds;
-        let tableName      = "VenueLists";
-        let userUidColumn  = "UserUid";
-        let venueIdsColumn = "VenueIds";
-        let locationColumn = "Location";
-
+        let venueIds = req.body.venueIds;
         let upsertSql =
             `
         INSERT INTO VenueLists (UserUid, VenueIds, Location, SongsPerArtist, IncludeOpeners)

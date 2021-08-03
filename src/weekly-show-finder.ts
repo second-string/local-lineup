@@ -1,6 +1,7 @@
-import * as dbHelpers   from "./helpers/db-helpers";
-import * as showEmailer from "./helpers/show-emailer";
-import * as showFinder  from "./show-finder";
+import * as dbHelpers     from "./helpers/db-helpers";
+import * as showEmailer   from "./helpers/show-emailer";
+import * as spotifyHelper from "./helpers/spotify-helper";
+import * as showFinder    from "./show-finder";
 
 async function main() {
     const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
@@ -26,9 +27,13 @@ async function main() {
         const venueIds       = venueListObj.VenueIds.split(",");
         const songsPerArtist = venueListObj.SongsPerArtist;
         const includeOpeners = venueListObj.IncludeOpeners;
+        const location       = venueListObj.Location;
 
         // TODO :: get rid of this query and have the initial SELECT above join the two tables
         let userObj = await db.getAsync("SELECT * FROM Users WHERE Uid=?", [ userUid ]);
+
+        // Preemptively refresh token with useless request for remainder of requests for this user
+        const _ = await spotifyHelper.getLoggedInUserProfile(userObj.SpotifyAccessToken, userObj, db);
 
         let venues = {
             seatgeek : venueIds.reduce(
@@ -87,7 +92,8 @@ async function main() {
                 shows = Object.keys(showsByDate).flatMap(x => showsByDate[x]);
             }
 
-            let exitCode = await showFinder.buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, db);
+            console.log("Attempting to build playlist...");
+            let exitCode = await showFinder.buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, location, db);
             if (exitCode < 0) {
                 return reject(Error(userObj.SpotifyUsername));
             }

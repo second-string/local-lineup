@@ -4,8 +4,10 @@ import sqlite3 from "sqlite3";
 
 import * as constants from "./constants";
 
+// Used for initial auth flow for user then for refreshing token. User's access token used for all normal api calls
 export var spotifyAuth = () =>
     "Basic " + Buffer.from(`${constants.clientId}:${constants.clientSecret}`).toString("base64");
+
 export var seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
 
 export function baseSpotifyHeaders(method, spotifyToken): {method: string, headers: any, family: number, body?: any} {
@@ -20,45 +22,51 @@ export function baseSpotifyHeaders(method, spotifyToken): {method: string, heade
 }
 
 // Not exported, only used within autoRetrySpotifyCall
-async function refreshSpotifyToken() {
+async function refreshSpotifyToken(refresh_token) {
     const postOptions = {
         method : "POST",
-        body : {grant_type : "client_credentials"},
+        body : {grant_type : "refresh_token", refresh_token},
         headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : spotifyAuth()}
     };
 
     console.log("Getting spotify API token...");
     const {success, response} = await instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
-    console.log(response);
     return success ? response.access_token : response;
 }
 
 // Enables other logic to get spotify information without having to store and handle refreshing the token themselves
-export async function
-autoRetrySpotifyCall(spotifyToken, url, method, userUid, db?: sqlite3.Database, logCurl?: boolean, body: any = null) {
+export async function autoRetrySpotifyCall(spotifyToken,
+                                           url,
+                                           method,
+                                           userObj: DbUser,
+                                           db?: sqlite3.Database,
+                                           logCurl?: boolean,
+                                           body: any = null) {
     let options = baseSpotifyHeaders(method, spotifyToken);
     if (body) {
         options.body = body;
     }
 
-    let {success, response} = await instrumentCall(url, options, false);
+    let {success, response} = await instrumentCall(url, options, logCurl);
     if (!success) {
         // This could probably be refined with error codes, but give it a refresh and retry for any failure for now
         console.log(`Failed a spotify request to ${url} with status ${response.status}, refreshing token and retrying`);
-        spotifyToken = await refreshSpotifyToken();
+        spotifyToken = await refreshSpotifyToken(userObj.SpotifyAccessToken);
 
         // Shove our new token into the existing headers. Don't rebuild fully with baseSpotifyHeaders in case they
         // customized
         options.headers.Authorization = "Bearer " + spotifyToken;
 
-        ({success, response} = await instrumentCall(url, options, false));
-        //
-        // Save the newly refreshed access token here if the request was successful. Don't await the call so we don't
-        // block on the DB insert
+        ({success, response} = await instrumentCall(url, options, logCurl));
+
+        // Save the newly refreshed access token here if the request was successful. Await the call so we
+        // block on the DB insert since we're usually running a lot of calls back to back and we want them to use the
+        // new token instead of executing before we're inserted
         // TODO HACK check for null - this shouldn't be an optional param in the future but need it for reverse compat
         // right now
         if (db) {
-            db!.runAsync("UPDATE Users set SpotifyAccessToken='?' where Uid='?';", [ spotifyToken, userUid ]);
+            console.log("Have db object inserting new token");
+            await db!.runAsync("UPDATE Users set SpotifyAccessToken=? where Uid=?", [ spotifyToken, userObj.Uid ]);
         }
     }
 
