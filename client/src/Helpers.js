@@ -1,3 +1,5 @@
+
+// Should match object in server constants.ts - don't add here without updating there!
 export const locations = [
     { value: "san francisco", displayName: "San Francisco" },
     { value: "los angeles", displayName: "Los Angeles" },

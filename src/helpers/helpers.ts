@@ -15,7 +15,7 @@ export function baseSpotifyHeaders(method, spotifyToken): {method: string, heade
         method,
         headers : {
             "Content-type" : "application/json",
-            Authorization : "Bearer " + spotifyToken,
+            "Authorization" : "Bearer " + spotifyToken,
         },
         family : 4
     };
@@ -39,7 +39,7 @@ export async function autoRetrySpotifyCall(spotifyToken,
                                            url,
                                            method,
                                            userObj: DbUser,
-                                           db?: sqlite3.Database,
+                                           db: sqlite3.Database,
                                            logCurl?: boolean,
                                            body: any = null) {
     let options = baseSpotifyHeaders(method, spotifyToken);
@@ -51,7 +51,7 @@ export async function autoRetrySpotifyCall(spotifyToken,
     if (!success) {
         // This could probably be refined with error codes, but give it a refresh and retry for any failure for now
         console.log(`Failed a spotify request to ${url} with status ${response.status}, refreshing token and retrying`);
-        spotifyToken = await refreshSpotifyToken(userObj.SpotifyAccessToken);
+        spotifyToken = await refreshSpotifyToken(userObj.SpotifyRefreshToken);
 
         // Shove our new token into the existing headers. Don't rebuild fully with baseSpotifyHeaders in case they
         // customized
@@ -62,12 +62,8 @@ export async function autoRetrySpotifyCall(spotifyToken,
         // Save the newly refreshed access token here if the request was successful. Await the call so we
         // block on the DB insert since we're usually running a lot of calls back to back and we want them to use the
         // new token instead of executing before we're inserted
-        // TODO HACK check for null - this shouldn't be an optional param in the future but need it for reverse compat
-        // right now
-        if (db) {
-            console.log("Have db object inserting new token");
-            await db!.runAsync("UPDATE Users set SpotifyAccessToken=? where Uid=?", [ spotifyToken, userObj.Uid ]);
-        }
+        console.log("Have db object inserting new token");
+        await db.runAsync("UPDATE Users set SpotifyAccessToken=? where Uid=?", [ spotifyToken, userObj.Uid ]);
     }
 
     return {success, response};
@@ -238,6 +234,6 @@ export function dedupeShows(showsByArtistId) {
     }
 }
 
-async function sleep(ms, timeoutValue?: any) {
+export async function sleep(ms, timeoutValue?: any) {
     return new Promise((resolve) => setTimeout(() => resolve(timeoutValue || null), ms));
 }

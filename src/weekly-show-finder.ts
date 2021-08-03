@@ -35,6 +35,12 @@ async function main() {
         // Preemptively refresh token with useless request for remainder of requests for this user
         const _ = await spotifyHelper.getLoggedInUserProfile(userObj.SpotifyAccessToken, userObj, db);
 
+        // Unfortunately we need the user object to make the above test request, but have no way of knowing if that
+        // request actually refreshed the token. If it did, we need to reload our user object since we still have the
+        // stale token. Thus, this ugly double SQL query. Since this is only run for every venue list we have once a
+        // week, I'm not too worried about it
+        userObj = await db.getAsync("SELECT * FROM Users WHERE Uid=?", [ userUid ]);
+
         let venues = {
             seatgeek : venueIds.reduce(
                 (obj, item) => {
