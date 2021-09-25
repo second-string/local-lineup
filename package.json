@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "npm run devBuild --prefix client && nodemon dist/server.js",
+    "dev": "npm run devBuild --prefix client && npm run server",
     "build": "tsc",
     "server": "concurrently \"tsc --watch\" \"nodemon .\"",
     "deploy": "npm run build --prefix client/ && nodemon dist/server.js",

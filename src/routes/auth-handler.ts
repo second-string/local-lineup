@@ -8,7 +8,16 @@ import * as constants  from "../helpers/constants";
 import * as helpers    from "../helpers/helpers";
 import * as showFinder from "../show-finder";
 
-const loggedOutPaths = [ "/", "/login", "/spotify-auth", "/token-auth", "/show-finder/delete-venues" ];
+const loggedOutPaths = [
+    "/",
+    "/login",
+    "/spotify-auth",
+    "/token-auth",
+    "/show-finder/venues",
+    "/show-finder/delete-venues",
+    "/show-finder/spotify-search",
+    "/show-finder/venue-search"
+];
 
 export async function authenticate(userDb, req, res, next) {
     if (loggedOutPaths.filter(x => req.path === x).length > 0 || req.path.startsWith("/static")) {

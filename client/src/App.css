@@ -1,7 +1,8 @@
 .App {
   font-family: "Trebuchet MS", Helvetica, sans-serif;
   text-align: center;
-  height: 100vw;
+  display: flex;
+  justify-content: center;
 }
 
 h1 {
@@ -33,6 +34,16 @@ div {
 
 #new-search-button {
   font-size: 15px;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
 }
 
 .unselectable {

@@ -8,6 +8,7 @@ import "./VenueSearch.css";
 class VenueSearch extends Component {
     state = {
         // locations: [],
+        isLoggedIn: false,
         selectedLocation: this.defaultLocationLabel,
         allVenues: [],
         selectedVenues: [],
@@ -25,29 +26,63 @@ class VenueSearch extends Component {
     songsPerArtistChoices = [1, 2, 3, 4, 5];
 
     async componentDidMount() {
-        const userSavedVenuesObj = await this.getUserSavedVenues();
-        let state = { showVenueSearch: false };
-
-        // See if this user has any saved locations already. If not, don't do anything
-        if (userSavedVenuesObj.Location) {
-            // If they have a location, go get all the venues for that location
-            let allVenuesForLocation = await this.getAllVenuesForLocation(userSavedVenuesObj.Location);
-            state.showVenueSearch = true;
-
-            // Map each solo venue ID to its venue to get the name for display
-            if (userSavedVenuesObj.VenueIds) {
-                const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
-                state.selectedVenues = uiVenueObjs;
+        let cookies = document.cookie.split(";");
+        let token = null;
+        for (let cookiePairString of cookies) {
+            let cookiePair = cookiePairString.split("=");
+            if (cookiePair[0] === "show-finder-token") {
+                token = cookiePair[1];
+                break;
             }
         }
 
-        if (userSavedVenuesObj.SongsPerArtist) {
-            state.selectedSongsPerArtist = userSavedVenuesObj.SongsPerArtist;
+        let isLoggedIn = false;
+        if (token !== null) {
+            // Make sure this is our set token
+            let postOptions = {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify({
+                    token: token
+                })
+            };
+
+            let responseJson = await helpers.instrumentCall("/token-auth", postOptions);
+            let response = await responseJson.json();
+            isLoggedIn = response.isLoggedIn;
         }
 
-        if (userSavedVenuesObj.IncludeOpeners !== undefined) {
-            state.includeOpeners = userSavedVenuesObj.IncludeOpeners;
+        let state = { showVenueSearch: false, isLoggedIn };
+
+        // Only try to re-populate things if we have a logged-in user
+        if (isLoggedIn) {
+            const userSavedVenuesObj = await this.getUserSavedVenues();
+
+            // See if this user has any saved locations already. If not, don't do anything
+            if (userSavedVenuesObj.Location) {
+                // If they have a location, go get all the venues for that location
+                let allVenuesForLocation = await this.getAllVenuesForLocation(userSavedVenuesObj.Location);
+                state.showVenueSearch = true;
+
+                // Map each solo venue ID to its venue to get the name for display
+                if (userSavedVenuesObj.VenueIds) {
+                    const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
+                    state.selectedVenues = uiVenueObjs;
+                }
+            }
+
+            if (userSavedVenuesObj.SongsPerArtist) {
+                state.selectedSongsPerArtist = userSavedVenuesObj.SongsPerArtist;
+            }
+
+            if (userSavedVenuesObj.IncludeOpeners !== undefined) {
+                state.includeOpeners = userSavedVenuesObj.IncludeOpeners;
+            }
         }
+
+        console.log(state);
 
         this.setState(state);
     }
@@ -66,7 +101,11 @@ class VenueSearch extends Component {
         });
 
         const allVenuesForLocation = await this.getAllVenuesForLocation(location);
-        const userSavedVenuesObj = await this.getUserSavedVenues(location);
+        let userSavedVenuesObj = {};
+        if (this.state.isLoggedIn) {
+            userSavedVenuesObj = await this.getUserSavedVenues(location);
+        }
+
         let state = { showVenueSearch: true };
         if (userSavedVenuesObj.VenueIds) {
             const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
@@ -250,7 +289,7 @@ class VenueSearch extends Component {
                         value={this.state.selectedVenues}
                     />
                     <div>
-                        <div>
+                        <div style={{ display: this.state.isLoggedIn ? "" : "none" }}>
                             <div style={{ display: "inline-block", margin: "2em auto auto" }}>
                                 <label style={{ marginRight: "1em", fontSize: ".8em" }}>
                                     Choose the number of songs per artist you'd like to appear in your playlist:
@@ -317,6 +356,27 @@ class VenueSearch extends Component {
                                 Gimme
                             </button>
                         </div>
+                    </div>
+                </form>
+                <form action="/login" method="GET" style={{ display: (!this.state.isLoggedIn && this.state.showVenueSearch) ? "" : "none" }}>
+                    <div style={{ margin: "2em auto auto" }}>
+                        <p style={{ marginRight: "1em" }}>
+                            In order to send you a email and build a customized playlist every week, Show Finder needs you to log in with Spotify.
+                        </p>
+                        <button type="submit" value="Log in">Log in</button>
+                        <a
+                            href="./#"
+                            onClick={this.selectVenues}
+                            style={{
+                                display: this.state.saveSuccess ? "none" : "block",
+                                margin: "auto",
+                                marginTop: ".5em",
+                                fontSize: ".7em",
+                                color: "black",
+                                opacity: ".7"
+                            }}>
+                            I don't want to sign in yet, just show me the upcoming shows
+                        </a>
                     </div>
                 </form>
                 <div>

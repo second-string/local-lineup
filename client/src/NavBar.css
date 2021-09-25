@@ -1,6 +1,6 @@
 .NavBar {
     font-family: "Trebuchet MS", Helvetica, sans-serif;
-    background-color: black;
+    background-color: slategray;
     margin: 0;
 }
 .side {
@@ -23,7 +23,7 @@
 
 .nav-input {
     cursor: pointer;
-    background-color: black;
+    background-color: slategray;
     border: none;
     font-size: 1em;
     margin: 0;
@@ -38,7 +38,7 @@
 .menu-a:hover,
 .menu-option-a:hover {
     background-color: lightgray;
-    color: black;
+    color: slategray;
 }
 
 .nav-a.active,
@@ -61,7 +61,7 @@
     height: 100vh;
     top: 3em;
     left: 0;
-    background-color: black;
+    background-color: slategray;
     z-index: 10; /* react-select appears over it for some reason without this */
 }
 

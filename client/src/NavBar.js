@@ -77,18 +77,18 @@ class NavBar extends Component {
                         </a>
                         <a
                             className={this.props.venueSearchSelected ? "active nav-a" : "nav-a"}
-                            style={{ display: this.state.isLoggedIn ? "" : "none" }}
+                            style={{ display: this.props.homeSelected ? "none" : "" }}
                             href="/show-finder/venue-search">
                             Shows by Venue
                         </a>
                         <a
                             className={this.props.spotifySearchSelected ? "active nav-a" : "nav-a"}
-                            style={{ display: this.state.isLoggedIn ? "" : "none" }}
+                            style={{ display: this.props.homeSelected? "none" : "" }}
                             href="/show-finder/spotify-search">
                             Shows by Artist
                         </a>
                     </div>
-                    <div className="side right-align" style={{ display: this.state.isLoggedIn ? "" : "none" }}>
+                    <div className="side right-align" style={{ display: this.state.isLoggedIn  ? "" : "none" }}>
                         <form className="nav-form" method="POST" action="/logout">
                             <input className="nav-input" type="submit" value="Logout" />
                         </form>
@@ -98,19 +98,19 @@ class NavBar extends Component {
                     <a className="menu-a" href="#" onClick={this.menuClicked}>
                         <img className="menu-img" src="/menu.svg" />
                     </a>
-                    <div className="menu-dropdown" style={{ display: this.state.showingDropdown ? "blocK" : "none" }}>
+                    <div className="menu-dropdown" style={{ display: this.state.showingDropdown ? "block" : "none" }}>
                         <a className={this.props.homeSelected ? "active menu-option-a" : "menu-option-a"} href="/">
                             Home
                         </a>
                         <a
                             className={this.props.venueSearchSelected ? "active menu-option-a" : "menu-option-a"}
-                            style={{ display: this.state.isLoggedIn ? "" : "none" }}
+                            style={{ display: true /* only not on homepage in the future */  ? "" : "none" }}
                             href="/show-finder/venue-search">
                             Shows by Venue
                         </a>
                         <a
                             className={this.props.spotifySearchSelected ? "active menu-option-a" : "menu-option-a"}
-                            style={{ display: this.state.isLoggedIn ? "" : "none" }}
+                            style={{ display: true /* only not on homepage in the future */  ? "" : "none" }}
                             href="/show-finder/spotify-search">
                             Shows by Artist
                         </a>

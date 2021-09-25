@@ -7,6 +7,7 @@ import "./SpotifySearch.css";
 
 class SpotifySearch extends Component {
   baseState = {
+    isLoggedIn: false,
     headerText: "Shows by Artist",
     playlists: [],
     playlistNamesById: {},
@@ -37,8 +38,36 @@ class SpotifySearch extends Component {
     this.state = this.baseState;
   }
 
-  componentDidMount() {
-    this.setState({ locations: helpers.locations });
+  async componentDidMount() {
+    let cookies = document.cookie.split(";");
+    let token = null;
+    for (let cookiePairString of cookies) {
+      let cookiePair = cookiePairString.split("=");
+      if (cookiePair[0] === "show-finder-token") {
+        token = cookiePair[1];
+        break;
+      }
+    }
+
+    let isLoggedIn = false;
+    if (token !== null) {
+      // Make sure this is our set token
+      let postOptions = {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json"
+        },
+        body: JSON.stringify({
+          token: token
+        })
+      };
+
+      let responseJson = await helpers.instrumentCall("/token-auth", postOptions);
+      let response = await responseJson.json();
+      isLoggedIn = response.isLoggedIn;
+    }
+
+    this.setState({ locations: helpers.locations, isLoggedIn });
   }
 
   resetState(overrides) {
@@ -207,62 +236,75 @@ class SpotifySearch extends Component {
   };
 
   render() {
-    return (
-      <div className="SpotifySearch">
-        <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
-          New Search
-        </button>
-        <h3>{this.state.headerText}</h3>
-        <p style={{ display: this.state.firstPageLoad ? "" : "none" }}>
-          Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows. Results from 3
-          different music services are combined to ensure a complete set of shows.
-        </p>
-        <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
-        <div style={{ display: this.state.showingLocation ? "" : "none" }}>
-          <div>
-            <select id="location-select" onChange={this.getPlaylists}>
-              <option id="" disabled defaultValue>
-                {" "}
-                Choose a location{" "}
-              </option>
-              {this.state.locations.map(x => (
-                <option key={x.value} value={x.value}>
-                  {" "}
-                  {x.displayName}{" "}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div>
-          <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
-            <div>
-              <ReactList className="scroll-vertical" ref={this.playlistListRef} items={this.state.playlists} />
-            </div>
-            <button className="unselectable" type="submit">
-              Select playlist
-            </button>
-          </form>
+        if (!this.state.isLoggedIn) {
+            return (
+                <div className="SpotifySearch">
+                    <form action="/login" method="GET">
+                        <h3>Log in with Spotify</h3>
+                        <p>Show Finder gives you the ability to choose artists from your existing Spotify playlists to search for upcoming shows.</p>
+                        <p>In order to access your playlists, please log in with your Spotify account.</p>
+                        <button type="submit" value="Log in">Log in</button>
+                    </form>
+                </div>
+            );
+        } else {
+            return (
+                <div className="SpotifySearch">
+                    <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
+                    New Search
+                    </button>
+                    <h3>{this.state.headerText}</h3>
+                    <p style={{ display: this.state.firstPageLoad ? "" : "none" }}>
+                    Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows. Results from 3
+                    different music services are combined to ensure a complete set of shows.
+                    </p>
+                    <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
+                    <div style={{ display: this.state.showingLocation ? "" : "none" }}>
+                    <div>
+                        <select id="location-select" onChange={this.getPlaylists}>
+                        <option id="" disabled defaultValue>
+                            {" "}
+                            Choose a location{" "}
+                        </option>
+                        {this.state.locations.map(x => (
+                            <option key={x.value} value={x.value}>
+                            {" "}
+                            {x.displayName}{" "}
+                            </option>
+                        ))}
+                        </select>
+                    </div>
+                    </div>
+                    <div>
+                    <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
+                        <div>
+                        <ReactList className="scroll-vertical" ref={this.playlistListRef} items={this.state.playlists} />
+                        </div>
+                        <button className="unselectable" type="submit">
+                        Select playlist
+                        </button>
+                    </form>
 
-          <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? "" : "none" }}>
-            <div>
-              <ReactList
-                className="scroll-vertical"
-                ref={this.artistListRef}
-                items={this.state.allArtists}
-                multiple={true}
-                selected={Array(this.state.allArtists.length).keys()}
-              />
-            </div>
-            <button className="unselectable" type="submit">
-              Choose artists
-            </button>
-          </form>
-        </div>
+                    <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? "" : "none" }}>
+                        <div>
+                        <ReactList
+                            className="scroll-vertical"
+                            ref={this.artistListRef}
+                            items={this.state.allArtists}
+                            multiple={true}
+                            selected={Array(this.state.allArtists.length).keys()}
+                        />
+                        </div>
+                        <button className="unselectable" type="submit">
+                        Choose artists
+                        </button>
+                    </form>
+                    </div>
 
-        {this.state.shows}
-      </div>
-    );
+                    {this.state.shows}
+                </div>
+            );
+        }
   }
 }
 

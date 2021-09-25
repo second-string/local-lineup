@@ -1,3 +1,4 @@
+import * as helpers from "./Helpers.js";
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import ReactList from "react-list-select";
@@ -7,26 +8,6 @@ class App extends Component {
   state = {
     isLoggedIn: false
   };
-
-  async instrumentCall(url, options) {
-    let res;
-    try {
-      res = await fetch(url, options);
-    } catch (e) {
-      console.log(e);
-      throw new Error(e);
-    }
-
-    if (res.status >= 400) {
-      console.log(`ERROR contacting ${url} with options:`);
-      console.log(options);
-      console.log("Reponse: ");
-      console.log(res);
-      // throw new Error(res);
-    }
-
-    return res;
-  }
 
   async componentDidMount() {
     let cookies = document.cookie.split(";");
@@ -52,7 +33,7 @@ class App extends Component {
         })
       };
 
-      let responseJson = await this.instrumentCall("/token-auth", postOptions);
+      let responseJson = await helpers.instrumentCall("/token-auth", postOptions);
       let response = await responseJson.json();
       isLoggedIn = response.isLoggedIn;
     }
@@ -63,12 +44,21 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "" : "none" }}>
-          <h2>music n shit</h2>
-        </div>
-        <div className="center-vertically" style={{ display: this.state.isLoggedIn ? "none" : "", marginTop: "2rem" }}>
-          <a href="./login">Login to your Spotify account to enable Show Finder</a>
-          <p >This login is used to retrieve a list of your public playlists and to create the weekly Show Finder playlist ONLY if you explicitly choose to do so.</p>
+        <div className="flex-column" style={{maxWidth: "66%"}}>
+            <h1>Show Finder</h1>
+            <h3>Whether you're discovering new artists or falling back on old favorites, view who will be playing at your favorite venues soon</h3>
+            <p>Show Finder aggregates concert listing from four separate music services to provide a complete list of who is playing in your city.</p>
+            <p>Choose from one of two options to start your search:</p>
+            <div className="flex-row">
+                <form action="/show-finder/venue-search" method="GET" style={{flexBasis: "100%"}}>
+                    <button type="submit">Search by venue</button>
+                    <p>Select all venues you're interested in from your city to receive an email every Sunday listing who will be playing there the following week. Link your Spotify account for Show Finder to build a playlist of those artists' songs for you to discover new talent.</p>
+                </form>
+                <form action="/show-finder/spotify-search" method="GET" style={{flexBasis: "100%"}}>
+                    <button type="submit">Search by artist</button>
+                    <p>Select a list of artists from your Spotify playlists to see who will be playing in your city soon.</p>
+                </form>
+            </div>
         </div>
       </div>
     );
