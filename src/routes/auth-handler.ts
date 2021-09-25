@@ -8,48 +8,45 @@ import * as constants  from "../helpers/constants";
 import * as helpers    from "../helpers/helpers";
 import * as showFinder from "../show-finder";
 
-const loggedOutPaths = [
-    "/",
-    "/login",
-    "/spotify-auth",
-    "/token-auth",
-    "/show-finder/venues",
-    "/show-finder/delete-venues",
-    "/show-finder/spotify-search",
-    "/show-finder/venue-search"
+// API routes that require user to be logged in
+const restrictedPaths = [
+    "/show-finder/playlists",
+    "/show-finder/artists",
+    "/show-finder/save-venues",
+    "/show-finder/user-venues",
 ];
 
-export async function authenticate(userDb, req, res, next) {
-    if (loggedOutPaths.filter(x => req.path === x).length > 0 || req.path.startsWith("/static")) {
+export async function session(userDb, req, res, next) {
+    let sessionToken: string = req.cookies["show-finder-token"];
+    let token                = null;
+    if (sessionToken === undefined || sessionToken === null) {
+        // If no token exists this is most likely first page load for the user - create
+        token        = {userUid : null};
+        sessionToken = jwt.sign(token, constants.jwtSigningSecret, {expiresIn : "3h"});
+        res.cookie("show-finder-token", sessionToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
+    } else {
+        // If token cookie exists, try to parse it
+        token = parseToken(sessionToken);
+        if (token === null) {
+            return res.redirect(401, "/");
+        }
+    }
+
+    // Regardless of existing or newly created, set on the req object so all remaining routes have access to it
+    req.sessionToken = sessionToken;
+
+    // Only try to go get user from DB if we're hitting a restricted api route that needs user info
+    if (restrictedPaths.filter(x => req.path === x).length === 0 || req.path.startsWith("/static")) {
         return next();
     }
 
-    if (!req.cookies || !req.cookies["show-finder-token"]) {
-        return res.redirect(401, "/");
-    }
-
-    const reqToken = req.cookies["show-finder-token"];
-    let token      = null;
-    try {
-        token = jwt.verify(reqToken, constants.jwtSigningSecret);
-    } catch (e) {
-        console.log("Error decoding JWT!");
-        console.log("req.cookies.token:");
-        console.log(reqToken);
-        console.log("Exception:");
-        console.log(e);
-
-        return res.redirect(401, "/");
-    }
-
+    // If this token has a user associated with it, save user obj in req object for potential use in requests rather
+    // than doubling up on the users table lookup (most common use currently is grabbing user's spoot access token)
     const userObj: DbUser = await userDb.getAsync(`SELECT * FROM Users WHERE Uid=?`, [ token.userUid ]);
-
     if (userObj === undefined) {
         console.log(`Got no user obj from db from jwt decoded token ${token.userUid}, redirecting to /`);
         return res.redirect(403, "/");
     } else {
-        // Save user obj in req object for potential use in requests rather than doubling up on the users table lookup
-        // (most common use currently is grabbing user's spoot access token)
         req.userObj = userObj;
         return next();
     }
@@ -97,16 +94,8 @@ export async function tokenAuth(db, req, res) {
         return res.json({isLoggedIn : false});
     }
 
-    let token = null;
-    try {
-        token = jwt.verify(reqToken, constants.jwtSigningSecret);
-    } catch (e) {
-        console.log("Error decoding JWT!");
-        console.log("req.cookies.token:");
-        console.log(reqToken);
-        console.log("Exception:");
-        console.log(e);
-
+    const token = parseToken(reqToken);
+    if (token === null) {
         return res.json({isLoggedIn : false});
     }
 
@@ -123,6 +112,11 @@ export async function tokenAuth(db, req, res) {
 
 // Redirect function passed to spotify.com's auth to handle getting the access/refresh tokens and storing them
 export async function spotifyLoginCallback(db, req, res) {
+    const token = parseToken(req.sessionToken);
+    if (token === null) {
+        return res.redirect(500, "/");
+    }
+
     let code     = req.query.code;
     let stateStr = req.query.state;
     if (code === undefined && req.query.error) {
@@ -199,9 +193,7 @@ export async function spotifyLoginCallback(db, req, res) {
         "INSERT OR REPLACE INTO Users(Uid, Email, SpotifyUsername, FullName, SpotifyAccessToken, SpotifyRefreshToken) VALUES (?, ?, ?, ?, ?, ?)",
         [ userUid, response.email, response.id, response.display_name, access, refresh ]);
 
-    let signedToken = jwt.sign({userUid : userUid}, constants.jwtSigningSecret, {expiresIn : "1h"});
-
-    res.cookie("show-finder-token", signedToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
+    updateUnparsedTokenField(req.sessionToken, "userUid", userUid, res);
     res.redirect(state.redirect ? state.redirect : "/");
 }
 
@@ -218,4 +210,33 @@ async function getHashInfo(password, salt, iterations) {
             resolve({hash : derivedKey.toString("hex"), salt, iterations});
         });
     });
+}
+
+export function parseToken(tokenStr) {
+    let token = null;
+    try {
+        token = jwt.verify(tokenStr, constants.jwtSigningSecret);
+    } catch (e) {
+        console.log("Error decoding JWT!");
+        console.log("req.sessionToken:");
+        console.log(tokenStr ? tokenStr : "undefined or null");
+        console.log("Exception:");
+        console.log(e);
+    }
+
+    return token;
+}
+
+// For use when caller only has unparsed token and doesn't need to see inside
+export function updateUnparsedTokenField(sessionToken, field, value, res) {
+    const parsedToken = parseToken(sessionToken);
+    return updateTokenField(parsedToken, field, value, res);
+}
+
+// For use when caller has already parsed token b/c new token depends on value(s) in previous token
+export function updateTokenField(parsedToken, field, value, res) {
+    parsedToken[field] = value;
+    delete parsedToken.exp;
+    const signedToken = jwt.sign(parsedToken, constants.jwtSigningSecret, {expiresIn : "3h"});
+    res.cookie("show-finder-token", signedToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
 }

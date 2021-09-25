@@ -1,3 +1,9 @@
+declare namespace Express {
+    export interface Request {
+        sessionToken: string;
+    }
+}
+
 interface DbUser {
     Uid: string;
     Email: string;

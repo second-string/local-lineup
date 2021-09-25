@@ -51,8 +51,8 @@ for (const dir of static_app_dirs) {
     app.use(express.static(dir));
 }
 
-// Route everything through the auth function
-app.use((req, res, next) => authHandler.authenticate(db, req, res, next));
+// Route everything through the session management function
+app.use((req, res, next) => authHandler.session(db, req, res, next));
 
 const routerDependencies = {
     db,

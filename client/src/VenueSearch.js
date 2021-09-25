@@ -30,33 +30,30 @@ class VenueSearch extends Component {
 
         let state = { showVenueSearch: false, isLoggedIn };
 
-        // Only try to re-populate things if we have a logged-in user
-        if (isLoggedIn) {
-            const userSavedVenuesObj = await this.getUserSavedVenues();
+        // Get best-matching saved venues obj from api. If we're logged in, might be saved db values, or fallback to token values.
+        // If not logged in, just check token values. Empty object returned for none found
+        const savedVenuesObj = await this.getSavedVenues(isLoggedIn);
 
-            // See if this user has any saved locations already. If not, don't do anything
-            if (userSavedVenuesObj.Location) {
-                // If they have a location, go get all the venues for that location
-                let allVenuesForLocation = await this.getAllVenuesForLocation(userSavedVenuesObj.Location);
-                state.showVenueSearch = true;
-
-                // Map each solo venue ID to its venue to get the name for display
-                if (userSavedVenuesObj.VenueIds) {
-                    const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
-                    state.selectedVenues = uiVenueObjs;
-                }
-            }
-
-            if (userSavedVenuesObj.SongsPerArtist) {
-                state.selectedSongsPerArtist = userSavedVenuesObj.SongsPerArtist;
-            }
-
-            if (userSavedVenuesObj.IncludeOpeners !== undefined) {
-                state.includeOpeners = userSavedVenuesObj.IncludeOpeners;
+        // See if this user has any saved locations already. If not, try to pull over a previous venue list from the cookie
+        let allVenuesForLocation = null;
+        if (savedVenuesObj.Location) {
+            allVenuesForLocation = await this.getAllVenuesForLocation(savedVenuesObj.Location);
+            state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+        } else if (isLoggedIn) {
+            // Force cookie venues/location with 'false' for isLoggedIn param only if our first check wasn't already a logged out cookie check
+            savedVenuesObj = await this.getSavedVenues(false);
+            if (savedVenuesObj.Location) {
+                allVenuesForLocation = await this.getAllVenuesForLocation(savedVenuesObj.Location);
+                state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
             }
         }
 
-        console.log(state);
+        // If we never got them sometime in the above process, get them for the current default location
+        if (!allVenuesForLocation) {
+            allVenuesForLocation = await this.getAllVenuesForLocation(this.state.selectedLocation);
+        }
+
+        state.allVenues = allVenuesForLocation;
 
         this.setState(state);
     }
@@ -74,28 +71,56 @@ class VenueSearch extends Component {
             selectedVenues: []
         });
 
-        const allVenuesForLocation = await this.getAllVenuesForLocation(location);
-        let userSavedVenuesObj = {};
-        if (this.state.isLoggedIn) {
-            userSavedVenuesObj = await this.getUserSavedVenues(location);
+        let savedVenuesObj = await this.getSavedVenues(this.state.isLoggedIn, location);
+        let state = { showVenueSearch: true, selectedLocation: location, };
+        debugger;
+
+        // Get best-matching saved venues obj from api. If we're logged in, might be saved db values, or fallback to token values.
+        // If not logged in, just check token values. Empty object returned for none found
+        let allVenuesForLocation = null;
+        if (savedVenuesObj.Location) {
+            allVenuesForLocation = await this.getAllVenuesForLocation(location);
+            state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+        } else if (this.state.isLoggedIn) {
+            // Force cookie venues/location with 'false' for isLoggedIn param only if our first check wasn't already a logged out cookie check
+            savedVenuesObj = await this.getSavedVenues(false);
+            if (savedVenuesObj) {
+                allVenuesForLocation = await this.getAllVenuesForLocation(location);
+                state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+            }
         }
 
-        let state = { showVenueSearch: true };
-        if (userSavedVenuesObj.VenueIds) {
-            const uiVenueObjs = this.buildUiVenueObjects(userSavedVenuesObj.VenueIds, allVenuesForLocation);
-            state.selectedVenues = uiVenueObjs;
+        // If we never got them sometime in the above process, get them for the selected location
+        if (!allVenuesForLocation) {
+            allVenuesForLocation = await this.getAllVenuesForLocation(location);
         }
 
-        if (userSavedVenuesObj.SongsPerArtist) {
-            state.selectedSongsPerArtist = userSavedVenuesObj.SongsPerArtist;
-        }
-
-        if (userSavedVenuesObj.IncludeOpeners !== undefined) {
-            state.includeOpeners = userSavedVenuesObj.IncludeOpeners;
-        }
+        state.allVenues = allVenuesForLocation;
 
         this.setState(state);
     };
+
+    // Set state variables for showing venue ids and playlist options that were previously saved.
+    // Expects an existing savedVenuesObj.Location check beforehand. Returns passed-in updated temp state.
+    populateFromSavedValues = async (savedVenuesObj, allVenuesForLocation, tempState) => {
+        tempState.showVenueSearch = true;
+
+        // Map each solo venue ID to its venue to get the name for display
+        if (savedVenuesObj.VenueIds) {
+            const uiVenueObjs = this.buildUiVenueObjects(savedVenuesObj.VenueIds, allVenuesForLocation);
+            tempState.selectedVenues = uiVenueObjs;
+        }
+
+        if (savedVenuesObj.SongsPerArtist) {
+            tempState.selectedSongsPerArtist = savedVenuesObj.SongsPerArtist;
+        }
+
+        if (savedVenuesObj.IncludeOpeners !== undefined) {
+            tempState.includeOpeners = savedVenuesObj.IncludeOpeners;
+        }
+
+        return tempState;
+    }
 
     getAllVenuesForLocation = async location => {
         this.setState({ showSpinner: true, selectedLocation: location });
@@ -118,7 +143,8 @@ class VenueSearch extends Component {
         return allVenuesForLocation;
     };
 
-    getUserSavedVenues = async location => {
+    // Get the venue ids for a specific location either from db user venueids or cookie if not logged in
+    getSavedVenues = async (isLoggedIn, location) => {
         const getOptions = {
             method: "GET",
             headers: {
@@ -126,17 +152,37 @@ class VenueSearch extends Component {
             }
         };
 
-        const res = await helpers.instrumentCall(`/show-finder/user-venues${location ? `?location=${location}` : ""}`, getOptions);
+        // Switch URLs (user-venues or selected-venues) depending on if user is logged in or just looking in cookie respectively
+        const res = await helpers.instrumentCall(`/show-finder/${isLoggedIn ? "user" : "selected"}-venues${location ? `?location=${location}` : ""}`, getOptions);
         const venueIdsObj = await res.json();
 
         return venueIdsObj;
     };
 
-    // Takes in comma-delimited string of ids and a list of the full venue objects
+    // Let the backend update the selected venues saved in cookie every time we change selected list on frontend
+    updateCookieVenueList = async (location, venueIds) => {
+        const postBody = {
+            location,
+            venueIds,
+        };
+
+        const postOptions = {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json"
+            },
+            body:  JSON.stringify(postBody),
+        };
+
+        const res = await helpers.instrumentCall("/show-finder/selected-venues", postOptions);
+        // TODO :: any error checking or something to do with the result?
+    }
+
+    // Takes in an array of ids and a list of the full venue objects
     // Returns a list of the jsx objects for display with key, value, and label
-    buildUiVenueObjects = (venueIdString, venueObjs) => {
+    buildUiVenueObjects = (venueIds, venueObjs) => {
         let userVenues = [];
-        for (let id of venueIdString.split(",")) {
+        for (let id of venueIds) {
             const venue = venueObjs.find(x => x.id === parseInt(id));
             if (!venue) {
                 continue;
@@ -212,6 +258,9 @@ class VenueSearch extends Component {
         } else {
             // e is a list of the selected venue objects in the shape of { value: venueId, label: venueName }
             this.setState({ selectedVenues: e });
+
+            // Send selected venue ids to backend to update cookie list
+            this.updateCookieVenueList(this.state.selectedLocation, e.map(x => x.value));
         }
     };
 

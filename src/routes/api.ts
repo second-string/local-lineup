@@ -161,25 +161,92 @@ export function setRoutes(routerDependencies) {
         }
     });
 
+    // Retrieve logged-in user's previously-saved venue list from the db. Can be called with no location, in which the
+    // first existing venue id list will be returned, or with a location to retrieve specific venue ids. If none exist
+    // or none match passed in location, will simply return an emptyu object
     router.get("/show-finder/user-venues", async (req, res) => {
         // Support querying for a specific location for this user if they have multiple
         // Allows us to keep populating their different venue lists as they switch locations
-        let venueListObj: DbVenueList = null;
+        let dbVenueListObj: DbVenueList = null;
         if (req.query.location) {
-            venueListObj = await db.getAsync(
+            dbVenueListObj = await db.getAsync(
                 `SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=? AND Location=?`,
                 [ req.userObj.Uid, req.query.location ]);
         } else {
-            venueListObj = await db.getAsync(
+            dbVenueListObj = await db.getAsync(
                 `SELECT VenueIds, Location, SongsPerArtist, IncludeOpeners FROM VenueLists WHERE UserUid=?`,
                 [ req.userObj.Uid ]);
         }
 
-        if (venueListObj === undefined) {
+        if (dbVenueListObj === undefined) {
             return res.json({});
         }
 
+        // Convert comma-delimeted DB list into real one
+        // Note: NOT stringified - built manually in client js by joining w/ commas
+        const venueListObj: any = {...dbVenueListObj};
+        if (dbVenueListObj.VenueIds) {
+            venueListObj.VenueIds = dbVenueListObj.VenueIds.split(",");
+        }
+
         res.json(venueListObj);
+    });
+
+    // Retrieve previously selected venue ids stored in cookie for logged out user. Can be called with no location, in
+    // which the first existing saved location will be returned, or with a location to retrieve specific venue ids. If
+    // none exist or none match passed in location, will simply return empty object
+    router.get("/show-finder/selected-venues", async (req, res) => {
+        const token  = authHandler.parseToken(req.sessionToken);
+        let location = req.query.location as string;
+        if (!token.selectedVenues) {
+            return res.json({});
+        } else {
+            let venueIds = null;
+            if (location) {
+                venueIds = token.selectedVenues[location];
+            } else {
+                // Check to see if we have any for first page load, not picky on location
+                if (token.selectedVenues && Object.keys(token.selectedVenues).length > 0) {
+                    location = Object.keys(token.selectedVenues)[0];
+                    venueIds = token.selectedVenues[location];
+                }
+            }
+
+            if (venueIds) {
+                // Return in DB format since that's how /user-venues api route returns db-saved logged in user venues
+                return res.json({
+                    Location : location,
+                    VenueIds : venueIds,
+                });
+            } else {
+                return res.json({});
+            }
+        }
+    });
+
+    // Used to store selected venues per city in a cooke so when users select venues, sign in, then return through
+    // spotify auth callback redirect, they still have the full venue list. Once a user is logged in the react code
+    // only uses the DB venue list
+    router.post("/show-finder/selected-venues", async (req, res) => {
+        const location = req.body.location;
+        const venueIds = req.body.venueIds;
+        if (!location || !venueIds) {
+            return res.status(400).send();
+        }
+
+        const token        = authHandler.parseToken(req.sessionToken);
+        let selectedVenues = {};
+        if (token.selectedVenues) {
+            token.selectedVenues.location = venueIds;
+            selectedVenues                = token.selectedVenues;
+        } else {
+            selectedVenues = {
+                [location] : venueIds,
+            };
+        }
+
+        authHandler.updateTokenField(token, "selectedVenues", selectedVenues, res);
+        return res.status(200).send();
     });
 
     return router;
