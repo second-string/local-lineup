@@ -363,6 +363,7 @@ class VenueSearch extends Component {
                         <p style={{ marginRight: "1em" }}>
                             In order to send you a email and build a customized playlist every week, Show Finder needs you to log in with Spotify.
                         </p>
+                        <input type="hidden" name="redirect" value={window.location.pathname} />
                         <button type="submit" value="Log in">Log in</button>
                         <a
                             href="./#"

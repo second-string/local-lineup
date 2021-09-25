@@ -58,6 +58,20 @@ export async function authenticate(userDb, req, res, next) {
 export async function login(req, res) {
     const rootHost    = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
+
+    // Include redirect path to return to correct location post-auth if necessary. If not included, will return home.
+    let state = {redirect : "/"};
+    if (req.query.redirect &&
+        (req.query.redirect == "/show-finder/spotify-search" || req.query.redirect == "/show-finder/venue-search")) {
+        state.redirect = req.query.redirect;
+    }
+
+    // Encode redirect info in state variable so we know where to return to when spotify calls auth callback
+    const stateStr = JSON.stringify(state);
+    console.log(`state str: ${stateStr}`);
+    const stateEncoded = Buffer.from(stateStr).toString("base64");
+    console.log(`b64 enc state: ${stateEncoded}`);
+
     const scopes =
         "user-read-email user-library-read playlist-read-private playlist-modify-private playlist-modify-public";
 
@@ -66,7 +80,7 @@ export async function login(req, res) {
         client_id : constants.clientId,
         scope : scopes,
         redirect_uri : redirectUri,
-        state : "test_state_token"
+        state : stateEncoded
     }));
 }
 
@@ -111,25 +125,32 @@ export async function tokenAuth(db, req, res) {
 
 // Redirect function passed to spotify.com's auth to handle getting the access/refresh tokens and storing them
 export async function spotifyLoginCallback(db, req, res) {
-    let code  = req.query.code;
-    let state = req.query.state;
+    let code     = req.query.code;
+    let stateStr = req.query.state;
     if (code === undefined && req.query.error) {
-        throw new Error(`Error getting preliminary auth code from spoot: ${req.query.error}`);
+        console.error(`Error getting preliminary auth code from spoot: ${req.query.error}`)
+        return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     } else if (code === undefined) {
-        throw new Error("Shit is borked - no error nor code from spoot prelim auth");
+        console.error("Shit is borked - no error nor code from spoot prelim auth")
+        return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     }
 
-    if (state !== "test_state_token") {
-        throw new Error(`State is borked. Looking for '${"test_state_token"}' got '${state}'`);
+    if (!stateStr) {
+        console.error(`State is borked. Got no state. Returning user to home page`)
+        return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     }
+
+    const stateDecoded = Buffer.from(stateStr, "base64").toString("utf-8");
+    console.log(`decoded b64 state: ${stateDecoded}`);
+    const state = JSON.parse(stateDecoded);
+    console.log(`parsed state: ${state}`);
 
     const rootHost  = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     let postOptions = {
         method : "POST",
         body : {
             grant_type : "authorization_code",
-            redirect_uri :
-                `https://${rootHost}/spotify-auth`,  // Doesn't matter, just needs to match what we sent previously
+            redirect_uri : `https://${rootHost}/spotify-auth`,  // Not used, just needs to match what we sent previously
             code : code
         },
         headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : helpers.spotifyAuth()}
@@ -140,7 +161,8 @@ export async function spotifyLoginCallback(db, req, res) {
         await helpers.instrumentCall("https://accounts.spotify.com/api/token", postOptions, false);
     if (!success) {
         console.error(response);
-        throw new Error(`something went wrong with request for access/refresh spoot tokens`);
+        console.error("something went wrong with request for access/refresh spoot tokens");
+        return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     }
 
     const access  = response.access_token;
@@ -155,7 +177,8 @@ export async function spotifyLoginCallback(db, req, res) {
     ({success, response} = await helpers.instrumentCall("https://api.spotify.com/v1/me", getOptions, false));
     if (!success) {
         console.error(response);
-        throw new Error("Error getting user account using access token");
+        console.error("Error getting user account using access token");
+        return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     }
 
     // Lookup email in DB to see if they have an account
@@ -175,7 +198,9 @@ export async function spotifyLoginCallback(db, req, res) {
         [ userUid, response.email, response.id, response.display_name, access, refresh ]);
 
     let signedToken = jwt.sign({userUid : userUid}, constants.jwtSigningSecret, {expiresIn : "1h"});
-    res.cookie("show-finder-token", signedToken, {maxAge : 1000 * 60 * 60 /* 1hr */}).redirect("/");
+
+    res.cookie("show-finder-token", signedToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
+    res.redirect(state.redirect ? state.redirect : "/");
 }
 
 async function getHashInfo(password, salt, iterations) {

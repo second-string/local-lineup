@@ -243,6 +243,7 @@ class SpotifySearch extends Component {
                         <h3>Log in with Spotify</h3>
                         <p>Show Finder gives you the ability to choose artists from your existing Spotify playlists to search for upcoming shows.</p>
                         <p>In order to access your playlists, please log in with your Spotify account.</p>
+                        <input type="hidden" name="redirect" value={window.location.pathname} />
                         <button type="submit" value="Log in">Log in</button>
                     </form>
                 </div>
