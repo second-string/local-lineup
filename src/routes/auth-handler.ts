@@ -67,10 +67,8 @@ export async function login(req, res) {
     }
 
     // Encode redirect info in state variable so we know where to return to when spotify calls auth callback
-    const stateStr = JSON.stringify(state);
-    console.log(`state str: ${stateStr}`);
+    const stateStr     = JSON.stringify(state);
     const stateEncoded = Buffer.from(stateStr).toString("base64");
-    console.log(`b64 enc state: ${stateEncoded}`);
 
     const scopes =
         "user-read-email user-library-read playlist-read-private playlist-modify-private playlist-modify-public";
@@ -92,7 +90,7 @@ export async function logout(req, res) {
 // for pages shown to non-logged-in users that you want to display differently for logged-in (i.e. hiding a login
 // button)
 export async function tokenAuth(db, req, res) {
-    // Just 'token' key because it's what we're manually sending from inside our react homepage
+    // Just 'token' key because it's what we're manually sending from inside our react code
     let reqToken = req.body.token;
 
     if (reqToken === undefined || reqToken === null) {
@@ -141,9 +139,13 @@ export async function spotifyLoginCallback(db, req, res) {
     }
 
     const stateDecoded = Buffer.from(stateStr, "base64").toString("utf-8");
-    console.log(`decoded b64 state: ${stateDecoded}`);
-    const state = JSON.parse(stateDecoded);
-    console.log(`parsed state: ${state}`);
+    let state          = {redirect : "/"};
+    try {
+        state = JSON.parse(stateDecoded);
+    } catch {
+        console.error(`Error parsing json state out of b64 decoded string. Decoded state string: ${stateDecoded}`);
+        return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
+    }
 
     const rootHost  = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
     let postOptions = {

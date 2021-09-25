@@ -34,4 +34,36 @@ export async function instrumentCall(url, options) {
     return res;
 };
 
+export async function isUserLoggedIn(cookieString) {
+    let cookies = cookieString.split(";");
+    let token = null;
+    for (let cookiePairString of cookies) {
+      let cookiePair = cookiePairString.split("=");
+      if (cookiePair[0] === "show-finder-token") {
+        token = cookiePair[1];
+        break;
+      }
+    }
+
+    let isLoggedIn = false;
+    if (token !== null) {
+      // Make sure this is our set token
+      let postOptions = {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json"
+        },
+        body: JSON.stringify({
+          token: token
+        })
+      };
+
+      let responseJson = await instrumentCall("/token-auth", postOptions);
+      let response = await responseJson.json();
+      isLoggedIn = response.isLoggedIn;
+    }
+
+    return isLoggedIn;
+}
+
 // module.exports = {instrumentCall};

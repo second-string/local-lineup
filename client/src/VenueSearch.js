@@ -26,33 +26,7 @@ class VenueSearch extends Component {
     songsPerArtistChoices = [1, 2, 3, 4, 5];
 
     async componentDidMount() {
-        let cookies = document.cookie.split(";");
-        let token = null;
-        for (let cookiePairString of cookies) {
-            let cookiePair = cookiePairString.split("=");
-            if (cookiePair[0] === "show-finder-token") {
-                token = cookiePair[1];
-                break;
-            }
-        }
-
-        let isLoggedIn = false;
-        if (token !== null) {
-            // Make sure this is our set token
-            let postOptions = {
-                method: "POST",
-                headers: {
-                    "Content-type": "application/json"
-                },
-                body: JSON.stringify({
-                    token: token
-                })
-            };
-
-            let responseJson = await helpers.instrumentCall("/token-auth", postOptions);
-            let response = await responseJson.json();
-            isLoggedIn = response.isLoggedIn;
-        }
+        const isLoggedIn = await helpers.isUserLoggedIn(document.cookie);
 
         let state = { showVenueSearch: false, isLoggedIn };
 
