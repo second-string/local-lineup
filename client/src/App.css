@@ -10,30 +10,35 @@ h1 {
 }
 
 button {
-  font-size: 30px;
-  padding: 10px;
-  border-style: solid;
+  font-size: 18px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   background-color: white;
-  border-color: #afafaf;
-  border-width: 2px;
-  border-radius: 5px;
   margin: 10px;
   outline: none;
+  min-width: 200px;
+  min-height: 75px;
+  white-space: nowrap;
 }
 
 div {
   height: 100%;
 }
 
-#location-select {
-  display: block;
-  margin: auto;
-  margin-top: 20px;
-  margin-bottom: 20px;
+.default-button-border {
+  border-style: solid;
+  border-color: #afafaf;
+  border-width: 2px;
+  border-radius: 5px;
 }
 
-#new-search-button {
-  font-size: 15px;
+.blue-button-border {
+    border-style: solid;
+    border-color: #6699ff;;
+    border-width: 2px;
+    border-radius: 5px;
 }
 
 .flex-row {
@@ -46,132 +51,33 @@ div {
     flex-direction: column;
 }
 
-.unselectable {
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
-  cursor: default;
+.align-items-center {
+    align-items: center;
 }
 
-.scroll-vertical {
-  overflow: auto;
+.justify-content-center {
+    justify-content: center;
 }
 
-.textbox {
-  min-width: 200px;
-  font-size: 40px;
-  padding: 10px;
-  border-radius: 10px;
-  border-style: solid;
-  border-color: #afafaf;
-  outline: none;
+.text-align-left {
+    text-align: left;
 }
 
-.block {
-  display: block;
+.text-align-right {
+    text-align: right;
 }
 
-.center-child {
-  text-align: center;
+.w-100 {
+    width: 100%;
 }
 
-.react-list-select {
-  text-align: center;
-  display: inline-block;
-  min-width: 600px;
-  border-radius: 5px;
-  border-style: solid;
-  border-color: #79b9ff;
-  border-width: 2px;
-  outline: none;
+.slate-rounded-border {
+    border-style: solid;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: slategray;
 }
 
-.loader {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border: 10px solid #f3f3f3; /* Light grey */
-  border-top: 10px solid #3498db; /* Blue */
-  border-radius: 50%;
-  margin: auto;
-  width: 60px;
-  height: 60px;
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.react-list-select--item {
-  padding: 0.3em 0.6em;
-  cursor: pointer;
-  position: relative;
-  font-size: 20px;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
-}
-
-.react-list-select--item.is-selected {
-  -webkit-user-select: inherit;
-  -moz-user-select: inherit;
-  -ms-user-select: inherit;
-  -o-user-select: inherit;
-  user-select: inherit;
-}
-
-.react-list-select--item.is-disabled {
-  cursor: default;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-/* Add some style to the list */
-
-.react-list-select {
-  background: #fafafa;
-  margin-right: 0.5em;
-}
-.react-list-select--item.is-selected {
-  background: #d7e7ff;
-}
-.react-list-select:hover .react-list-select--item.is-focused::before,
-.react-list-select:hover .react-list-select--item.is-focused::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #79b9ff;
-}
-.react-list-select:hover .react-list-select--item.is-focused::before {
-  left: 0;
-}
-.react-list-select:hover .react-list-select--item.is-focused::after {
-  right: 0;
-}
-.react-list-select--item.is-disabled {
-  color: #afafaf;
-}
-
-.context-menu .react-list-select {
-  padding: 0.3em 0;
-}
-.context-menu .react-list-select--item {
-  font-size: 0.8125em;
+.flex-basis-100 {
+    flex-basis: 100%;
 }
