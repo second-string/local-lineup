@@ -230,8 +230,7 @@ export function setRoutes(routerDependencies) {
     router.post("/show-finder/selected-venues", async (req, res) => {
         const location = req.body.location;
         const venueIds = req.body.venueIds;
-        debugger;
-        ;
+
         if (!location || !venueIds) {
             return res.status(400).send();
         }
@@ -239,8 +238,8 @@ export function setRoutes(routerDependencies) {
         const token        = authHandler.parseToken(req.sessionToken);
         let selectedVenues = {};
         if (token.selectedVenues) {
-            token.selectedVenues.location = venueIds;
-            selectedVenues                = token.selectedVenues;
+            token.selectedVenues[location] = venueIds;
+            selectedVenues                 = token.selectedVenues;
         } else {
             selectedVenues = {
                 [location] : venueIds,
