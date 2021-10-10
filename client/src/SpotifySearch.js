@@ -8,12 +8,11 @@ import "./SpotifySearch.css";
 class SpotifySearch extends Component {
   baseState = {
     isLoggedIn: false,
-    headerText: "Shows by Artist",
+    headerText: "",
     playlists: [],
     playlistNamesById: {},
     allArtists: [],
     shows: [],
-    firstPageLoad: true,
     showingLocation: true,
     showingNewSearch: false,
     showingArtists: false,
@@ -21,9 +20,11 @@ class SpotifySearch extends Component {
     showingShows: false,
     showSpinner: false,
     locations: [],
-    selectedLocation: null
+    selectedLocation: this.defaultLocationValue,
   };
 
+  defaultLocationLabel = "Choose a location";
+  defaultLocationValue = "defaultLocation";
   state = {};
 
   constructor(props) {
@@ -43,21 +44,22 @@ class SpotifySearch extends Component {
       this.setState({ locations: helpers.locations, isLoggedIn });
   }
 
-  resetState(overrides) {
-    let newState = { ...this.baseState, ...overrides };
-    this.setState(newState);
-  }
-
-  newSearch = () => {
-    this.resetState({
-      locations: helpers.locations,
-      selectedLocation: this.state.selectedLocation,
-      playlistNamesById: this.state.playlistNamesById,
-      firstPageLoad: false,
-      showingNewSearch: false
+  newSearch = (e) => {
+    e.preventDefault();
+    this.setState({
+        headerText: "",
+        playlists: [],
+        playlistNamesById: {},
+        allArtists: [],
+        shows: [],
+        showingLocation: true,
+        showingNewSearch: false,
+        showingArtists: false,
+        showingPlaylists: false,
+        showingShows: false,
+        showSpinner: false,
+        selectedLocation: this.defaultLocationValue,
     });
-
-    this.showPlaylists(this.state.playlistNamesById);
   };
 
   getPlaylists = async e => {
@@ -77,7 +79,6 @@ class SpotifySearch extends Component {
 
     this.setState({
       selectedLocation: e.target.value,
-      firstPageLoad: false,
       showSpinner: true,
       showingLocation: false,
       showingNewSearch: true,
@@ -203,8 +204,7 @@ class SpotifySearch extends Component {
         showSpinner: false,
         headerText: "Choose a playlist",
         playlists: names
-      },
-      () => ReactDOM.findDOMNode(this.playlistListRef.current).focus()
+      }
     );
   };
 
@@ -224,57 +224,65 @@ class SpotifySearch extends Component {
         } else {
             return (
                 <div className="SpotifySearch">
-                    <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
-                    New Search
-                    </button>
-                    <h3>{this.state.headerText}</h3>
-                    <p style={{ display: this.state.firstPageLoad ? "" : "none" }}>
-                    Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows. Results from 3
-                    different music services are combined to ensure a complete set of shows.
-                    </p>
-                    <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
+                    <h2>Shows by Artist</h2>
+                    <p>Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.</p>
+                    <p>Results from 4 different music services are combined to ensure a complete set of shows.</p>
                     <div style={{ display: this.state.showingLocation ? "" : "none" }}>
-                    <div>
-                        <select id="location-select" onChange={this.getPlaylists}>
-                        <option id="" disabled defaultValue>
-                            {" "}
-                            Choose a location{" "}
-                        </option>
-                        {this.state.locations.map(x => (
-                            <option key={x.value} value={x.value}>
-                            {" "}
-                            {x.displayName}{" "}
-                            </option>
-                        ))}
+                        <select id="location-select" value={this.state.selectedLocation} defaultValue={this.defaultLocationValue} onChange={this.getPlaylists}>
+                            <option id="defaultValueId" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
+                            {this.state.locations.map(x => (
+                                <option key={x.value} value={x.value}>
+                                {x.displayName}
+                                </option>
+                            ))}
                         </select>
                     </div>
-                    </div>
                     <div>
-                    <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
-                        <div>
-                        <ReactList className="scroll-vertical" ref={this.playlistListRef} items={this.state.playlists} />
-                        </div>
-                        <button className="unselectable" type="submit">
-                        Select playlist
-                        </button>
-                    </form>
+                        <h3>{this.state.headerText}</h3>
+                        <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
+                        <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
+                            <div className="flex-row justify-content-space-between">
+                                <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
+                                    New Search
+                                </button>
+                                <button className="unselectable" type="submit">Select playlist</button>
+                            </div>
+                            <div>
+                                <ReactList className="scroll-vertical" ref={this.playlistListRef} items={this.state.playlists} />
+                            </div>
+                        </form>
 
-                    <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? "" : "none" }}>
-                        <div>
-                        <ReactList
-                            className="scroll-vertical"
-                            ref={this.artistListRef}
-                            items={this.state.allArtists}
-                            multiple={true}
-                            selected={Array(this.state.allArtists.length).keys()}
-                        />
-                        </div>
-                        <button className="unselectable" type="submit">
-                        Choose artists
-                        </button>
-                    </form>
+                        <form onSubmit={this.getShowsForArtists} style={{ display: this.state.showingArtists ? "" : "none" }}>
+                            <div className="flex-row justify-content-space-between">
+                                <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
+                                    New Search
+                                </button>
+                                <button className="unselectable" type="submit">Choose artists</button>
+                            </div>
+                            <div>
+                            <ReactList
+                                className="scroll-vertical"
+                                ref={this.artistListRef}
+                                items={this.state.allArtists}
+                                multiple={true}
+                                selected={Array(this.state.allArtists.length).keys()}
+                            />
+                            </div>
+                        </form>
                     </div>
 
+
+                {
+                    // Not a good way to do this (not to mention the 3 'new search' buttons re-used throughout the layout is a god-awful way to do this
+                    // but it touches the least of the existing logic)
+                    this.state.shows && this.state.shows.length > 0 ?
+                        <div className="flex-row justify-content-end">
+                            <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
+                                New Search
+                            </button>
+                        </div>
+                        : null
+                }
                     {this.state.shows}
                 </div>
             );
