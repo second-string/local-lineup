@@ -59,7 +59,7 @@
     "buildOld": "node scripts/build.js",
     "test": "node scripts/test.js",
     "devBuild": "webpack --config webpack.dev.js",
-    "devServer": "webpack-dev-server --config webpack.dev.js",
+    "devServer": "webpack-dev-server --config webpack.dev.js --hot",
     "build": "webpack --config webpack.prod.js"
   },
   "eslintConfig": {

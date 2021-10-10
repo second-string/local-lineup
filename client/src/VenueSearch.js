@@ -9,7 +9,7 @@ class VenueSearch extends Component {
     state = {
         // locations: [],
         isLoggedIn: false,
-        selectedLocation: this.defaultLocationLabel,
+        selectedLocation: this.defaultLocationValue,
         allVenues: [],
         selectedVenues: [],
         showsByDate: {},
@@ -21,6 +21,7 @@ class VenueSearch extends Component {
         showViewShowsInBrowserSection: false
     };
 
+    defaultLocationValue = "defaultLocation";
     defaultLocationLabel = "Choose a location";
     defaultSongsPerArtistLabel = "# songs per artist";
     songsPerArtistChoices = [1, 2, 3, 4, 5];
@@ -28,7 +29,7 @@ class VenueSearch extends Component {
     async componentDidMount() {
         const isLoggedIn = await helpers.isUserLoggedIn(document.cookie);
 
-        let state = { showVenueSearch: false, isLoggedIn };
+        let state = { showVenueSearch: false, isLoggedIn, ...state };
 
         // Get best-matching saved venues obj from api. If we're logged in, might be saved db values, or fallback to token values.
         // If not logged in, just check token values. Empty object returned for none found
@@ -48,12 +49,15 @@ class VenueSearch extends Component {
             }
         }
 
-        // If we never got them sometime in the above process, get them for the current default location
-        if (!allVenuesForLocation) {
-            allVenuesForLocation = await this.getAllVenuesForLocation(this.state.selectedLocation);
+        // Only set locations if we actually have them in the above process. If we never got them sometime above,
+        // don't get anything since we're on the default disabled "choose a city" option
+        if (allVenuesForLocation) {
+            state.allVenues = allVenuesForLocation;
         }
-
-        state.allVenues = allVenuesForLocation;
+        // If we never got them sometime in the above process, get them for the current default location
+        // if (!allVenuesForLocation) {
+        //     allVenuesForLocation = await this.getAllVenuesForLocation(this.state.selectedLocation);
+        // }
 
         this.setState(state);
     }
@@ -73,7 +77,6 @@ class VenueSearch extends Component {
 
         let savedVenuesObj = await this.getSavedVenues(this.state.isLoggedIn, location);
         let state = { showVenueSearch: true, selectedLocation: location, };
-        debugger;
 
         // Get best-matching saved venues obj from api. If we're logged in, might be saved db values, or fallback to token values.
         // If not logged in, just check token values. Empty object returned for none found
@@ -282,10 +285,8 @@ class VenueSearch extends Component {
                     with songs from the artists listed in the email.
                 </p>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
-                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} style={{ margin: "2em auto 1em" }}>
-                    <option key="defaultLocation" value="defaultLocation" disabled defaultValue>
-                        {this.defaultLocationLabel}
-                    </option>
+                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} defaultValue={this.defaultLocationValue} style={{ margin: "2em auto 1em" }}>
+                    <option key="defaultLocation" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
                     {helpers.locations.map(x => (
                         <option key={x.value} value={x.value}>
                             {x.displayName}

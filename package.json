@@ -4,9 +4,9 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "npm run devBuild --prefix client && npm run server",
+    "dev": "npm run devBuild --prefix client & npm run server",
     "build": "tsc",
-    "server": "concurrently \"tsc --watch\" \"nodemon .\"",
+    "server": "concurrently \"tsc --watch\" \"nodemon . --inspect\"",
     "deploy": "npm run build --prefix client/ && nodemon dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

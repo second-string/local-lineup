@@ -163,7 +163,7 @@ export function setRoutes(routerDependencies) {
 
     // Retrieve logged-in user's previously-saved venue list from the db. Can be called with no location, in which the
     // first existing venue id list will be returned, or with a location to retrieve specific venue ids. If none exist
-    // or none match passed in location, will simply return an emptyu object
+    // or none match passed in location, will simply return an empty object
     router.get("/show-finder/user-venues", async (req, res) => {
         // Support querying for a specific location for this user if they have multiple
         // Allows us to keep populating their different venue lists as they switch locations
@@ -230,6 +230,8 @@ export function setRoutes(routerDependencies) {
     router.post("/show-finder/selected-venues", async (req, res) => {
         const location = req.body.location;
         const venueIds = req.body.venueIds;
+        debugger;
+        ;
         if (!location || !venueIds) {
             return res.status(400).send();
         }
