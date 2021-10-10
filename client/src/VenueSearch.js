@@ -250,7 +250,8 @@ class VenueSearch extends Component {
         if (res.status === 204) {
             this.setState({
                 saveSuccess: true,
-                showViewShowsInBrowserSection: true
+                showViewShowsInBrowserSection: true,
+                showsByDate: {},
             });
         }
     };
@@ -278,7 +279,7 @@ class VenueSearch extends Component {
     render() {
         return (
             <div className="VenueSearch">
-                <h3>Shows by Venue</h3>
+                <h2>Shows by Venue</h2>
                 <p style={{ display: "inline-block", margin: "auto" }}>
                     Choose your location and pick a list of venues in that city. After saving, you'll receive a weekly email on Sundays listing the upcoming
                     shows for those venues in the week after next. A 'Show Finder' playlist will also be created in your Spotify account that updates each week
@@ -405,6 +406,7 @@ class VenueSearch extends Component {
                     </div>
                 </form>
                 <div>
+                    {Object.keys(this.state.showsByDate).length > 0 ? <h3>Upcoming shows</h3> : null}
                     {Object.keys(this.state.showsByDate).map(x => (
                         <div>
                             <h4>{new Date(x).toLocaleDateString("en-US")}</h4>
