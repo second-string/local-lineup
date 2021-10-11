@@ -271,11 +271,10 @@ class SpotifySearch extends Component {
                         </form>
                     </div>
 
-
                 {
                     // Not a good way to do this (not to mention the 3 'new search' buttons re-used throughout the layout is a god-awful way to do this
                     // but it touches the least of the existing logic)
-                    this.state.shows && this.state.shows.length > 0 ?
+                    (this.state.shows && this.state.shows.length > 0) || this.state.showingShows ?
                         <div className="flex-row justify-content-end">
                             <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
                                 New Search

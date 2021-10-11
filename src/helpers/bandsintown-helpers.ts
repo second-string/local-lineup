@@ -14,7 +14,7 @@ export async function getBandsInTownShows(artists, location, showsByArtistId) {
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
             console.log(`Failed query in BandsInTown requests:`);
-            console.log(responseObject.response);
+            console.log(responseObject);
             continue;
         }
 
@@ -35,6 +35,11 @@ export async function getBandsInTownShows(artists, location, showsByArtistId) {
 
 function buildBandsInTownArtistQuery(artistId, artist) {
     let getOptions = {method : "GET", headers : {"Content-type" : "application/json"}};
+
+    // Fun (read: not fun) fact: BIT api can't fathom &s or .s, even encoded. 404s every time. We have to manually
+    // replace the encoded value (%26 for &, straight . for .) with 'and'
+    artist = artist.replace("%26", "and");
+    artist = artist.replace(".", "");
 
     return new Promise(async (resolve, reject) => {
         let response = await helpers.instrumentCall(

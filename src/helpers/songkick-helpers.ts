@@ -23,7 +23,7 @@ export async function getSongkickShows(artists, location, showsByArtistId) {
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
             console.log(`Failed query in Songkick artist show requests:`);
-            console.log(responseObject.response);
+            console.log(responseObject);
             continue;
         }
 

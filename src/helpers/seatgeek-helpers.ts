@@ -23,7 +23,7 @@ export async function getSeatGeekShowsForArtists(artists, location, showsByArtis
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
             console.log(`Failed query in SeatGeek artist show requests:`);
-            console.log(responseObject.response);
+            console.log(responseObject);
             continue;
         }
 

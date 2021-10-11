@@ -35,7 +35,7 @@ export function setRoutes(routerDependencies) {
 
         // Special case if we're using their liked tracks, otherwise use the regular playlists endpoint
         let artists = [];
-        if (parseInt(req.query.playlistId as string, 10) === constants.user_library_playlist_id) {
+        if (req.query.playlistId === constants.user_library_playlist_id) {
             artists = await spotifyHelper.getLikedSongsArtists(spotifyToken, req.userObj, db);
         } else {
             artists = await spotifyHelper.getArtistsFromPlaylist(spotifyToken, req.query.playlistId, req.userObj, db);
