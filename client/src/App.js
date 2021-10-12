@@ -19,8 +19,8 @@ class App extends Component {
       <div className="App">
         <div className="flex-column" style={{maxWidth: "66%"}}>
             <h1>Show Finder</h1>
-            <h3>Whether you're discovering new artists or falling back on old favorites, see who will be playing at your favorite venues soon</h3>
-            <p>Show Finder aggregates concert listing from four separate music services to provide a complete list of who is playing in your city.</p>
+            <h3>Whether you're discovering new artists or falling back on old favorites, see who will be playing at your favorite venues soon.</h3>
+            <p>Show Finder aggregates concert listings from four separate music services to provide a complete list of who is playing in your city.</p>
             <p>Choose from one of two options to start your search:</p>
             <div className="flex-row slate-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
                 <form action="/show-finder/venue-search" method="GET">
@@ -45,7 +45,7 @@ class App extends Component {
                         <button className="default-button-border" type="submit">Search by artist</button>
                         <div className="flex-col justify-content-center" style={{paddingLeft: "20px"}}>
                             <p>Select a list of artists from your Spotify to see who will be playing in your city soon.</p>
-                            <p>This option is good for finding when artists you already know and love will be playing near you</p>
+                            <p>This option is good for finding when artists you already know and love will be playing near you.</p>
                         </div>
                     </div>
                 </form>
