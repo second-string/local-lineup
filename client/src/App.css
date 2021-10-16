@@ -81,3 +81,31 @@ div {
 .flex-basis-100 {
     flex-basis: 100%;
 }
+
+@media only screen and (min-width: 768px) {
+    .main-content-browser {
+        display: block;
+    }
+
+    .main-content-mobile {
+        display: none;
+    }
+
+    .main-content-wrapper {
+        max-width: 66%;
+    }
+}
+
+@media only screen and (min-width: 320px) and (max-width: 768px) {
+    .main-content-browser {
+        display: none;
+    }
+
+    .main-content-mobile {
+        display: block;
+    }
+
+    .main-content-wrapper {
+        max-width: 85%;
+    }
+}
