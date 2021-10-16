@@ -186,9 +186,11 @@ class SpotifySearch extends Component {
       shows: shows.map(x => (
         <div>
           <h3>{x.artistName}</h3>
+          <ul>
           {x.shows.map(y => (
             <li>{y}</li>
           ))}
+         </ul>
         </div>
       ))
     });
@@ -237,7 +239,7 @@ class SpotifySearch extends Component {
                             ))}
                         </select>
                     </div>
-                    <div>
+                    <div style={{position: "relative"}}>
                         <h3>{this.state.headerText}</h3>
                         <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
                         <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>

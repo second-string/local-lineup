@@ -280,11 +280,9 @@ class VenueSearch extends Component {
         return (
             <div className="VenueSearch">
                 <h2>Shows by Venue</h2>
-                <p style={{ display: "inline-block", margin: "auto" }}>
-                    Choose your location and pick a list of venues in that city. After saving, you'll receive a weekly email on Sundays listing the upcoming
-                    shows for those venues in the week after next. A 'Show Finder' playlist will also be created in your Spotify account that updates each week
-                    with songs from the artists listed in the email.
-                </p>
+                <p>Choose your location and pick a list of venues in that city.</p>
+                <p>After saving, you'll receive a weekly email on Sundays listing the upcoming shows for those venues in the week after next.</p>
+                <p>A 'Show Finder' playlist will also be created in your Spotify account that updates each week with songs from the artists listed in the email.</p>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
                 <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} defaultValue={this.defaultLocationValue} style={{ margin: "2em auto 1em" }}>
                     <option key="defaultLocation" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
