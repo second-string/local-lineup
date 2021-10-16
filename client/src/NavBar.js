@@ -6,6 +6,7 @@ import "./NavBar.css";
 class NavBar extends Component {
     state = {
         isLoggedIn: false,
+        email: undefined,
         showingDropdown: false
     };
 
@@ -41,6 +42,7 @@ class NavBar extends Component {
         }
 
         let isLoggedIn = false;
+        let email = undefined;
         if (token !== null) {
             // Make sure this is our set token
             let postOptions = {
@@ -56,9 +58,10 @@ class NavBar extends Component {
             let responseJson = await this.instrumentCall("/token-auth", postOptions);
             let response = await responseJson.json();
             isLoggedIn = response.isLoggedIn;
+            email = response.email
         }
 
-        this.setState({ isLoggedIn: isLoggedIn });
+        this.setState({ isLoggedIn: isLoggedIn, email: email });
     }
 
     menuClicked = e => {
@@ -71,7 +74,7 @@ class NavBar extends Component {
         return (
             <div className="NavBar">
                 <div className="nav-browser">
-                    <div className="side">
+                    <div>
                         <a className={this.props.homeSelected ? "active nav-a" : "nav-a"} href="/">
                             Home
                         </a>
@@ -88,16 +91,20 @@ class NavBar extends Component {
                             Shows by Artist
                         </a>
                     </div>
-                    <div className="side right-align" style={{ display: this.state.isLoggedIn  ? "" : "none" }}>
+                    <div className="flex-row align-items-center" style={{ display: this.state.isLoggedIn  ? "" : "none" }}>
+                        <p style={{paddingRight: "20px", color: "white"}}>{this.state.email}</p>
                         <form className="nav-form" method="POST" action="/logout">
                             <input className="nav-input" type="submit" value="Logout" />
                         </form>
                     </div>
                 </div>
                 <div className="nav-mobile">
-                    <a className="menu-a" href="#" onClick={this.menuClicked}>
-                        <img className="menu-img" src="/menu.svg" />
-                    </a>
+                    <div className="flex-row justify-content-space-between">
+                        <a className="menu-a" href="#" onClick={this.menuClicked}>
+                            <img className="menu-img" src="/menu.svg" />
+                        </a>
+                        <p style={{paddingRight: "20px", color: "white"}}>{this.state.email}</p>
+                    </div>
                     <div className="menu-dropdown" style={{ display: this.state.showingDropdown ? "block" : "none" }}>
                         <a className={this.props.homeSelected ? "active menu-option-a" : "menu-option-a"} href="/">
                             Home
@@ -114,6 +121,9 @@ class NavBar extends Component {
                             href="/show-finder/spotify-search">
                             Shows by Artist
                         </a>
+                            <form  method="POST" action="/logout">
+                                <input className="nav-input" style={{width: "100%"}} type="submit" value="Logout"/>
+                            </form>
                     </div>
                 </div>
             </div>

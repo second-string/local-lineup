@@ -12,6 +12,19 @@
     text-align: right;
 }
 
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.justify-content-space-between {
+    justify-content: space-between;
+}
+
 .nav-a,
 .nav-input {
     display: inline-block;
@@ -91,6 +104,18 @@
     flex-direction: column;
     justify-content: center;
 }*/
+
+@media only screen and (min-width: 768px) {
+    .nav-browser {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .nav-mobile {
+        display: none;
+    }
+}
 
 @media only screen and (min-width: 320px) and (max-width: 768px) {
     .nav-browser {

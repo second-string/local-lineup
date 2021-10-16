@@ -104,7 +104,7 @@ export async function tokenAuth(db, req, res) {
     // If user exists, send back logged in, if not, they somehow have a jwt-valid token with a user that doesn't
     // exist...?
     if (dbUser) {
-        return res.json({isLoggedIn : true});
+        return res.json({isLoggedIn : true, email : dbUser.Email});
     } else {
         return res.json({isLoggedIn : false});
     }
