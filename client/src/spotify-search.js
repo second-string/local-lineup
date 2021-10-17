@@ -7,4 +7,5 @@ import * as serviceWorker from "./serviceWorker";
 
 ReactDOM.render(<NavBar spotifySearchSelected={true} />, document.getElementById("navbar"));
 ReactDOM.render(<SpotifySearch />, document.getElementById("root"));
+
 serviceWorker.unregister();
