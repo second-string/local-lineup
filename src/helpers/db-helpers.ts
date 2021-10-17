@@ -1,7 +1,13 @@
+import fs from "fs";
 import sqlite3 from "sqlite3";
 
 // Open sqlite db and log for success or fail
 export function openDb(pathToDb) {
+    if (!fs.existsSync(pathToDb)) {
+        console.error(`Didn't find db file in expected location (${pathToDb}), exiting script`);
+        return;
+    }
+
     return new sqlite3.Database(pathToDb, (err) => {
         if (err) {
             console.log(err);

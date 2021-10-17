@@ -11,12 +11,23 @@ button {
   font-size: 15px;
   padding: 10px;
   border-style: solid;
-  background-color: white;
+  background-color: transparent;
   border-color: #afafaf;
   border-width: 2px;
   border-radius: 5px;
   margin: 10px;
   outline: none;
+  color: white;
+}
+
+button:hover {
+    background-color: lightgray;
+    color: black;
+}
+
+button:active {
+    background-color: #6699FF;
+    color: white;
 }
 
 select {
@@ -61,10 +72,13 @@ select {
   display: inline-block;
   border-radius: 5px;
   border-style: solid;
-  border-color: #79b9ff;
+  border-color: white;
   border-width: 2px;
   min-width: 60vw;
   outline: none;
+  color: white;
+  margin-right: 0.5em;
+  background: black;        /* affects the rendered lists for spotifysearch, not the dropdown for venuesearch :/ */
 }
 
 .loader {
@@ -135,12 +149,8 @@ ul {
 
 /* Add some style to the list */
 
-.react-list-select {
-  background: #fafafa;
-  margin-right: 0.5em;
-}
 .react-list-select--item.is-selected {
-  background: #d7e7ff;
+  background: #6699FF;
 }
 .react-list-select:hover .react-list-select--item.is-focused::before,
 .react-list-select:hover .react-list-select--item.is-focused::after {

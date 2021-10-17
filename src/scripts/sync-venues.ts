@@ -1,6 +1,8 @@
-import * as helpers   from "../helpers/helpers";
-import * as dbHelpers from "../helpers/db-helpers";
+import fs from 'fs';
+
 import * as constants from "../helpers/constants";
+import * as dbHelpers from "../helpers/db-helpers";
+import * as helpers   from "../helpers/helpers";
 
 /*
 Sample venue object
@@ -82,12 +84,14 @@ async function getVenues(city) {
 
     console.log(`Took ${totalMillis} milliseconds to get ${total} venues`);
 
-    // De-dupe venues cause they send a ton of repeats
+    // De-dupe venues cause they send some repeats
     let hasSeen = {};
     return venueList.filter(x => (hasSeen.hasOwnProperty(x.id) ? false : (hasSeen[x.id] = true)));
 }
 
 async function saveVenues(location, venues, db) {
+    console.log(`Saving ${venues.length} ${location} venues to db...`);
+
     await db.runAsync("BEGIN TRANSACTION");
     for (const venue of venues) {
         const venueParams = [ venue.id, location, venue.name, venue.url ];
@@ -105,12 +109,22 @@ async function run() {
         process.exit(-1);
     }
 
-    const db = dbHelpers.openDb("../user_venues.db");
+    const dbPath = "./user_venues.db";
+    if (!fs.existsSync(dbPath)) {
+        console.error(`Didn't find db file in expected location (${dbPath}), exiting script`);
+        return;
+    }
+
+    const db     = dbHelpers.openDb(dbPath);
+    const venues = await getVenues("san francisco");
 
     for (const location of locations) {
         console.log(`Syncing venues for ${location}`);
         const venues = await getVenues(location);
-        await                saveVenues(location, venues, db);
+        // Out of ~2k sf venues, 106 have non-zero scores (value is between 0.0 and 1.0). Filter to improve perf + cut
+        // out fake dupes
+        const nonZeroScoreVenues = venues.filter(x => x.score > 0);
+        await saveVenues(location, nonZeroScoreVenues, db);
         console.log(`Successfully saved ${location} venues`);
     }
 }

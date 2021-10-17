@@ -1,5 +1,6 @@
 .App {
   font-family: "Trebuchet MS", Helvetica, sans-serif;
+  color: white;
   text-align: center;
   display: flex;
   justify-content: center;
@@ -15,16 +16,27 @@ button {
   padding-right: 20px;
   padding-top: 10px;
   padding-bottom: 10px;
-  background-color: white;
+  background-color: transparent;
   margin: 10px;
   outline: none;
   min-width: 200px;
   min-height: 75px;
   white-space: nowrap;
+  color: white;
 }
 
 div {
   height: 100%;
+}
+
+button:hover {
+    background-color: lightgray;
+    color: black;
+}
+
+button:active {
+    background-color: #6699FF;
+    color: white;
 }
 
 .default-button-border {
@@ -71,11 +83,11 @@ div {
     width: 100%;
 }
 
-.slate-rounded-border {
+.white-rounded-border {
     border-style: solid;
     border-radius: 10px;
     border-width: 1px;
-    border-color: slategray;
+    border-color: white;
 }
 
 .flex-basis-100 {

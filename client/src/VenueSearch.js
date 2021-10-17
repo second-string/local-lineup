@@ -298,6 +298,7 @@ class VenueSearch extends Component {
                         display: this.state.showVenueSearch ? "" : "none"
                     }}>
                     <Select
+                        className="react-list-select"
                         isMulti
                         isSearchable
                         openMenuOnClick={false}
@@ -350,8 +351,8 @@ class VenueSearch extends Component {
                                     margin: "auto",
                                     marginTop: ".5em",
                                     fontSize: ".7em",
-                                    color: "black",
-                                    opacity: ".7"
+                                    color: "white",
+                                    opacity: ".8"
                                 }}>
                                 I don't want to save anything yet, just show me the upcoming shows
                             </a>
@@ -396,8 +397,8 @@ class VenueSearch extends Component {
                                 margin: "auto",
                                 marginTop: ".5em",
                                 fontSize: ".7em",
-                                color: "black",
-                                opacity: ".7"
+                                color: "white",
+                                opacity: ".8"
                             }}>
                             I don't want to sign in yet, just show me the upcoming shows
                         </a>

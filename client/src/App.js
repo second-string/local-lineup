@@ -2,6 +2,7 @@ import * as helpers from "./Helpers.js";
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import ReactList from "react-list-select";
+import _ from "./index-background.jpg"
 import "./App.css";
 
 class App extends Component {
@@ -23,7 +24,7 @@ class App extends Component {
             <p>Show Finder aggregates concert listings from four separate music services to provide a complete list of who is playing in your city.</p>
             <p>Choose from one of two options to start your search:</p>
             <div className="main-content-browser">
-                <div className="flex-row slate-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
+                <div className="flex-row white-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
                     <form action="/show-finder/venue-search" method="GET">
                         <div className="flex-row align-items-center text-align-left">
                             <div className="flex-col justify-content-center align-items-center">
@@ -40,7 +41,7 @@ class App extends Component {
                         </div>
                     </form>
                 </div>
-                <div className="flex-row slate-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
+                <div className="flex-row white-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
                     <form action="/show-finder/spotify-search" method="GET">
                         <div className="flex-row align-items-center">
                             <button className="default-button-border" type="submit">Search by artist</button>
@@ -53,7 +54,7 @@ class App extends Component {
                 </div>
             </div>
             <div className="main-content-mobile">
-                <div className="flex-col slate-rounded-border flex-basis-100" style={{marginTop: "20px", marginBottom: "20px"}}>
+                <div className="flex-col white-rounded-border flex-basis-100" style={{marginTop: "20px", marginBottom: "20px"}}>
                     <form action="/show-finder/venue-search" method="GET">
                         <div className="flex-col justify-content-center align-items-center" style={{padding: "10px"}}>
                             <p>Select your favorite venues to receive an email every Sunday listing who will be playing there the following week.</p>
@@ -65,7 +66,7 @@ class App extends Component {
                         </div>
                     </form>
                 </div>
-                <div className="flex-col slate-rounded-border flex-basis-100" style={{marginTop: "20px", marginBottom: "20px"}}>
+                <div className="flex-col white-rounded-border flex-basis-100" style={{marginTop: "20px", marginBottom: "20px"}}>
                     <form action="/show-finder/spotify-search" method="GET">
                         <div className="flex-col justify-content-center align-items-center" style={{padding: "10px"}}>
                             <p>Select a list of artists from your Spotify to see who will be playing in your city soon.</p>

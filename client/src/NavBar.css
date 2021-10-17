@@ -1,6 +1,6 @@
 .NavBar {
     font-family: "Trebuchet MS", Helvetica, sans-serif;
-    background-color: slategray;
+    background-color: black;
     margin: 0;
 }
 .side {
@@ -51,7 +51,7 @@
 .menu-a:hover,
 .menu-option-a:hover {
     background-color: lightgray;
-    color: slategray;
+    color: black;
 }
 
 .nav-a.active,
