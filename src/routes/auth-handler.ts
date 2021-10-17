@@ -19,17 +19,17 @@ const restrictedPaths = [
 export async function session(userDb, req, res, next) {
     let sessionToken: string = req.cookies["show-finder-token"];
     let token                = null;
-    if (sessionToken === undefined || sessionToken === null) {
-        // If no token exists this is most likely first page load for the user - create
+    if (sessionToken) {
+        // If token cookie exists, try to parse it
+        token = parseToken(sessionToken);
+    }
+
+    if (token === null) {
+        // If no token exists this is most likely first page load for the user. We also might have failed token parsing
+        // above either due to expired token or something going weirdly wrong. Whatever it is, create a new valid one
         token        = {userUid : null};
         sessionToken = jwt.sign(token, constants.jwtSigningSecret, {expiresIn : "3h"});
         res.cookie("show-finder-token", sessionToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
-    } else {
-        // If token cookie exists, try to parse it
-        token = parseToken(sessionToken);
-        if (token === null) {
-            return res.redirect(401, "/");
-        }
     }
 
     // Regardless of existing or newly created, set on the req object so all remaining routes have access to it
@@ -217,11 +217,13 @@ export function parseToken(tokenStr) {
     try {
         token = jwt.verify(tokenStr, constants.jwtSigningSecret);
     } catch (e) {
-        console.log("Error decoding JWT!");
-        console.log("req.sessionToken:");
-        console.log(tokenStr ? tokenStr : "undefined or null");
-        console.log("Exception:");
-        console.log(e);
+        if (!(e instanceof jwt.TokenExpiredError)) {
+            console.log("Error decoding JWT!");
+            console.log("req.sessionToken:");
+            console.log(tokenStr ? tokenStr : "undefined or null");
+            console.log("Exception:");
+            console.log(e);
+        }
     }
 
     return token;
