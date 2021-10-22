@@ -20,7 +20,7 @@ class App extends Component {
       <div className="App">
         <div className="main-content-wrapper flex-column">
             <h1>Show Finder</h1>
-            <h3>Whether you're discovering new artists or falling back on old favorites, see who will be playing at your favorite venues soon.</h3>
+            <h3>Whether you're discovering new artists or falling back on old favorites, see who will be playing at your favorite local venues soon.</h3>
             <p>Show Finder aggregates concert listings from four separate music services to provide a complete list of who is playing in your city.</p>
             <p>Choose from one of two options to start your search:</p>
             <div className="main-content-browser">
