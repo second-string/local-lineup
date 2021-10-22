@@ -22,8 +22,16 @@ export async function getSongkickShows(artists, location, showsByArtistId) {
     for (let promiseObject of songkickResponseObjects) {
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
-            console.log(`Failed query in Songkick artist show requests:`);
-            console.log(responseObject);
+            if (responseObject.response && responseObject.response.status == 404) {
+                console.log("SK artist 404");
+            } else if (responseObject.response && responseObject.response.message &&
+                       responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
+                console.log("SK artist ENOTFOUND");
+            } else {
+                console.log(`Failed query in Songkick artist show requests:`);
+                console.log(responseObject);
+            }
+
             continue;
         }
 
@@ -42,27 +50,24 @@ export async function getSongkickShows(artists, location, showsByArtistId) {
     console.log(`Added or appended shows for ${songkickShowsFound} artists from Songkick`);
 }
 
-function buildSongkickArtistIdQuery(artistId, artist) {
-    let getOptions = {method : "GET", headers : {"Content-type" : "application/json"}};
+async function buildSongkickArtistIdQuery(artistId, artist) {
+    const getOptions = {method : "GET", headers : {"Content-type" : "application/json"}};
 
-    return new Promise(async (resolve, reject) => {
-        let response = await helpers.instrumentCall(
-            `https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`,
-            getOptions,
-            false);
-        resolve({artistId : artistId, queryResponse : response});
-    });
+    const response = await helpers.instrumentCall(
+        `https://api.songkick.com/api/3.0/search/artists.json?apikey=${constants.songkickSecret}&query=${artist}`,
+        getOptions,
+        false);
+
+    return {artistId : artistId, queryResponse : response};
 }
 
-function buildSongkickArtistQuery(artistId, songkickArtistId) {
-    let getOptions = {method : "GET", headers : {"Content-type" : "application/json"}};
+async function buildSongkickArtistQuery(artistId, songkickArtistId) {
+    const getOptions = {method : "GET", headers : {"Content-type" : "application/json"}};
 
-    return new Promise(async (resolve, reject) => {
-        let       response =
-            await helpers.instrumentCall(`https://api.songkick.com/api/3.0/artists/${
-                                             songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`,
-                                         getOptions,
-                                         false);
-        resolve({artistId : artistId, queryResponse : response});
-    });
+    const response = await helpers.instrumentCall(
+        `https://api.songkick.com/api/3.0/artists/${songkickArtistId}/calendar.json?apikey=${constants.songkickSecret}`,
+        getOptions,
+        false);
+
+    return {artistId : artistId, queryResponse : response};
 }

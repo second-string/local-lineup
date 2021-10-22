@@ -12,17 +12,17 @@ import * as spotifyHelpers     from "./helpers/spotify-helper";
 export async function getAllShows(artists, location) {
     // Eventual return value (ish). Object with key of artist ID (int) and value of a list of { date: DateTime, show:
     // string }
-    let showsByArtistId = {};
-
-    // Run these sequentially since doing all at the same time seems to exacerbate ECONNRESET and failed query issues.
-    await bandsInTownHelpers.getBandsInTownShows(artists, location, showsByArtistId);
-    await songkickHelpers.getSongkickShows(artists, location, showsByArtistId);
-    await seatgeekHelpers.getSeatGeekShowsForArtists(artists, location, showsByArtistId);
+    let showsByArtistId     = {};
+    let showServiceRequests = [];
+    showServiceRequests.push(bandsInTownHelpers.getBandsInTownShows(artists, location, showsByArtistId));
+    showServiceRequests.push(songkickHelpers.getSongkickShows(artists, location, showsByArtistId));
+    showServiceRequests.push(seatgeekHelpers.getSeatGeekShowsForArtists(artists, location, showsByArtistId));
 
     if (location === "san francisco") {
-        await foopeeHelpers.getFoopeeShows(artists, location, showsByArtistId);
+        showServiceRequests.push(foopeeHelpers.getFoopeeShows(artists, location, showsByArtistId));
     }
 
+    await Promise.all(showServiceRequests);
     helpers.dedupeShows(showsByArtistId);
 
     // Set each value of the artist ID key to just the list of shows from the previous list of show/date objects

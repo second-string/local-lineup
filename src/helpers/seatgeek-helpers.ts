@@ -22,8 +22,16 @@ export async function getSeatGeekShowsForArtists(artists, location, showsByArtis
     for (let promiseObject of seatGeekResponseObjects) {
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
-            console.log(`Failed query in SeatGeek artist show requests:`);
-            console.log(responseObject);
+            if (responseObject.response && responseObject.response.status == 404) {
+                console.log("SG 404");
+            } else if (responseObject.response && responseObject.response.message &&
+                       responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
+                console.log("SG ENOTFOUND");
+            } else {
+                console.log(`Failed query in SeatGeek artist show requests:`);
+                console.log(responseObject);
+            }
+
             continue;
         }
 
@@ -90,56 +98,54 @@ export async function getSeatGeekShowsForVenues(venuesById) {
     return {success : true, response : showsByDate};
 }
 
-function buildSeatGeekArtistIdQuery(artistId, artist) {
-    let getOptions = {
+async function buildSeatGeekArtistIdQuery(artistId, artist) {
+    const getOptions = {
         method : "GET",
         headers : {"Content-type" : "application/json", Authorization : helpers.seatGeekAuth()}
     };
 
-    return new Promise(async (resolve, reject) => {
-        let       response =
-            await helpers.instrumentCall(`https://api.seatgeek.com/2/performers?q=${artist}`, getOptions, false);
-        resolve({artistId : artistId, queryResponse : response});
-    });
+    const response =
+        await helpers.instrumentCall(`https://api.seatgeek.com/2/performers?q=${artist}`, getOptions, false);
+
+    return {artistId : artistId, queryResponse : response};
 }
 
-function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
-    let getOptions = {
+async function buildSeatGeekArtistQuery(artistId, seatGeekArtistId) {
+    const getOptions = {
         method : "GET",
         headers : {"Content-type" : "application/json", Authorization : helpers.seatGeekAuth()}
     };
 
-    return new Promise(async (resolve, reject) => {
-        let resultCount = 0;
-        let page        = 1;
-        let total       = 0;
-        let perPage     = 25;
-        let response: {success: boolean, response: any};
-        let responseBody: any = {};
-        let fullEventsList    = [];
+    let resultCount = 0;
+    let page        = 1;
+    let total       = 0;
+    let perPage     = 25;
+    let response: {success: boolean, response: any};
+    let responseBody: any = {};
+    let fullEventsList    = [];
 
-        // Normal pagination logic while building the fullEventsList list
-        do {
-            response = await helpers.instrumentCall(`https://api.seatgeek.com/2/events?performers.id=${
-                                                        seatGeekArtistId}&per_page=${perPage}&page=${page++}`,
-                                                    getOptions,
-                                                    false);
+    // Normal pagination logic while building the fullEventsList list
+    do {
+        response = await helpers.instrumentCall(
+            `https://api.seatgeek.com/2/events?performers.id=${seatGeekArtistId}&per_page=${perPage}&page=${page++}`,
+            getOptions,
+            false);
 
-            if (!response.success) {
-                console.log("Failed paginated call to get seatgeek artist");
-                console.log(response.response);
-                continue;
-            }
-            responseBody   = response.response;
-            fullEventsList = fullEventsList.concat(responseBody.events);
-            total          = responseBody.meta.total;
-        } while (perPage * page <= total);
+        if (!response.success) {
+            console.log("Failed paginated call to get seatgeek artist");
+            console.log(response.response);
+            continue;
+        }
+        responseBody   = response.response;
+        fullEventsList = fullEventsList.concat(responseBody.events);
+        total          = responseBody.meta.total;
+    } while (perPage * page <= total);
 
-        // This is where it gets hacky - our parser is conditioned to check the success field of a single response, and
-        // then pull the events list out of its body. Here we rip open the final response from the last page request,
-        // shove the full events list in there, and then stringify it all back up and act like nothing happened
-        responseBody.events = fullEventsList;
-        response.response   = responseBody;
-        resolve({artistId : artistId, queryResponse : response});
-    });
+    // This is where it gets hacky - our parser is conditioned to check the success field of a single response, and
+    // then pull the events list out of its body. Here we rip open the final response from the last page request,
+    // shove the full events list in there, and then stringify it all back up and act like nothing happened
+    responseBody.events = fullEventsList;
+    response.response   = responseBody;
+
+    return {artistId : artistId, queryResponse : response};
 }

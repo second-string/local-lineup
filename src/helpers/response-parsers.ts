@@ -47,8 +47,16 @@ export function parseSongkickArtistsResponse(responseList) {
     for (let promiseObject of responseList) {
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
-            console.log(`Failed query in Songkick artist ID requests:`);
-            console.log(responseObject.response);
+            if (responseObject.response && responseObject.response.status == 404) {
+                console.log("SK artist ID 404");
+            } else if (responseObject.response && responseObject.response.message &&
+                       responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
+                console.log("SK artist ID ENOTFOUND");
+            } else {
+                console.log(`Failed query in SongKick artist ID requests:`);
+                console.log(responseObject);
+            }
+
             continue;
         }
 
@@ -99,8 +107,16 @@ export function parseSeatGeekArtistsResponse(responseList) {
     for (let promiseObject of responseList) {
         let responseObject = promiseObject.queryResponse;
         if (!responseObject.success) {
-            console.log(`Failed query in SeatGeek artist ID requests`);
-            console.log(responseObject.response);
+            if (responseObject.response && responseObject.response.status == 404) {
+                console.log("SG artist ID 404");
+            } else if (responseObject.response && responseObject.response.message &&
+                       responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
+                console.log("SG artist ID ENOTFOUND");
+            } else {
+                console.log(`Failed query in SeatGeek artist ID requests:`);
+                console.log(responseObject);
+            }
+
             continue;
         }
 

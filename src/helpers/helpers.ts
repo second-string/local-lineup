@@ -1,3 +1,4 @@
+import AbortController from "abort-controller";
 import formurlencoded from "form-urlencoded";
 import fetch from "node-fetch";
 import sqlite3 from "sqlite3";
@@ -75,17 +76,32 @@ export async function autoRetrySpotifyCall(spotifyToken,
 //
 // params: url to fetch, options to fetch with, timeout in seconds to wait on request before aborting returns:
 // unparsedRes from node-fetch. Will either be Response object or timeout object of {ok,message} (matches Response keys)
-async function fetchWithBackoffAndTimeout(url, options, timeout) {
-    // Build X second timeout to chop our requests that are hanging. 'Real' responses from fetch, successful or
-    // otherwise, will include an `ok` field as well. Using the same key here allows us to combine a success check for
-    // an actual unsuccessful response vs. timeout into a single if-check
-    const requestTimeout = sleep(timeout * 1000, {ok : false, message : "Request timed out"});
-
+async function fetchWithBackoffAndTimeout(url, options, timeoutSeconds) {
     let unparsedRes = null;
     let backoff     = true;
     while (backoff) {
+        // Build X second timeout to chop our requests that are hanging. 'Real' responses from fetch, successful or
+        // otherwise, will include an `ok` field as well. Using the same key here allows us to combine a success check
+        // for an actual unsuccessful response vs. timeout into a single if-check
+        const abortController = new AbortController();
+        const timeout         = setTimeout(() => abortController.abort(), timeoutSeconds * 1000);
+        options.signal        = abortController.signal;
+
         const requestPromise = fetch(url, options, true);
-        unparsedRes          = await Promise.race([ requestPromise, requestTimeout ]);
+        try {
+            unparsedRes = await requestPromise;
+        } catch (e) {
+            let message = "";
+            if (e.name === "AbortError") {
+                message = `Request timed out internal AbortController`;
+            } else {
+                message = `Call to base node-fetch threw for unhandled reason: ${e.message}`;
+            }
+
+            unparsedRes = {ok : false, message : message};
+        } finally {
+            clearTimeout(timeout);
+        }
 
         // No need to error check 'real' response or timeout `ok` here since status won't be 429, so we'll break the
         // while loop and fall to the below error checking block regardless
