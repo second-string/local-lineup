@@ -81,8 +81,28 @@ export async function getArtists(spotifyToken, artists, userObj: DbUser, db: sql
                 false);
 
             if (artistResponse.response.artists && artistResponse.response.artists.items.length > 0) {
-                // Take the first one, it's almost always correct
-                resolve(artistResponse.response.artists.items[0]);
+                // The first result is correct ~90% of the time. Unfortunately spotify weights the artists' popularity
+                // in the ordering of the list returned, so if you search for a smaller artist with a similar name as a
+                // big one, the big one will come first (e.g. Camila Cabello for CAM, Claude DeBussy for Claud, etc).
+                // See if we have an exact string match with any of the first 15 artists before defaulting to the first
+                // in the list if not.
+                const num_to_compare = artistResponse.response.artists.items.length > 16
+                                           ? 16
+                                           : artistResponse.response.artists.items.length;
+                const adjusted_name  = artist.trim().toLowerCase();
+                let chosen_index     = 0;
+                for (let i = 0; i < num_to_compare; i++) {
+                    if (artistResponse.response.artists.items[i].name === undefined) {
+                        continue;
+                    }
+
+                    if (adjusted_name === artistResponse.response.artists.items[i].name.trim().toLowerCase()) {
+                        chosen_index = i;
+                        break;
+                    }
+                }
+
+                resolve(artistResponse.response.artists.items[chosen_index]);
             } else {
                 console.log(`No artists found for search term '${artist}'`);
                 resolve(null);
@@ -177,8 +197,8 @@ export async function getOrCreatePlaylist(spotifyToken: string, userObj: DbUser,
         let currentPlaylistsResponse = await helpers.autoRetrySpotifyCall(spotifyToken, url, "GET", userObj, db, false);
         if (currentPlaylistsResponse.success === undefined || !currentPlaylistsResponse.success) {
             console.log(`Error getting playlist for current user`);
-            console.log(currentPlaylistsResponse.response);
-            throw new Error();
+            console.log(currentPlaylistsResponse);
+            throw new Error(`Error getting playlist for current user`);
         }
 
         playlists = playlists.concat(currentPlaylistsResponse.response.items);
@@ -213,8 +233,8 @@ export async function getOrCreatePlaylist(spotifyToken: string, userObj: DbUser,
                                                                         body);
         if (createPlaylistResponse === undefined || !createPlaylistResponse.success) {
             console.log(`Error creating playlist`);
-            console.log(createPlaylistResponse.response);
-            throw new Error();
+            console.log(createPlaylistResponse);
+            throw new Error(`Error creating playlist`);
         }
 
         playlistObj = createPlaylistResponse.response;
@@ -240,8 +260,8 @@ addTracksToPlaylist(spotifyToken: string, playlistObj, trackUris: string[], user
                                                body);
         if (addTracksResponse.success === undefined || !addTracksResponse.success) {
             console.log("Error adding tracks to playlist");
-            console.log(addTracksResponse.response);
-            throw new Error();
+            console.log(addTracksResponse);
+            throw new Error("Error adding tracks to playlist");
         }
 
         console.log(`Added a page of tracks to playlist: ${i * 100} to ${i * 100 + 99}`);
