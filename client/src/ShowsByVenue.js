@@ -279,7 +279,7 @@ class VenueSearch extends Component {
     render() {
         return (
             <div className="ShowsByVenue">
-                <h2>Shows by Venue</h2>
+                <h1>Shows by Venue</h1>
                 <p>Choose your location and pick a list of venues in that city.</p>
                 <p>After saving, you'll receive a weekly email on Sundays listing the upcoming shows for those venues in the week after next.</p>
                 <p>A 'Local Lineup' playlist will also be created in your Spotify account that updates each week with songs from the artists listed in the email.</p>

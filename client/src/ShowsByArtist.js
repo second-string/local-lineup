@@ -226,7 +226,7 @@ class SpotifySearch extends Component {
         } else {
             return (
                 <div className="ShowsByArtist">
-                    <h2>Shows by Artist</h2>
+                    <h1>Shows by Artist</h1>
                     <p>Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.</p>
                     <p>Results from 4 different music services are combined to ensure a complete set of shows.</p>
                     <div style={{ display: this.state.showingLocation ? "" : "none" }}>
