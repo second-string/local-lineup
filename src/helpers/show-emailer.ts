@@ -19,7 +19,7 @@ export async function sendShowsEmail(userObj, shows, startDate, endDate) {
     startDate = startDate.toLocaleDateString('en-US');
     endDate   = endDate.toLocaleDateString('en-US');
 
-    let baseUrl        = process.env.DEPLOY_STAGE === 'PROD' ? 'showfinder.brianteam.dev' : 'localhost';
+    let baseUrl        = process.env.DEPLOY_STAGE === 'PROD' ? 'locallineup.live' : 'localhost';
     let unsubscribeUrl = `https://${baseUrl}/show-finder/delete-venues?uid=${userObj.Uid}`;
 
     // oauth auth object fields: https://nodemailer.com/smtp/oauth2/
