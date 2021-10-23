@@ -1,7 +1,7 @@
 import Email from 'email-templates';
 import nodemailer from "nodemailer";
 
-import * as showFinder from '../show-finder';
+import * as localLineup from '../local-lineup';
 
 export async function sendShowsEmail(userObj, shows, startDate, endDate) {
     if (userObj === null || userObj === undefined) {

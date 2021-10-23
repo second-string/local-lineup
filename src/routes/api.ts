@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import * as authHandler   from "./auth-handler";
-import * as showFinder    from "../show-finder";
+import * as localLineup   from "../local-lineup";
 import * as dbHelpers     from "../helpers/db-helpers";
 import * as constants     from "../helpers/constants";
 import * as helpers       from "../helpers/helpers";
@@ -49,7 +49,7 @@ export function setRoutes(routerDependencies) {
             res.status(400).send();
         }
 
-        let venues = await showFinder.getVenues(req.query.city, db);
+        let venues = await localLineup.getVenues(req.query.city, db);
         if (venues === undefined) {
             console.log(`Call to get venues for ${req.query.city} failed`);
             return res.status(500).json(venues);
@@ -132,14 +132,14 @@ export function setRoutes(routerDependencies) {
     router.post("/local-lineup/shows", async (req, res) => {
         if (req.body.selectedVenues) {
             // Error handled internally, lists will just be empty if there was failure
-            const showDatesByService = await showFinder.getShowsForVenues(req.body.selectedVenues);
+            const showDatesByService = await localLineup.getShowsForVenues(req.body.selectedVenues);
             return res.json(showDatesByService);
         } else if (req.body.selectedArtists) {
             // No venues specified, get all shows for all artists supplied in body
             // Need to group artist by arbitrary id to be able to bundle and serve consolidated response
             let i                        = 0;
             let artists                  = req.body.selectedArtists.map(x => ({id : i++, name : x}));
-            let allServicesResponse: any = await showFinder.getAllShows(artists, req.body.location);
+            let allServicesResponse: any = await localLineup.getAllShows(artists, req.body.location);
             if (allServicesResponse.statusCode) {
                 console.log(`Call to get shows for all artists failed with status ${allServicesResponse.statusCode}`);
                 return res.status(allServicesResponse.statusCode).json(allServicesResponse);

@@ -4,9 +4,9 @@ import jwt from "jsonwebtoken";
 import querystring from "querystring";
 import uuid from "uuid/v4";
 
-import * as constants  from "../helpers/constants";
-import * as helpers    from "../helpers/helpers";
-import * as showFinder from "../show-finder";
+import * as constants   from "../helpers/constants";
+import * as helpers     from "../helpers/helpers";
+import * as localLineup from "../local-lineup";
 
 // API routes that require user to be logged in
 const restrictedPaths = [
