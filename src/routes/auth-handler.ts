@@ -17,7 +17,7 @@ const restrictedPaths = [
 ];
 
 export async function session(userDb, req, res, next) {
-    let sessionToken: string = req.cookies["show-finder-token"];
+    let sessionToken: string = req.cookies["local-lineup-token"];
     let token                = null;
     if (sessionToken) {
         // If token cookie exists, try to parse it
@@ -29,7 +29,7 @@ export async function session(userDb, req, res, next) {
         // above either due to expired token or something going weirdly wrong. Whatever it is, create a new valid one
         token        = {userUid : null};
         sessionToken = jwt.sign(token, constants.jwtSigningSecret, {expiresIn : "3h"});
-        res.cookie("show-finder-token", sessionToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
+        res.cookie("local-lineup-token", sessionToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
     }
 
     // Regardless of existing or newly created, set on the req object so all remaining routes have access to it
@@ -80,7 +80,7 @@ export async function login(req, res) {
 }
 
 export async function logout(req, res) {
-    res.cookie("show-finder-token", "", {maxAge : 0}).redirect("/");
+    res.cookie("local-lineup-token", "", {maxAge : 0}).redirect("/");
 }
 
 // Function called from our react code to handle showing different page states for logged-in users. Only necessary
@@ -240,5 +240,5 @@ export function updateTokenField(parsedToken, field, value, res) {
     parsedToken[field] = value;
     delete parsedToken.exp;
     const signedToken = jwt.sign(parsedToken, constants.jwtSigningSecret, {expiresIn : "3h"});
-    res.cookie("show-finder-token", signedToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
+    res.cookie("local-lineup-token", signedToken, {maxAge : 1000 * 60 * 60 * 3 /* 3hrs */});
 }

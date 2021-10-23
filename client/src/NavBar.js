@@ -35,7 +35,7 @@ class NavBar extends Component {
         let token = null;
         for (let cookiePairString of cookies) {
             let cookiePair = cookiePairString.split("=");
-            if (cookiePair[0] === "show-finder-token") {
+            if (cookiePair[0] === "local-lineup-token") {
                 token = cookiePair[1];
                 break;
             }
