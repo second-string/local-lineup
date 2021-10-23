@@ -9,6 +9,7 @@ class SpotifySearch extends Component {
   baseState = {
     isLoggedIn: false,
     headerText: "",
+    subHeaderText: "",
     playlists: [],
     playlistNamesById: {},
     allArtists: [],
@@ -48,6 +49,7 @@ class SpotifySearch extends Component {
     e.preventDefault();
     this.setState({
         headerText: "",
+        subHeaderText: "",
         playlists: [],
         playlistNamesById: {},
         allArtists: [],
@@ -82,7 +84,8 @@ class SpotifySearch extends Component {
       showSpinner: true,
       showingLocation: false,
       showingNewSearch: true,
-      headerText: "Fetching playlists..."
+      headerText: "Fetching playlists...",
+      subHeaderText: "",
     });
 
     let res = await helpers.instrumentCall("/local-lineup/playlists", postOptions);
@@ -110,7 +113,8 @@ class SpotifySearch extends Component {
       showSpinner: true,
       showingLocation: false,
       showingNewSearch: true,
-      headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`
+      headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`,
+      subHeaderText: "",
     });
 
     let res = await helpers.instrumentCall(`/local-lineup/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
@@ -125,7 +129,8 @@ class SpotifySearch extends Component {
         showingArtists: true,
         showSpinner: false,
         allArtists: decodedArtists,
-        headerText: this.state.playlistNamesById[playlistId]
+        headerText: this.state.playlistNamesById[playlistId],
+        subHeaderText: "",
       },
       () => ReactDOM.findDOMNode(this.artistListRef.current).focus()
     );
@@ -159,7 +164,8 @@ class SpotifySearch extends Component {
     this.setState({
       showingArtists: false,
       showSpinner: true,
-      headerText: "Searching for shows..."
+      headerText: "Searching for shows...",
+      subHeaderText: "Please be patient, this can take up to a minute for large numbers of artists",
     });
     // list of { artistName, shows[] } objects
     let showsJson = await helpers.instrumentCall("/local-lineup/shows", postOptions);
@@ -183,6 +189,7 @@ class SpotifySearch extends Component {
       showingShows: true,
       showSpinner: false,
       headerText: header,
+      subHeaderText: "",
       shows: shows.map(x => (
         <div>
           <h3>{x.artistName}</h3>
@@ -205,6 +212,7 @@ class SpotifySearch extends Component {
         showingPlaylists: true,
         showSpinner: false,
         headerText: "Choose a playlist",
+        subHeaderText: "",
         playlists: names
       }
     );
@@ -240,7 +248,10 @@ class SpotifySearch extends Component {
                         </select>
                     </div>
                     <div style={{position: "relative"}}>
-                        <h3>{this.state.headerText}</h3>
+                        <div className="flex-col">
+                            <h3>{this.state.headerText}</h3>
+                            <p className="no-margin-top">{this.state.subHeaderText}</p>
+                        </div>
                         <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
                         <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
                             <div className="flex-row justify-content-space-between">

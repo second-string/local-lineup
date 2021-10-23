@@ -108,6 +108,10 @@ select {
     justify-content: space-between;
 }
 
+.no-margin-top {
+    margin-top: 0;
+}
+
 @keyframes spin {
   0% {
     transform: translate(-50%, -50%) rotate(0deg);
