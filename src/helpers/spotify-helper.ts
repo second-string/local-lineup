@@ -206,8 +206,8 @@ export async function getOrCreatePlaylist(spotifyToken: string, userObj: DbUser,
         hasNext   = url !== null;
     } while (hasNext);
 
-    let playlistObj = playlists.find(x => x.name.toLowerCase() === "show finder" ||
-                                          x.name.toLowerCase() == `show finder - ${location}` &&
+    let playlistObj = playlists.find(x => x.name.toLowerCase() === "local lineup" ||
+                                          x.name.toLowerCase() == `local lineup - ${location}` &&
                                               x.owner.id === userObj.SpotifyUsername);
     if (playlistObj === undefined) {
         // They don't have their own showfinder playlist yet, create it
@@ -223,7 +223,7 @@ export async function getOrCreatePlaylist(spotifyToken: string, userObj: DbUser,
             correctCaseLocation = location;
         }
 
-        const body = {name : `Show Finder - ${correctCaseLocation}`, public : false, description : "helloaf"};
+        const body = {name : `Local Lineup - ${correctCaseLocation}`, public : false, description : "helloaf"};
         let createPlaylistResponse = await helpers.autoRetrySpotifyCall(spotifyToken,
                                                                         `https://api.spotify.com/v1/me/playlists`,
                                                                         "POST",
