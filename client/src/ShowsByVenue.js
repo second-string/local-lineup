@@ -12,7 +12,7 @@ class VenueSearch extends Component {
         selectedLocation: this.defaultLocationValue,
         allVenues: [],
         selectedVenues: [],
-        showsByDate: {},
+        showsByDate: null,
         selectedSongsPerArtist: this.defaultSongsPerArtistLabel,
         includeOpeners: true,
         showVenueSearch: false,
@@ -71,7 +71,7 @@ class VenueSearch extends Component {
             showVenueSearch: false,
             saveSuccess: false,
             showViewShowsInBrowserSection: false,
-            showsByDate: {},
+            showsByDate: null,
             selectedVenues: []
         });
 
@@ -221,11 +221,13 @@ class VenueSearch extends Component {
         let showDatesByService = await res.json();
         let showsByDate = showDatesByService["seatgeek"];
 
-        if (showsByDate !== undefined && showsByDate !== null) {
-            this.setState({
-                showsByDate: showsByDate
-            });
+        if (!showsByDate) {
+            showsByDate = {};
         }
+
+        this.setState({
+            showsByDate: showsByDate
+        });
     };
 
     saveShowsSelected = async e => {
@@ -251,7 +253,7 @@ class VenueSearch extends Component {
             this.setState({
                 saveSuccess: true,
                 showViewShowsInBrowserSection: true,
-                showsByDate: {},
+                showsByDate: null,
             });
         }
     };
@@ -275,6 +277,37 @@ class VenueSearch extends Component {
     includeOpenersChanged = e => {
         this.setState({ includeOpeners: e.target.checked });
     };
+
+    renderShows = () => {
+        if (this.state.showsByDate) {
+            if (Object.keys(this.state.showsByDate).length > 0) {
+                const showListObjects = Object.keys(this.state.showsByDate).map(x => (
+                    <div>
+                        <h4>{new Date(x).toLocaleDateString("en-US")}</h4>
+                        <ul id="{x}">
+                            {this.state.showsByDate[x].map(y => (
+                                <li key={y.id} value={y.id}>
+                                    {y.title} --- {y.venue.name}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ));
+
+                return (
+                    <div>
+                        <h3>Upcoming shows</h3>
+                        {showListObjects}
+                    </div>
+                );
+            } else {
+                return <h3>No shows found for the selected venues in {this.state.selectedLocation}</h3>;
+            }
+        }
+
+        // If we've had no shows set yet, don't show any header (or shows obviously)
+        return null;
+    }
 
     render() {
         return (
@@ -377,7 +410,7 @@ class VenueSearch extends Component {
                                 disabled={this.state.selectedVenues === null || Object.keys(this.state.selectedVenues).length === 0}
                                 type="submit"
                                 style={{ display: "inline-block" }}>
-                                Gimme
+                                Get shows
                             </button>
                         </div>
                     </div>
@@ -404,21 +437,8 @@ class VenueSearch extends Component {
                         </a>
                     </div>
                 </form>
-                <div>
-                    {Object.keys(this.state.showsByDate).length > 0 ? <h3>Upcoming shows</h3> : null}
-                    {Object.keys(this.state.showsByDate).map(x => (
-                        <div>
-                            <h4>{new Date(x).toLocaleDateString("en-US")}</h4>
-                            <ul id="{x}">
-                                {this.state.showsByDate[x].map(y => (
-                                    <li key={y.id} value={y.id}>
-                                        {y.title} --- {y.venue.name}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
+
+                {this.renderShows()}
             </div>
         );
     }
