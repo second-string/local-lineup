@@ -15,7 +15,7 @@ export function setRoutes(routerDependencies) {
     router.post("/logout", (req, res) => authHandler.logout(req, res));
     router.post("/token-auth", async (req, res) => authHandler.tokenAuth(db, req, res));
 
-    router.post("/show-finder/playlists", async (req, res) => {
+    router.post("/local-lineup/playlists", async (req, res) => {
         const spotifyToken = req.userObj.SpotifyAccessToken;
         let playlists      = await spotifyHelper.getPlaylists(spotifyToken, req.userObj, db);
         if (playlists.ok !== undefined && !playlists.ok) {
@@ -26,9 +26,9 @@ export function setRoutes(routerDependencies) {
         res.send(playlists);
     });
 
-    router.get("/show-finder/artists", async (req, res) => {
+    router.get("/local-lineup/artists", async (req, res) => {
         if (!req.query.playlistId) {
-            return res.status(400).send("Did not include playlistId query param in request to '/show-finder/artists/");
+            return res.status(400).send("Did not include playlistId query param in request to '/local-lineup/artists/");
         }
 
         const spotifyToken = req.userObj.SpotifyAccessToken;
@@ -44,7 +44,7 @@ export function setRoutes(routerDependencies) {
         res.json(artists);
     });
 
-    router.get("/show-finder/venues", async (req, res) => {
+    router.get("/local-lineup/venues", async (req, res) => {
         if (req.query.city === undefined) {
             res.status(400).send();
         }
@@ -58,7 +58,7 @@ export function setRoutes(routerDependencies) {
         res.json(venues);
     });
 
-    router.post("/show-finder/save-venues", async (req, res) => {
+    router.post("/local-lineup/save-venues", async (req, res) => {
         if (!req.body) {
             console.log("Did not receive any venue IDs or info in POST body");
             return res.status(400);
@@ -97,7 +97,7 @@ export function setRoutes(routerDependencies) {
     });
 
     // TODO :: BT unsub success screen
-    router.get("/show-finder/delete-venues", async (req, res) => {
+    router.get("/local-lineup/delete-venues", async (req, res) => {
         if (req.query.uid === undefined) {
             console.log("Did not receive any user uid for venue-deletion in the query param");
             return res.status(400);
@@ -129,7 +129,7 @@ export function setRoutes(routerDependencies) {
         return res.sendFile("email-delete-success.html", {root : staticAppDir});
     });
 
-    router.post("/show-finder/shows", async (req, res) => {
+    router.post("/local-lineup/shows", async (req, res) => {
         if (req.body.selectedVenues) {
             // Error handled internally, lists will just be empty if there was failure
             const showDatesByService = await showFinder.getShowsForVenues(req.body.selectedVenues);
@@ -164,7 +164,7 @@ export function setRoutes(routerDependencies) {
     // Retrieve logged-in user's previously-saved venue list from the db. Can be called with no location, in which the
     // first existing venue id list will be returned, or with a location to retrieve specific venue ids. If none exist
     // or none match passed in location, will simply return an empty object
-    router.get("/show-finder/user-venues", async (req, res) => {
+    router.get("/local-lineup/user-venues", async (req, res) => {
         // Support querying for a specific location for this user if they have multiple
         // Allows us to keep populating their different venue lists as they switch locations
         let dbVenueListObj: DbVenueList = null;
@@ -195,7 +195,7 @@ export function setRoutes(routerDependencies) {
     // Retrieve previously selected venue ids stored in cookie for logged out user. Can be called with no location, in
     // which the first existing saved location will be returned, or with a location to retrieve specific venue ids. If
     // none exist or none match passed in location, will simply return empty object
-    router.get("/show-finder/selected-venues", async (req, res) => {
+    router.get("/local-lineup/selected-venues", async (req, res) => {
         const token  = authHandler.parseToken(req.sessionToken);
         let location = req.query.location as string;
         if (!token.selectedVenues) {
@@ -227,7 +227,7 @@ export function setRoutes(routerDependencies) {
     // Used to store selected venues per city in a cooke so when users select venues, sign in, then return through
     // spotify auth callback redirect, they still have the full venue list. Once a user is logged in the react code
     // only uses the DB venue list
-    router.post("/show-finder/selected-venues", async (req, res) => {
+    router.post("/local-lineup/selected-venues", async (req, res) => {
         const location = req.body.location;
         const venueIds = req.body.venueIds;
 

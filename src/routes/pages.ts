@@ -13,9 +13,10 @@ export function setRoutes(routerDependencies) {
     router.get("/login", (req, res) => authHandler.login(req, res));
     router.get("/spotify-auth", async (req, res) => authHandler.spotifyLoginCallback(db, req, res));
 
-    router.get("/show-finder/spotify-search",
-               (req, res) => res.sendFile("spotify-search.html", {root : baseStaticDir}));
-    router.get("/show-finder/venue-search", (req, res) => res.sendFile("venue-search.html", {root : baseStaticDir}));
+    router.get("/local-lineup/shows-by-artist",
+               (req, res) => res.sendFile("shows-by-artist.html", {root : baseStaticDir}));
+    router.get("/local-lineup/shows-by-venue",
+               (req, res) => res.sendFile("shows-by-venue.html", {root : baseStaticDir}));
 
     return router;
 }

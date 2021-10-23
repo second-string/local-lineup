@@ -13,7 +13,7 @@ module.exports = {
     //      'webpack-hot-middleware/client'
     //     ],
     app: paths.appIndexJs,
-    spotify: paths.spotifySearchJs,
+    artist: paths.artistSearchJs,
     venue: paths.venueSearchJs
   },
   devServer: {
@@ -94,14 +94,14 @@ module.exports = {
       inject: true
     }),
     new HtmlWebpackPlugin({
-      template: paths.spotifyHtml,
-      filename: "spotify-search.html",
-      chunks: ["spotify"],
+      template: paths.artistHtml,
+      filename: "shows-by-artist.html",
+      chunks: ["artist"],
       inject: true
     }),
     new HtmlWebpackPlugin({
       template: paths.venueHtml,
-      filename: "venue-search.html",
+      filename: "shows-by-venue.html",
       chunks: ["venue"],
       inject: true
     }),

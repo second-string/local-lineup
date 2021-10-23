@@ -10,10 +10,10 @@ import * as showFinder from "../show-finder";
 
 // API routes that require user to be logged in
 const restrictedPaths = [
-    "/show-finder/playlists",
-    "/show-finder/artists",
-    "/show-finder/save-venues",
-    "/show-finder/user-venues",
+    "/local-lineup/playlists",
+    "/local-lineup/artists",
+    "/local-lineup/save-venues",
+    "/local-lineup/user-venues",
 ];
 
 export async function session(userDb, req, res, next) {
@@ -53,13 +53,13 @@ export async function session(userDb, req, res, next) {
 }
 
 export async function login(req, res) {
-    const rootHost    = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
+    const rootHost    = process.env.DEPLOY_STAGE === "PROD" ? "locallineup.live" : "localhost";
     const redirectUri = `https://${rootHost}/spotify-auth`;
 
     // Include redirect path to return to correct location post-auth if necessary. If not included, will return home.
     let state = {redirect : "/"};
-    if (req.query.redirect &&
-        (req.query.redirect == "/show-finder/spotify-search" || req.query.redirect == "/show-finder/venue-search")) {
+    if (req.query.redirect && (req.query.redirect == "/local-lineup/shows-by-artist" ||
+                               req.query.redirect == "/local-lineup/shows-by-venue")) {
         state.redirect = req.query.redirect;
     }
 
@@ -141,7 +141,7 @@ export async function spotifyLoginCallback(db, req, res) {
         return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     }
 
-    const rootHost  = process.env.DEPLOY_STAGE === "PROD" ? "showfinder.brianteam.dev" : "localhost";
+    const rootHost  = process.env.DEPLOY_STAGE === "PROD" ? "locallineup.live" : "localhost";
     let postOptions = {
         method : "POST",
         body : {

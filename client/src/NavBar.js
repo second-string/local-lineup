@@ -81,13 +81,13 @@ class NavBar extends Component {
                         <a
                             className={this.props.venueSearchSelected ? "active nav-a" : "nav-a"}
                             style={{ display: this.props.homeSelected ? "none" : "" }}
-                            href="/show-finder/venue-search">
+                            href="/local-lineup/shows-by-venue">
                             Shows by Venue
                         </a>
                         <a
                             className={this.props.spotifySearchSelected ? "active nav-a" : "nav-a"}
                             style={{ display: this.props.homeSelected? "none" : "" }}
-                            href="/show-finder/spotify-search">
+                            href="/local-lineup/shows-by-artist">
                             Shows by Artist
                         </a>
                     </div>
@@ -112,13 +112,13 @@ class NavBar extends Component {
                         <a
                             className={this.props.venueSearchSelected ? "active menu-option-a" : "menu-option-a"}
                             style={{ display: true /* only not on homepage in the future */  ? "" : "none" }}
-                            href="/show-finder/venue-search">
+                            href="/local-lineup/shows-by-venue">
                             Shows by Venue
                         </a>
                         <a
                             className={this.props.spotifySearchSelected ? "active menu-option-a" : "menu-option-a"}
                             style={{ display: true /* only not on homepage in the future */  ? "" : "none" }}
-                            href="/show-finder/spotify-search">
+                            href="/local-lineup/shows-by-artist">
                             Shows by Artist
                         </a>
                             <form  method="POST" action="/logout">

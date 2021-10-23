@@ -25,7 +25,7 @@ class App extends Component {
             <p>Choose from one of two options to start your search:</p>
             <div className="main-content-browser">
                 <div className="flex-row white-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
-                    <form action="/show-finder/venue-search" method="GET">
+                    <form action="/local-lineup/shows-by-venue" method="GET">
                         <div className="flex-row align-items-center text-align-left">
                             <div className="flex-col justify-content-center align-items-center">
                                 <div style={{flexGrow: 1}}></div>
@@ -42,7 +42,7 @@ class App extends Component {
                     </form>
                 </div>
                 <div className="flex-row white-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
-                    <form action="/show-finder/spotify-search" method="GET">
+                    <form action="/local-lineup/shows-by-artist" method="GET">
                         <div className="flex-row align-items-center">
                             <button className="default-button-border" type="submit">Search by artist</button>
                             <div className="flex-col justify-content-center" style={{paddingLeft: "20px"}}>
@@ -55,7 +55,7 @@ class App extends Component {
             </div>
             <div className="main-content-mobile">
                 <div className="flex-col white-rounded-border flex-basis-100" style={{marginTop: "20px", marginBottom: "20px"}}>
-                    <form action="/show-finder/venue-search" method="GET">
+                    <form action="/local-lineup/shows-by-venue" method="GET">
                         <div className="flex-col justify-content-center align-items-center" style={{padding: "10px"}}>
                             <p>Select your favorite venues to receive an email every Sunday listing who will be playing there the following week.</p>
                             <p>Link your Spotify account for Show Finder to build a playlist of those artists' songs for you to discover new talent.</p>
@@ -67,7 +67,7 @@ class App extends Component {
                     </form>
                 </div>
                 <div className="flex-col white-rounded-border flex-basis-100" style={{marginTop: "20px", marginBottom: "20px"}}>
-                    <form action="/show-finder/spotify-search" method="GET">
+                    <form action="/local-lineup/shows-by-artist" method="GET">
                         <div className="flex-col justify-content-center align-items-center" style={{padding: "10px"}}>
                             <p>Select a list of artists from your Spotify to see who will be playing in your city soon.</p>
                             <p>This option is good for finding when artists you already know and love will be playing near you.</p>

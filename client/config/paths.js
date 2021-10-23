@@ -84,10 +84,10 @@ module.exports = {
   // appNodeModules: resolveApp('node_modules'),
   // publicUrl: getPublicUrl(resolveApp('package.json')),
   // servedPath: getServedPath(resolveApp('package.json')),
-  spotifySearchJs: resolveModule(resolveApp, 'src/spotify-search'),
-  spotifyHtml: resolveApp('public/spotify-search.html'),
-  venueSearchJs: resolveModule(resolveApp, 'src/venue-search'),
-  venueHtml: resolveApp('public/venue-search.html'),
+  artistSearchJs: resolveModule(resolveApp, 'src/shows-by-artist'),
+  artistHtml: resolveApp('public/shows-by-artist.html'),
+  venueSearchJs: resolveModule(resolveApp, 'src/shows-by-venue'),
+  venueHtml: resolveApp('public/shows-by-venue.html'),
   emailDeleteSuccessHtml: resolveApp('public/email-delete-success.html')
 };
 
