@@ -282,7 +282,7 @@ class VenueSearch extends Component {
                 <h2>Shows by Venue</h2>
                 <p>Choose your location and pick a list of venues in that city.</p>
                 <p>After saving, you'll receive a weekly email on Sundays listing the upcoming shows for those venues in the week after next.</p>
-                <p>A 'Show Finder' playlist will also be created in your Spotify account that updates each week with songs from the artists listed in the email.</p>
+                <p>A 'Local Lineup' playlist will also be created in your Spotify account that updates each week with songs from the artists listed in the email.</p>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
                 <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} defaultValue={this.defaultLocationValue} style={{ margin: "2em auto 1em" }}>
                     <option key="defaultLocation" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
@@ -385,7 +385,7 @@ class VenueSearch extends Component {
                 <form action="/login" method="GET" style={{ display: (!this.state.isLoggedIn && this.state.showVenueSearch) ? "" : "none" }}>
                     <div style={{ margin: "2em auto auto" }}>
                         <p style={{ marginRight: "1em" }}>
-                            In order to send you a email and build a customized playlist every week, Show Finder needs you to log in with Spotify.
+                            In order to send you a email and build a customized playlist every week, Local Lineup needs you to log in with Spotify.
                         </p>
                         <input type="hidden" name="redirect" value={window.location.pathname} />
                         <button type="submit" value="Log in">Log in</button>

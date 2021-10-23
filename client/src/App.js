@@ -19,9 +19,9 @@ class App extends Component {
     return (
       <div className="App">
         <div className="main-content-wrapper flex-column">
-            <h1>Show Finder</h1>
+            <h1>Local Lineup</h1>
             <h3>Whether you're discovering new artists or falling back on old favorites, see who will be playing at your favorite local venues soon.</h3>
-            <p>Show Finder aggregates concert listings from four separate music services to provide a complete list of who is playing in your city.</p>
+            <p>Local Lineup aggregates concert listings from four separate music services to provide a complete list of who is playing in your city.</p>
             <p>Choose from one of two options to start your search:</p>
             <div className="main-content-browser">
                 <div className="flex-row white-rounded-border flex-basis-100" style={{minHeight: "175px", margin: "20px", padding: "10px"}}>
@@ -36,7 +36,7 @@ class App extends Component {
                             </div>
                             <div className="flex-col justify-content-center" style={{paddingLeft: "20px"}}>
                                 <p>Select your favorite venues to receive an email every Sunday listing who will be playing there the following week.</p>
-                                <p>Link your Spotify account for Show Finder to build a playlist of those artists' songs for you to discover new talent.</p>
+                                <p>Link your Spotify account for Local Lineup to build a playlist of those artists' songs for you to discover new talent.</p>
                             </div>
                         </div>
                     </form>
@@ -58,7 +58,7 @@ class App extends Component {
                     <form action="/local-lineup/shows-by-venue" method="GET">
                         <div className="flex-col justify-content-center align-items-center" style={{padding: "10px"}}>
                             <p>Select your favorite venues to receive an email every Sunday listing who will be playing there the following week.</p>
-                            <p>Link your Spotify account for Show Finder to build a playlist of those artists' songs for you to discover new talent.</p>
+                            <p>Link your Spotify account for Local Lineup to build a playlist of those artists' songs for you to discover new talent.</p>
                             <button className="blue-button-border" type="submit">Search by venue</button>
                             <div className="flex-col" style={{alignItems: "top" }}>
                                 <p style={{color: "#6699FF", margin: 0}}>Most popular option!</p>
