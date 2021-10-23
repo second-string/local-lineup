@@ -21,5 +21,6 @@ export const locations = [
     {value : "austin", displayName : "Austin"},
     {value : "houston", displayName : "Houston"},
     {value : "charlotte", displayName : "Charlotte"},
-    {value : "philadelphia", displayName : "Philadelphia"}
+    {value : "philadelphia", displayName : "Philadelphia"},
+    {value : "seattle", displayName : "Seattle"},
 ];

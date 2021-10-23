@@ -42,7 +42,7 @@ Sample venue object
 },
 */
 
-const locations = [
+const defaultLocations = [
     "san francisco",
     "los angeles",
     "washington",
@@ -53,7 +53,8 @@ const locations = [
     "austin",
     "houston",
     "charlotte",
-    "philadelphia"
+    "philadelphia",
+    "seattle",
 ];
 
 const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
@@ -115,8 +116,20 @@ async function run() {
         return;
     }
 
-    const db     = dbHelpers.openDb(dbPath);
-    const venues = await getVenues("san francisco");
+    const db = dbHelpers.openDb(dbPath);
+
+    let locations = [];
+    if (process.argv.length > 2) {
+        const location: string = process.argv[2];
+        if (!defaultLocations.includes(location)) {
+            console.error(`Supplied location of ${location} not found in default location list, exiting`);
+            process.exit(-1);
+        }
+
+        locations = [ location ];
+    } else {
+        locations = defaultLocations;
+    }
 
     for (const location of locations) {
         console.log(`Syncing venues for ${location}`);
