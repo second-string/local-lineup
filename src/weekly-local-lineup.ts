@@ -1,7 +1,7 @@
 import * as dbHelpers     from "./helpers/db-helpers";
 import * as showEmailer   from "./helpers/show-emailer";
 import * as spotifyHelper from "./helpers/spotify-helper";
-import * as showFinder    from "./show-finder";
+import * as localLineup   from "./local-lineup";
 
 async function main() {
     const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
@@ -54,7 +54,7 @@ async function main() {
         let endDate         = new Date(startDate);
         endDate.setDate(endDate.getDate() + 7);
 
-        let services: any = await showFinder.getShowsForVenues(venues);
+        let services: any = await localLineup.getShowsForVenues(venues);
         if (services === undefined) {
             console.log(`Call to get shows for selected venues failed`);
             return;
@@ -99,7 +99,8 @@ async function main() {
             }
 
             console.log("Attempting to build playlist...");
-            let exitCode = await showFinder.buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, location, db);
+            let       exitCode =
+                await localLineup.buildPlaylist(userObj, shows, songsPerArtist, includeOpeners, location, db);
             if (exitCode < 0) {
                 return reject(Error(userObj.SpotifyUsername));
             }

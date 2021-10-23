@@ -3,7 +3,7 @@ import * as helpers from "./Helpers.js";
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import ReactList from "react-list-select";
-import "./SpotifySearch.css";
+import "./ShowsByArtist.css";
 
 class SpotifySearch extends Component {
   baseState = {
@@ -213,7 +213,7 @@ class SpotifySearch extends Component {
   render() {
         if (!this.state.isLoggedIn) {
             return (
-                <div className="SpotifySearch">
+                <div className="ShowsByArtist">
                     <form action="/login" method="GET">
                         <h3>Log in with Spotify</h3>
                         <p>Local Lineup gives you the ability to choose artists from your existing Spotify playlists to search for upcoming shows.</p>
@@ -225,7 +225,7 @@ class SpotifySearch extends Component {
             );
         } else {
             return (
-                <div className="SpotifySearch">
+                <div className="ShowsByArtist">
                     <h2>Shows by Artist</h2>
                     <p>Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.</p>
                     <p>Results from 4 different music services are combined to ensure a complete set of shows.</p>

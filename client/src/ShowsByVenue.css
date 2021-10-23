@@ -1,6 +1,6 @@
-@import "SpotifySearch.css";
+@import "ShowsByArtist.css";
 
-.VenueSearch {
+.ShowsByVenue {
   font-family: "Trebuchet MS", Helvetica, sans-serif;
   text-align: center;
 }

@@ -3,7 +3,7 @@ import * as helpers from "./Helpers.js";
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import Select from "react-select";
-import "./VenueSearch.css";
+import "./ShowsByVenue.css";
 
 class VenueSearch extends Component {
     state = {
@@ -278,7 +278,7 @@ class VenueSearch extends Component {
 
     render() {
         return (
-            <div className="VenueSearch">
+            <div className="ShowsByVenue">
                 <h2>Shows by Venue</h2>
                 <p>Choose your location and pick a list of venues in that city.</p>
                 <p>After saving, you'll receive a weekly email on Sundays listing the upcoming shows for those venues in the week after next.</p>
