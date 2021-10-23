@@ -317,14 +317,27 @@ class VenueSearch extends Component {
                 <p>After saving, you'll receive a weekly email on Sundays listing the upcoming shows for those venues in the week after next.</p>
                 <p>A 'Local Lineup' playlist will also be created in your Spotify account that updates each week with songs from the artists listed in the email.</p>
                 <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
-                <select id="location-select" value={this.state.selectedLocation} onChange={this.locationSelected} defaultValue={this.defaultLocationValue} style={{ margin: "2em auto 1em" }}>
-                    <option key="defaultLocation" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
-                    {helpers.locations.map(x => (
-                        <option key={x.value} value={x.value}>
-                            {x.displayName}
-                        </option>
-                    ))}
-                </select>
+                <div id="location-select-div"> 
+                    <select value={this.state.selectedLocation} onChange={this.locationSelected} defaultValue={this.defaultLocationValue}>
+                        <option key="defaultLocation" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
+                        {helpers.locations.map(x => (
+                            <option key={x.value} value={x.value}>
+                                {x.displayName}
+                            </option>
+                        ))}
+                    </select>
+                    <a 
+                        href="mailto:brian.team.jr@gmail.com?subject=Add my city!"
+                        style={{
+                            margin: "auto",
+                            marginTop: ".5em",
+                            fontSize: ".7em",
+                            color: "white",
+                            opacity: ".8"
+                        }}>
+                            Don't see your city? Let me know and I'll add it
+                    </a>
+                </div>
                 <form
                     onSubmit={this.selectVenues}
                     style={{

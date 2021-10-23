@@ -8,3 +8,12 @@
 .react-list-select {
   color: black;
 }
+
+/*
+ * override margins for showsbyartist to space more since
+ * it still displays while user interacts w/ remainder of content 
+ */
+#location-select-div {
+    margin-top: 2em;
+    margin-bottom: 1em;
+}

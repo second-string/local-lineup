@@ -34,8 +34,10 @@ select {
   font-size: 16px;
 }
 
-#location-select {
-  display: block;
+#location-select-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin: auto;
   margin-top: 20px;
   margin-bottom: 20px;

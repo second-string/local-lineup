@@ -237,8 +237,8 @@ class SpotifySearch extends Component {
                     <h1>Shows by Artist</h1>
                     <p>Choose your location, one of your Spotify playlists, and any set of artists from that playlist to generate a list of upcoming shows.</p>
                     <p>Results from 4 different music services are combined to ensure a complete set of shows.</p>
-                    <div style={{ display: this.state.showingLocation ? "" : "none" }}>
-                        <select id="location-select" value={this.state.selectedLocation} defaultValue={this.defaultLocationValue} onChange={this.getPlaylists}>
+                    <div id="location-select-div" style={{ display: this.state.showingLocation ? "" : "none" }}>
+                        <select value={this.state.selectedLocation} defaultValue={this.defaultLocationValue} onChange={this.getPlaylists}>
                             <option id="defaultValueId" value={this.defaultLocationValue} disabled>{this.defaultLocationLabel}</option>
                             {this.state.locations.map(x => (
                                 <option key={x.value} value={x.value}>
@@ -246,6 +246,17 @@ class SpotifySearch extends Component {
                                 </option>
                             ))}
                         </select>
+                        <a 
+                            href="mailto:brian.team.jr@gmail.com?subject=Add my city!"
+                            style={{
+                                margin: "auto",
+                                marginTop: ".5em",
+                                fontSize: ".7em",
+                                color: "white",
+                                opacity: ".8"
+                            }}>
+                                Don't see your city? Let me know and I'll add it
+                        </a>
                     </div>
                     <div style={{position: "relative"}}>
                         <div className="flex-col">
