@@ -135,7 +135,7 @@ class VenueSearch extends Component {
             }
         };
 
-        let res  = await helpers.instrumentCall(`/show-finder/venues?city=${encodeURIComponent(location)}`, getOptions);
+        let res  = await helpers.instrumentCall(`/local-lineup/venues?city=${encodeURIComponent(location)}`, getOptions);
         let allVenuesForLocation = await res.json();
 
         this.setState({
@@ -156,7 +156,7 @@ class VenueSearch extends Component {
         };
 
         // Switch URLs (user-venues or selected-venues) depending on if user is logged in or just looking in cookie respectively
-        const res = await helpers.instrumentCall(`/show-finder/${isLoggedIn ? "user" : "selected"}-venues${location ? `?location=${location}` : ""}`, getOptions);
+        const res = await helpers.instrumentCall(`/local-lineup/${isLoggedIn ? "user" : "selected"}-venues${location ? `?location=${location}` : ""}`, getOptions);
         const venueIdsObj = await res.json();
 
         return venueIdsObj;
@@ -177,7 +177,7 @@ class VenueSearch extends Component {
             body:  JSON.stringify(postBody),
         };
 
-        const res = await helpers.instrumentCall("/show-finder/selected-venues", postOptions);
+        const res = await helpers.instrumentCall("/local-lineup/selected-venues", postOptions);
         // TODO :: any error checking or something to do with the result?
     }
 
@@ -217,7 +217,7 @@ class VenueSearch extends Component {
             body: JSON.stringify({ selectedVenues: postBody })
         };
 
-        let res = await helpers.instrumentCall(`/show-finder/shows`, postOptions);
+        let res = await helpers.instrumentCall(`/local-lineup/shows`, postOptions);
         let showDatesByService = await res.json();
         let showsByDate = showDatesByService["seatgeek"];
 
@@ -246,7 +246,7 @@ class VenueSearch extends Component {
             body: JSON.stringify(postBody)
         };
 
-        let res = await helpers.instrumentCall("/show-finder/save-venues", postOptions);
+        let res = await helpers.instrumentCall("/local-lineup/save-venues", postOptions);
         if (res.status === 204) {
             this.setState({
                 saveSuccess: true,

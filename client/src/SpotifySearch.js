@@ -85,7 +85,7 @@ class SpotifySearch extends Component {
       headerText: "Fetching playlists..."
     });
 
-    let res = await helpers.instrumentCall("/show-finder/playlists", postOptions);
+    let res = await helpers.instrumentCall("/local-lineup/playlists", postOptions);
     let playlistNamesById = await res.json();
 
     this.setState({ playlistNamesById });
@@ -113,7 +113,7 @@ class SpotifySearch extends Component {
       headerText: `Fetching artists for '${this.state.playlistNamesById[playlistId]}'`
     });
 
-    let res = await helpers.instrumentCall(`/show-finder/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
+    let res = await helpers.instrumentCall(`/local-lineup/artists?playlistId=${encodedPlaylistId}`, { method: "GET" });
     let artistJson = await res.json();
     let decodedArtists = [];
     for (let index in Object.keys(artistJson)) {
@@ -162,7 +162,7 @@ class SpotifySearch extends Component {
       headerText: "Searching for shows..."
     });
     // list of { artistName, shows[] } objects
-    let showsJson = await helpers.instrumentCall("/show-finder/shows", postOptions);
+    let showsJson = await helpers.instrumentCall("/local-lineup/shows", postOptions);
     let shows = await showsJson.json();
 
     // shows.length is actually a count of number of artists returned
@@ -216,7 +216,7 @@ class SpotifySearch extends Component {
                 <div className="SpotifySearch">
                     <form action="/login" method="GET">
                         <h3>Log in with Spotify</h3>
-                        <p>Show Finder gives you the ability to choose artists from your existing Spotify playlists to search for upcoming shows.</p>
+                        <p>Local Lineup gives you the ability to choose artists from your existing Spotify playlists to search for upcoming shows.</p>
                         <p>In order to access your playlists, please log in with your Spotify account.</p>
                         <input type="hidden" name="redirect" value={window.location.pathname} />
                         <button type="submit" value="Log in">Log in</button>
