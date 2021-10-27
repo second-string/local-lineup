@@ -1,3 +1,8 @@
+// We only need to import /client-ses here, but I think aws-sdk has to be npm installed in its entirety to properly
+// source access keys from env vars. Maybe not and something else was messed up but it was fishy before I installed the
+// full thing
+import * as aws from "@aws-sdk/client-ses";
+
 import Email from 'email-templates';
 import nodemailer from "nodemailer";
 
@@ -9,10 +14,11 @@ export async function sendShowsEmail(userObj, shows, startDate, endDate) {
         return -1;
     }
 
-    if (process.env.OAUTH2_CLIENT_ID === undefined || process.env.OAUTH2_CLIENT_SECRET === undefined ||
-        process.env.OAUTH2_ACCESS_TOKEN === undefined) {
-        console.log('No env vars set for OAuth2, run setup_env.sh');
-        return -1;
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+        // Fail hard with nothing set
+        const err = 'No env vars set for AWS SES IAM user, run setup_env.sh';
+        console.error(err);
+        throw new Error('No env vars set for AWS SES IAM user, run setup_env.sh');
     }
 
     // Prettify for the email template
@@ -22,23 +28,15 @@ export async function sendShowsEmail(userObj, shows, startDate, endDate) {
     let baseUrl        = process.env.DEPLOY_STAGE === 'PROD' ? 'locallineup.live' : 'localhost';
     let unsubscribeUrl = `https://${baseUrl}/local-lineup/delete-venues?uid=${userObj.Uid}`;
 
-    // oauth auth object fields: https://nodemailer.com/smtp/oauth2/
+    // Keys from env vars
+    const ses       = new aws.SES({
+        region : "us-east-1",
+    });
     const transport = nodemailer.createTransport({
-        host : 'smtp.gmail.com',
-        port : 465,
-        secure : true,
-        auth : {
-            user : 'show.finder.bot@gmail.com',
-            type : 'OAuth2',
-            clientId : process.env.OAUTH2_CLIENT_ID,
-            clientSecret : process.env.OAUTH2_CLIENT_SECRET,
-            refreshToken : process.env.OAUTH2_REFRESH_TOKEN,
-            accessToken : process.env.OAUTH2_ACCESS_TOKEN,
-            expiresIn : 3200,
-        }
+        SES : {ses, aws},
     });
 
-    const emailObj = new Email({message : {from : 'show.finder.bot@gmail.com'}, transport : transport, send : true});
+    const emailObj = new Email({message : {from : 'concierge@locallineup.live'}, transport : transport, send : true});
 
     return emailObj
         .send({

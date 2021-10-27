@@ -4,8 +4,8 @@ import * as spotifyHelper from "./helpers/spotify-helper";
 import * as localLineup   from "./local-lineup";
 
 async function main() {
-    const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/root/local-lineup/user_venues.db"
-                                                                    : "user_venues.db");
+    const db =
+        dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/root/local-lineup/user_venues.db" : "user_venues.db");
 
     let venueListObjs: DbVenueList[];
     if (process.env.DEPLOY_STAGE === "PROD") {
@@ -13,7 +13,7 @@ async function main() {
     } else {
         venueListObjs =
             await db.allAsync(`SELECT * from VenueLists WHERE UserUid=(SELECT Uid FROM Users WHERE Email=?);`,
-                              [ "show.finder.bot@gmail.com" ]);
+                              [ "dot4qu@virginia.edu" ]);
         if (venueListObjs.length !== 1) {
             console.log(`Warning, got ${
                 venueListObjs.length} users from db when only expecting the single show.finder.bot one`);

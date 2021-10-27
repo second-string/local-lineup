@@ -21,10 +21,12 @@
   },
   "homepage": "https://github.com/dot4qu/Show-Finder#readme",
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.38.0",
     "@types/express": "^4.17.12",
     "@types/node": "^15.12.5",
     "@types/sqlite3": "^3.1.7",
     "abort-controller": "^3.0.0",
+    "aws-sdk": "^2.1015.0",
     "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.2",
     "concurrently": "^6.2.0",
