@@ -20,7 +20,7 @@ export async function sendShowsEmail(userObj, shows, startDate, endDate) {
     endDate   = endDate.toLocaleDateString('en-US');
 
     let baseUrl        = process.env.DEPLOY_STAGE === 'PROD' ? 'locallineup.live' : 'localhost';
-    let unsubscribeUrl = `https://${baseUrl}/show-finder/delete-venues?uid=${userObj.Uid}`;
+    let unsubscribeUrl = `https://${baseUrl}/local-lineup/delete-venues?uid=${userObj.Uid}`;
 
     // oauth auth object fields: https://nodemailer.com/smtp/oauth2/
     const transport = nodemailer.createTransport({
@@ -42,7 +42,7 @@ export async function sendShowsEmail(userObj, shows, startDate, endDate) {
 
     return emailObj
         .send({
-            template : process.env.DEPLOY_STAGE === 'PROD' ? '/home/pi/Show-Finder/emails/test' : 'test',
+            template : process.env.DEPLOY_STAGE === 'PROD' ? '/root/local-lineup/emails/test' : 'test',
             message : {to : userObj.Email},
             locals : {startDate : startDate, endDate : endDate, showsByDate : shows, unsubscribeUrl : unsubscribeUrl}
         })

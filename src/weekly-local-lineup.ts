@@ -4,7 +4,7 @@ import * as spotifyHelper from "./helpers/spotify-helper";
 import * as localLineup   from "./local-lineup";
 
 async function main() {
-    const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/home/pi/Show-Finder/user_venues.db"
+    const db = dbHelpers.openDb(process.env.DEPLOY_STAGE === "PROD" ? "/root/local-lineup/user_venues.db"
                                                                     : "user_venues.db");
 
     let venueListObjs: DbVenueList[];
