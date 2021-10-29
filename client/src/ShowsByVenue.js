@@ -33,21 +33,25 @@ class VenueSearch extends Component {
 
         // Get best-matching saved venues obj from api. If we're logged in, might be saved db values, or fallback to token values.
         // If not logged in, just check token values. Empty object returned for none found
-        const savedVenuesObj = await this.getSavedVenues(isLoggedIn);
+        let savedVenuesObj = await this.getSavedVenues(isLoggedIn);
 
         // See if this user has any saved locations already. If not, try to pull over a previous venue list from the cookie
         let allVenuesForLocation = null;
+        let extendedState = {};
         if (savedVenuesObj.Location) {
             allVenuesForLocation = await this.getAllVenuesForLocation(savedVenuesObj.Location);
-            state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+            extendedState = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
         } else if (isLoggedIn) {
             // Force cookie venues/location with 'false' for isLoggedIn param only if our first check wasn't already a logged out cookie check
             savedVenuesObj = await this.getSavedVenues(false);
             if (savedVenuesObj.Location) {
                 allVenuesForLocation = await this.getAllVenuesForLocation(savedVenuesObj.Location);
-                state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+                extendedState = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
             }
         }
+
+        // Make sure we don't fully drop the variables declared at beginning of function in initial state declaration
+        state = { ...state, ...extendedState };
 
         // Only set locations if we actually have them in the above process. If we never got them sometime above,
         // don't get anything since we're on the default disabled "choose a city" option
@@ -81,17 +85,21 @@ class VenueSearch extends Component {
         // Get best-matching saved venues obj from api. If we're logged in, might be saved db values, or fallback to token values.
         // If not logged in, just check token values. Empty object returned for none found
         let allVenuesForLocation = null;
+        let extendedState = {};
         if (savedVenuesObj.Location) {
             allVenuesForLocation = await this.getAllVenuesForLocation(location);
-            state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+            extendedState = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
         } else if (this.state.isLoggedIn) {
             // Force cookie venues/location with 'false' for isLoggedIn param only if our first check wasn't already a logged out cookie check
             savedVenuesObj = await this.getSavedVenues(false);
             if (savedVenuesObj) {
                 allVenuesForLocation = await this.getAllVenuesForLocation(location);
-                state = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
+                extendedState = await this.populateFromSavedValues(savedVenuesObj, allVenuesForLocation, state);
             }
         }
+
+        // Make sure we don't fully drop the variables declared at beginning of function in initial state declaration
+        state = { ...state, ...extendedState };
 
         // If we never got them sometime in the above process, get them for the selected location
         if (!allVenuesForLocation) {
