@@ -27,6 +27,9 @@ export async function getSongkickShows(artists, location, showsByArtistId) {
             } else if (responseObject.response && responseObject.response.message &&
                        responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
                 console.log("SK artist ENOTFOUND");
+            } else if (!responseObject.success && responseObject.response.message &&
+                       responseObject.response.message.includes("AbortController")) {
+                console.log("SK timout");
             } else {
                 console.log(`Failed query in Songkick artist show requests:`);
                 console.log(responseObject);

@@ -19,6 +19,9 @@ export async function getBandsInTownShows(artists, location, showsByArtistId) {
             } else if (responseObject.response && responseObject.response.message &&
                        responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
                 console.log("BIT ENOTFOUND");
+            } else if (!responseObject.success && responseObject.response.message &&
+                       responseObject.response.message.includes("AbortController")) {
+                console.log("BIT timout");
             } else {
                 console.log(`Failed query in BandsInTown requests:`);
                 console.log(responseObject);

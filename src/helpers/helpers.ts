@@ -149,7 +149,7 @@ export async function instrumentCall(url, options, logCurl): Promise<{success : 
             options.body = encodedBody;
         }
 
-        unparsedRes = await fetchWithBackoffAndTimeout(url, options, 8);
+        unparsedRes = await fetchWithBackoffAndTimeout(url, options, 45);
         if (unparsedRes && !unparsedRes.ok) {
             error = unparsedRes;
         } else {

@@ -52,6 +52,9 @@ export function parseSongkickArtistsResponse(responseList) {
             } else if (responseObject.response && responseObject.response.message &&
                        responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
                 console.log("SK artist ID ENOTFOUND");
+            } else if (!responseObject.success && responseObject.response.message &&
+                       responseObject.response.message.includes("AbortController")) {
+                console.log("SK ID timout");
             } else {
                 console.log(`Failed query in SongKick artist ID requests:`);
                 console.log(responseObject);
@@ -112,6 +115,9 @@ export function parseSeatGeekArtistsResponse(responseList) {
             } else if (responseObject.response && responseObject.response.message &&
                        responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
                 console.log("SG artist ID ENOTFOUND");
+            } else if (!responseObject.success && responseObject.response.message &&
+                       responseObject.response.message.includes("AbortController")) {
+                console.log("SG artist ID timout");
             } else {
                 console.log(`Failed query in SeatGeek artist ID requests:`);
                 console.log(responseObject);

@@ -27,6 +27,9 @@ export async function getSeatGeekShowsForArtists(artists, location, showsByArtis
             } else if (responseObject.response && responseObject.response.message &&
                        responseObject.response.message.includes("getaddrinfo ENOTFOUND")) {
                 console.log("SG ENOTFOUND");
+            } else if (!responseObject.success && responseObject.response.message &&
+                       responseObject.response.message.includes("AbortController")) {
+                console.log("SG timout");
             } else {
                 console.log(`Failed query in SeatGeek artist show requests:`);
                 console.log(responseObject);
