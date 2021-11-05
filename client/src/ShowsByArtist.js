@@ -162,7 +162,7 @@ class SpotifySearch extends Component {
     });
 
 
-    let maxArtistChunkRequestLength = 50;
+    let maxArtistChunkRequestLength = 25;
     let shows = [];
     for (let i = 0; i < encodedArtists.length; i += maxArtistChunkRequestLength) {
         // Slice encodedArtist by the max chunk length each iteration. For last iteration when there are less artists left than chunk length,
