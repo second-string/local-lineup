@@ -150,26 +150,35 @@ class SpotifySearch extends Component {
 
     let encodedArtists = this.state.allArtists.filter((x, i) => selectedArtistIndices.includes(i)).map(x => encodeURIComponent(x));
 
-    let postOptions = {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify({
-        selectedArtists: encodedArtists,
-        location: this.state.selectedLocation
-      })
-    };
-
     this.setState({
       showingArtists: false,
       showSpinner: true,
       headerText: "Searching for shows...",
       subHeaderText: "Please be patient, this can take up to a minute for large numbers of artists",
     });
-    // list of { artistName, shows[] } objects
-    let showsJson = await helpers.instrumentCall("/local-lineup/shows", postOptions);
-    let shows = await showsJson.json();
+
+
+    let maxArtistChunkRequestLength = 50;
+    let shows = [];
+    for (let i = 0; i < encodedArtists.length; i += maxArtistChunkRequestLength) {
+        // Slice encodedArtist by the max chunk length each iteration. For last iteration when there are less artists left than chunk length,
+        // slice will just return remainder of elements.
+      let postOptions = {
+        method: "POST",
+        headers: {
+            "Content-type": "application/json"
+        },
+        body: JSON.stringify({
+            selectedArtists: encodedArtists.slice(i, i + maxArtistChunkRequestLength),
+            location: this.state.selectedLocation,
+        })
+      };
+
+      // [ { artistName, shows[] } ]
+      let showsJson = await helpers.instrumentCall("/local-lineup/shows", postOptions);
+      let showsChunk = await showsJson.json();
+      shows = shows.concat(showsChunk);
+    }
 
     // shows.length is actually a count of number of artists returned
     let showCount = shows.map(x => x.shows.length || 0).reduce((x, y) => x + y, 0);
