@@ -96,6 +96,14 @@ select {
   animation: spin 2s linear infinite;
 }
 
+.loadingPercentage {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+}
+
 .flex-row {
     display: flex;
     flex-direction: row;

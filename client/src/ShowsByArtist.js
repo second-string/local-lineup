@@ -20,6 +20,8 @@ class SpotifySearch extends Component {
     showingPlaylists: false,
     showingShows: false,
     showSpinner: false,
+    showLoadingPercentage: false,
+    loadingPercentage: "",
     locations: [],
     selectedLocation: this.defaultLocationValue,
   };
@@ -60,6 +62,7 @@ class SpotifySearch extends Component {
         showingPlaylists: false,
         showingShows: false,
         showSpinner: false,
+        showLoadingPercentage: false,
         selectedLocation: this.defaultLocationValue,
     });
   };
@@ -152,7 +155,8 @@ class SpotifySearch extends Component {
 
     this.setState({
       showingArtists: false,
-      showSpinner: true,
+      loadingPercentage: "",
+      showLoadingPercentage: true,
       headerText: "Searching for shows...",
       subHeaderText: "Please be patient, this can take up to a minute for large numbers of artists",
     });
@@ -178,6 +182,11 @@ class SpotifySearch extends Component {
       let showsJson = await helpers.instrumentCall("/local-lineup/shows", postOptions);
       let showsChunk = await showsJson.json();
       shows = shows.concat(showsChunk);
+
+      // Update user-facing percent every chunk received
+      let percentDecimal = i / encodedArtists.length;
+      let percentStr = `${Math.floor(percentDecimal * 100)}%`;
+      this.setState({ loadingPercentage: percentStr });
     }
 
     // shows.length is actually a count of number of artists returned
@@ -196,7 +205,8 @@ class SpotifySearch extends Component {
 
     this.setState({
       showingShows: true,
-      showSpinner: false,
+      showLoadingPercentage: false,
+      loadingPercentage: "",
       headerText: header,
       subHeaderText: "",
       shows: shows.map(x => (
@@ -273,6 +283,7 @@ class SpotifySearch extends Component {
                             <p className="no-margin-top">{this.state.subHeaderText}</p>
                         </div>
                         <div className="loader" style={{ display: this.state.showSpinner ? "" : "none" }}></div>
+                        <div className="loadingPercentage" style={{ display: this.state.showLoadingPercentage ? "" : "none" }}><p>{this.state.loadingPercentage}</p></div>
                         <form onSubmit={this.getArtists} style={{ display: this.state.showingPlaylists ? "" : "none" }}>
                             <div className="flex-row justify-content-space-between">
                                 <button id="new-search-button" className="unselectable block" onClick={this.newSearch} style={{ display: this.state.showingNewSearch ? "" : "none" }}>
