@@ -158,7 +158,7 @@ class SpotifySearch extends Component {
       loadingPercentage: "",
       showLoadingPercentage: true,
       headerText: "Searching for shows...",
-      subHeaderText: "Please be patient, this can take up to a minute for large numbers of artists",
+      subHeaderText: "Please be patient, this can take up to a five minutes for large numbers of artists due to server capacity and API limits",
     });
 
 
