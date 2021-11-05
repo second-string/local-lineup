@@ -209,6 +209,8 @@ class VenueSearch extends Component {
     selectVenues = async e => {
         e.preventDefault();
 
+        this.setState({showSpinner: true,});
+
         // Send in the format [ { [key]: [name] } ]
         let postBody = {
             seatgeek: this.state.selectedVenues.reduce((obj, current) => {
@@ -234,7 +236,8 @@ class VenueSearch extends Component {
         }
 
         this.setState({
-            showsByDate: showsByDate
+            showsByDate: showsByDate,
+            showSpinner: false,
         });
     };
 
