@@ -66,7 +66,7 @@ app.use(pageRouter.setRoutes(routerDependencies));
 var creds = {};
 if (process.env.DEPLOY_STAGE === "PROD") {
     if (!process.env.PROD_SSL_KEY_PATH || !process.env.PROD_SSL_CERT_PATH || !process.env.PROD_SSL_CA_CERT_PATH) {
-        console.log("SSL cert env variables not set. Run the setup_env.sh script");
+        console.log("SSL cert env variables not set. Source the setup_env.sh script");
         process.exit(1);
     }
 

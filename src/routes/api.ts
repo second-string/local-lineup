@@ -15,7 +15,9 @@ let getAllShowsLambdaParams = {
     InvocationType : "RequestResponse",
     Payload : null,
 };
-const getAllShowsLambda = new Lambda();
+const getAllShowsLambda = new Lambda({
+    region : "us-east-1",
+});
 
 export function setRoutes(routerDependencies) {
     const db           = routerDependencies.db;
