@@ -158,11 +158,11 @@ class SpotifySearch extends Component {
       loadingPercentage: "",
       showLoadingPercentage: true,
       headerText: "Searching for shows...",
-      subHeaderText: "Please be patient, this can take up to a five minutes for large numbers of artists due to server capacity and API limits",
+      subHeaderText: "Please be patient, this can take up to a minute for large numbers of artists",
     });
 
 
-    let maxArtistChunkRequestLength = 25;
+    let maxArtistChunkRequestLength = 60;
     let shows = [];
     for (let i = 0; i < encodedArtists.length; i += maxArtistChunkRequestLength) {
         // Slice encodedArtist by the max chunk length each iteration. For last iteration when there are less artists left than chunk length,

@@ -1,0 +1,1 @@
+aws lambda invoke --function-name local-lineup-get-all-shows --invocation-type RequestResponse --cli-binary-format raw-in-base64-out --payload file://lambda_test_payload.json test_deployed_lambda_response.txt

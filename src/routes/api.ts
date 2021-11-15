@@ -1,4 +1,6 @@
+import {AWSError, Lambda, Request} from "aws-sdk";
 import express from "express";
+
 const router = express.Router();
 
 import * as authHandler   from "./auth-handler";
@@ -7,6 +9,13 @@ import * as dbHelpers     from "../helpers/db-helpers";
 import * as constants     from "../helpers/constants";
 import * as helpers       from "../helpers/helpers";
 import * as spotifyHelper from "../helpers/spotify-helper";
+
+let getAllShowsLambdaParams = {
+    FunctionName : "local-lineup-get-all-shows",
+    InvocationType : "RequestResponse",
+    Payload : null,
+};
+const getAllShowsLambda = new Lambda();
 
 export function setRoutes(routerDependencies) {
     const db           = routerDependencies.db;
@@ -137,20 +146,42 @@ export function setRoutes(routerDependencies) {
         } else if (req.body.selectedArtists) {
             // No venues specified, get all shows for all artists supplied in body
             // Need to group artist by arbitrary id to be able to bundle and serve consolidated response
-            let i                        = 0;
-            let artists                  = req.body.selectedArtists.map(x => ({id : i++, name : x}));
-            let allServicesResponse: any = await localLineup.getAllShows(artists, req.body.location);
-            if (allServicesResponse.statusCode) {
-                console.log(`Call to get shows for all artists failed with status ${allServicesResponse.statusCode}`);
-                return res.status(allServicesResponse.statusCode).json(allServicesResponse);
+            let i                           = 0;
+            let artists                     = req.body.selectedArtists.map(x => ({id : i++, name : x}));
+            const body                      = {artists : artists, location : req.body.location};
+            getAllShowsLambdaParams.Payload = JSON.stringify(body);
+
+            const allServicesPromise = new Promise((resolve, reject) => {
+                getAllShowsLambda.invoke(getAllShowsLambdaParams, (err, data) => {
+                    if (err) {
+                        return reject(data);
+                    }
+
+                    resolve(data);
+                });
+            });
+
+            let allServicesResponse;
+            try {
+                allServicesResponse = await allServicesPromise;
+            } catch (e) {
+                console.log(`Call to get shows for all artists failed with status ${
+                    e.Payload.statusCode ? e.Payload.statusCode : "undefined"}`);
+                console.error(e)
+                return res.status(e.Payload.statusCode).json({});
             }
 
+            // Extract the million layers that lambda bundles up
+            const parsedPayload   = await JSON.parse(allServicesResponse.Payload);
+            const parsedBody      = await    JSON.parse(parsedPayload.body);
+            const showsByArtistId = parsedBody.showsByArtistId;
+
             let mappedArtistsToShows =
-                Object.keys(allServicesResponse)
+                Object.keys(showsByArtistId)
                     .filter(x => artists.find(y => y.id === parseInt(x)) !== undefined)
                     .map(x => ({
                              artistName : decodeURIComponent(artists.find(y => y.id === parseInt(x)).name).toString(),
-                             shows : allServicesResponse[x]
+                             shows : showsByArtistId[x]
                          }));
 
             console.log(
