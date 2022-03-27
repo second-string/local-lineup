@@ -55,6 +55,7 @@ const defaultLocations = [
     "charlotte",
     "philadelphia",
     "seattle",
+    "baltimore"
 ];
 
 const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");

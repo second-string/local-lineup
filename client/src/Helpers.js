@@ -13,6 +13,7 @@ export const locations = [
     { value: "charlotte", displayName: "Charlotte" },
     { value: "philadelphia", displayName: "Philadelphia" },
     { value: "seattle", displayName: "Seattle" },
+    { value: "baltimore", displayName: "Baltimore" },
   ];
 
 export async function instrumentCall(url, options) {
