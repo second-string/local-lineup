@@ -44,7 +44,8 @@ class SpotifySearch extends Component {
 
   async componentDidMount() {
       const isLoggedIn = await helpers.isUserLoggedIn(document.cookie);
-      this.setState({ locations: helpers.locations, isLoggedIn });
+      const sortedLocations = helpers.locations.sort((a, b) => a.value > b.value ? 1 : -1);
+      this.setState({ locations: sortedLocations, isLoggedIn });
   }
 
   newSearch = (e) => {

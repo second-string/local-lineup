@@ -14,6 +14,13 @@ export const locations = [
     { value: "philadelphia", displayName: "Philadelphia" },
     { value: "seattle", displayName: "Seattle" },
     { value: "baltimore", displayName: "Baltimore" },
+    { value: "munich", displayName: "Munich" },
+    { value: "amsterdam", displayName: "Amsterdam" },
+    { value: "paris", displayName: "Paris" },
+    { value: "manchester", displayName: "Manchester" },
+    { value: "berlin", displayName: "Berlin" },
+    { value: "madrid", displayName: "Madrid" },
+    { value: "barcelona", displayName: "Barcelona" },
   ];
 
 export async function instrumentCall(url, options) {

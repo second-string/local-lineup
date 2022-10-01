@@ -335,7 +335,8 @@ class VenueSearch extends Component {
                             <option key={x.value} value={x.value}>
                                 {x.displayName}
                             </option>
-                        ))}
+                        ))
+                        .sort((a, b) => a.value > b.value ? 1 : -1)}
                     </select>
                     <a 
                         href="mailto:brian.team.jr@gmail.com?subject=Add my city!"
