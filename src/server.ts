@@ -5,7 +5,7 @@ import https from "https";
 import morgan from "morgan";
 import path from "path";
 import sqlite = require("sqlite3");
-import uuid from "uuid/v4";
+import {v4 as uuid} from "uuid";
 import cookieParser from "cookie-parser";
 
 import * as authHandler from "./routes/auth-handler";

@@ -87,7 +87,7 @@ async function fetchWithBackoffAndTimeout(url, options, timeoutSeconds) {
         const timeout         = setTimeout(() => abortController.abort(), timeoutSeconds * 1000);
         options.signal        = abortController.signal;
 
-        const requestPromise = fetch(url, options, true);
+        const requestPromise = fetch(url, options);
         try {
             unparsedRes = await requestPromise;
         } catch (e) {

@@ -2,7 +2,7 @@ import crypto from "crypto";
 import express from "express";
 import jwt from "jsonwebtoken";
 import querystring from "querystring";
-import uuid from "uuid/v4";
+import {v4 as uuid} from "uuid";
 
 import * as constants   from "../helpers/constants";
 import * as helpers     from "../helpers/helpers";
@@ -133,7 +133,7 @@ export async function spotifyLoginCallback(db, req, res) {
     }
 
     const stateDecoded = Buffer.from(stateStr, "base64").toString("utf-8");
-    let state          = {redirect : "/"};
+    let   state        = {redirect : "/"};
     try {
         state = JSON.parse(stateDecoded);
     } catch {
@@ -141,15 +141,15 @@ export async function spotifyLoginCallback(db, req, res) {
         return res.status(500).send("Error authorizing with Spotify. Please return home and try again");
     }
 
-    const rootHost  = process.env.DEPLOY_STAGE === "PROD" ? "locallineup.live" : "localhost";
-    let postOptions = {
-        method : "POST",
-        body : {
-            grant_type : "authorization_code",
-            redirect_uri : `https://${rootHost}/spotify-auth`,  // Not used, just needs to match what we sent previously
+    const rootHost    = process.env.DEPLOY_STAGE === "PROD" ? "locallineup.live" : "localhost";
+    let   postOptions = {
+          method : "POST",
+          body : {
+              grant_type : "authorization_code",
+              redirect_uri : `https://${rootHost}/spotify-auth`,  // Not used, just needs to match what we sent previously
             code : code
         },
-        headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : helpers.spotifyAuth()}
+          headers : {"Content-type" : "application/x-www-form-urlencoded", Authorization : helpers.spotifyAuth()}
     };
 
     console.log("Getting spotify access and refresh tokens ...");
