@@ -43,19 +43,9 @@ Sample venue object
 */
 
 const defaultLocations = [
-    "san francisco",
-    "los angeles",
-    "washington",
-    "new york",
-    "denver",
-    "chicago",
-    "boston",
-    "austin",
-    "houston",
-    "charlotte",
-    "philadelphia",
-    "seattle",
-    "baltimore"
+    "san francisco", "los angeles", "washington", "new york",     "denver",    "chicago",   "boston",
+    "austin",        "houston",     "charlotte",  "philadelphia", "seattle",   "baltimore", "munich",
+    "amsterdam",     "paris",       "manchester", "madrid",       "barcelona", "berlin",
 ];
 
 const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
@@ -121,13 +111,14 @@ async function run() {
 
     let locations = [];
     if (process.argv.length > 2) {
-        const location: string = process.argv[2];
-        if (!defaultLocations.includes(location)) {
-            console.error(`Supplied location of ${location} not found in default location list, exiting`);
-            process.exit(-1);
-        }
+        for (const location of process.argv.slice(2)) {
+            if (!defaultLocations.includes(location)) {
+                console.error(`Supplied location of ${location} not found in default location list, exiting`);
+                process.exit(-1);
+            }
 
-        locations = [ location ];
+            locations.push(location);
+        }
     } else {
         locations = defaultLocations;
     }
