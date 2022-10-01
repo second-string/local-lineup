@@ -70,6 +70,12 @@ if (process.env.DEPLOY_STAGE === "PROD") {
         process.exit(1);
     }
 
+    if (process.env.GENERATE_SOURCEMAP || process.env.GENERATE_SOURCEMAP === undefined || !process.env.NODE_OPTIONS) {
+        console.log(
+            "Must set env vars GENERATE_SOURCEMAP=false and NODE_OPTIONS=--max-old-space-size=4096 to compile on small droplet!");
+        process.exit(1);
+    }
+
     var key  = fs.readFileSync(process.env.PROD_SSL_KEY_PATH, "utf-8");
     var cert = fs.readFileSync(process.env.PROD_SSL_CERT_PATH, "utf-8");
     var ca   = fs.readFileSync(process.env.PROD_SSL_CA_CERT_PATH, "utf-8");
