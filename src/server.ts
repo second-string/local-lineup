@@ -70,7 +70,8 @@ if (process.env.DEPLOY_STAGE === "PROD") {
         process.exit(1);
     }
 
-    if (process.env.GENERATE_SOURCEMAP || process.env.GENERATE_SOURCEMAP === undefined || !process.env.NODE_OPTIONS) {
+    if (process.env.GENERATE_SOURCEMAP !== "false" || process.env.GENERATE_SOURCEMAP === undefined ||
+        !process.env.NODE_OPTIONS) {
         console.log(
             "Must set env vars GENERATE_SOURCEMAP=false and NODE_OPTIONS=--max-old-space-size=4096 to compile on small droplet!");
         process.exit(1);
