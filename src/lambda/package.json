@@ -12,6 +12,6 @@
     "abort-controller": "^3.0.0",
     "form-urlencoded": "^6.0.5",
     "node-fetch": "^3.1.0",
-    "sqlite3": "^5.0.2"
+    "sqlite3": "^5.0.3"
  }
 }
