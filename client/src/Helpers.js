@@ -21,6 +21,7 @@ export const locations = [
     { value: "berlin", displayName: "Berlin" },
     { value: "madrid", displayName: "Madrid" },
     { value: "barcelona", displayName: "Barcelona" },
+    { value: "london", displayName: "London" },
   ];
 
 export async function instrumentCall(url, options) {

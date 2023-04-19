@@ -45,7 +45,7 @@ Sample venue object
 const defaultLocations = [
     "san francisco", "los angeles", "washington", "new york",     "denver",    "chicago",   "boston",
     "austin",        "houston",     "charlotte",  "philadelphia", "seattle",   "baltimore", "munich",
-    "amsterdam",     "paris",       "manchester", "madrid",       "barcelona", "berlin",
+    "amsterdam",     "paris",       "manchester", "madrid",       "barcelona", "berlin",    "london",
 ];
 
 const seatGeekAuth = () => "Basic " + Buffer.from(`${constants.seatGeekClientId}:`).toString("base64");
